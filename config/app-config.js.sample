@@ -1,0 +1,4 @@
+module.exports = {
+  ROOT_DIR: '',
+  APP_NAME: 'REST-ful API Server'
+};

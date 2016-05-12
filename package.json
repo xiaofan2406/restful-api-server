@@ -1,0 +1,39 @@
+{
+  "name": "restful-api-server",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "DEBUG=* nodemon ./bin/www -i tests/",
+    "test": "./node_modules/.bin/mocha tests",
+    "preversion": "npm test",
+    "version": "",
+    "postversion": "git push && git push --tags"
+  },
+  "dependencies": {
+    "body-parser": "~1.x",
+    "cookie-parser": "~1.x",
+    "debug": "~2.x",
+    "express": "~4.x",
+    "serve-favicon": "~2.x",
+    "morgan": "",
+    "pg": "~4.x",
+    "sequelize": "~3.x",
+    "passport": "^0.3.2",
+    "passport-jwt": "^2.0.0",
+    "passport-local": "^1.0.0",
+    "bcrypt-nodejs": "0.0.3",
+    "jsonwebtoken": "",
+    "winston": ""
+  },
+  "devDependencies": {
+    "eslint": "",
+    "eslint-config-airbnb": "",
+    "eslint-plugin-import": "",
+    "eslint-plugin-jsx-a11y": "",
+    "eslint-plugin-react": "",
+    "nodemon": "",
+    "mocha": "",
+    "chai": "",
+    "supertest": ""
+  }
+}
