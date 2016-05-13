@@ -1,9 +1,9 @@
-const SQLLogger = require('../helpers/logging').SQLLogger;
+const SQLLogger = require('../helpers/logger').SQLLogger;
 
 module.exports = {
   development: {
     username: 'root',
-    password: 'password',
+    password: 'dbpassword',
     database: 'database_dev',
     host: '127.0.0.1',
     dialect: 'postgres',
@@ -11,7 +11,7 @@ module.exports = {
   },
   test: {
     username: 'root',
-    password: 'password',
+    password: 'dbpassword',
     database: 'database_test',
     host: '127.0.0.1',
     dialect: 'postgres',
@@ -19,7 +19,7 @@ module.exports = {
   },
   production: {
     username: 'root',
-    password: 'password',
+    password: 'dbpassword',
     database: 'database_production',
     host: '127.0.0.1',
     dialect: 'postgres',
