@@ -2,38 +2,35 @@ const supertest = require('supertest');
 const expect = require('chai').expect;
 const bcrypt = require('bcrypt-nodejs');
 
-const { User } =  require('../models');
+const { User } = require('../models');
 
-const api = supertest('http://192.168.1.49:3000');
+const api = supertest('http://localhost:3000');
 
 describe('Authentication', function() {
-
-  let userRes;
-  const email = 'test@mail.com';
   const password = 'password';
   const hashPassword = bcrypt.hashSync(password, bcrypt.genSaltSync(10), null);
-  let beforeCount;
 
-  before(function(done) {
-    User.count().then(count => {
-      beforeCount = count;
-      api.post('/signup')
-      .send({
-        email,
-        password
-      })
-      .end((err, res) => {
-        userRes = res;
-        done();
-      });
-    });
-  });
-  describe('Sign up', function() {
+  describe('Successful Sign Up', function() {
     let newUser;
+    let beforeCount;
+    let userRes;
+    const email = 'test@mail.com';
+
     before(function(done) {
-      User.find({ where: { email }}).then(user => {
-        newUser = user;
-        done();
+      User.count().then(count => { // get the initial count of users
+        beforeCount = count;
+        api.post('/signup') // send the request to sign up a new user
+        .send({
+          email,
+          password
+        })
+        .end((err, res) => {
+          userRes = res; // store the response send back by server
+          User.find({ where: { email }}).then(user => { // find the user in database
+            newUser = user;
+            done();
+          });
+        });
       });
     });
 
@@ -61,7 +58,49 @@ describe('Authentication', function() {
     });
 
     after(function() {
+
       newUser.destroy();
     });
+  });
+
+  describe('Successful Sign Up', function() {
+    let newUser;
+    let beforeCount;
+    let userRes;
+    const email = "@mail.com";
+    before(function(done) {
+      User.count().then(count => { // get the initial count of users
+        beforeCount = count;
+        api.post('/signup') // send the request to sign up a new user
+        .send({
+          email,
+          password
+        })
+        .end((err, res) => {
+          userRes = res; // store the response send back by server
+          User.find({ where: { email }}).then(user => { // find the user in database
+            newUser = user;
+            done();
+          });
+        });
+      });
+    });
+
+    it('should NOT create a new entry in the database', function(done) {
+      User.count().then(count => {
+        expect(count).to.equal(beforeCount);
+        done();
+      });
+    });
+
+    it('should NOT return any user information', function() {
+
+      expect(newUser).to.be.null;
+    });
+
+    it('should return response code 400', function() {
+      expect(userRes.status).to.equal(400);
+    });
+
   });
 });
