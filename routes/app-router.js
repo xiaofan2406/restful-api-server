@@ -6,9 +6,8 @@ const passport = require('../helpers/authentication');
 const requireAuth = passport.authenticate('jwt', { session: false });
 const requireSignin = passport.authenticate('local', { session: false });
 
-router.get('/', requireAuth, (req, res, next) => {
-  res.send('index');
-  next();
+router.get('/', requireAuth, (req, res) => {
+  res.status(200).json({ message: 'index page' });
 });
 
 router.post('/signup', (req, res, next) => {
@@ -24,9 +23,8 @@ router.post('/signup', (req, res, next) => {
   });
 });
 
-router.post('/login', requireSignin, (req, res, next) => {
-  res.json('logged in');
-  next();
+router.post('/signin', requireSignin, (req, res) => {
+  res.status(200).json(req.user.getToken());
 });
 
 
