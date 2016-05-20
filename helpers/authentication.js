@@ -16,6 +16,7 @@ const jwtOptions = {
   secretOrKey: JWT_SECRET
 };
 const jwtLogin = new JwtStrategy(jwtOptions, (payload, done) => {
+  console.log(payload);
   User.findById(payload.sub).then((user) => {
     if (user) {
       return done(null, user);
@@ -37,14 +38,14 @@ const localOptions = {
 const localLogin = new LocalStrategy(localOptions, (email, password, done) => {
   User.findOne({ where: { email } }).then(user => {
     if (!user) {
-      return done(null, false);
+      return done(null, false, { field: 'email', message: 'Incorrect email' });
     }
     return user.validPassword(password, (err, isMatch) => {
       if (err) {
         return done(err, false);
       }
       if (!isMatch) {
-        return done(null, false);
+        return done(null, false, { field: 'password', message: 'Incorrect password' });
       }
       return done(null, user);
     });

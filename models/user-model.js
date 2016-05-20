@@ -8,7 +8,7 @@ const JWT_SECRET = require('../config/jwt-config').JWT_SECRET;
 
 const hashPassword = (user) => {
   user.password = bcrypt.hashSync(user.password, bcrypt.genSaltSync(10), null);
-  // this syncronous version dosen't really improve performance
+  // this asyncronous version dosen't really improve performance
   // bcrypt.genSalt(10, (err, salt) => {
   //   if (err) {
   //     throw err;

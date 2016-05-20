@@ -4,7 +4,22 @@ const models = require('../models');
 const { User } = models;
 const passport = require('../helpers/authentication');
 const requireAuth = passport.authenticate('jwt', { session: false });
-const requireSignin = passport.authenticate('local', { session: false });
+
+const requireSignin = (req, res, next) => {
+  passport.authenticate('local', (err, user, info) => {
+    if (err) { return next(err); }
+    if (!user) {
+      const newErr = new Error();
+      newErr.status = 401;
+      newErr.field = info.field;
+      newErr.message = info.message;
+      return next(newErr);
+    }
+    req.user = user;
+    return next();
+  })(req, res, next);
+};
+
 const Utils = require('../helpers/utils.js');
 
 router.get('/', requireAuth, (req, res) => {
