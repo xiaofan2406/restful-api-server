@@ -1,40 +1,13 @@
 const passport = require('passport');
-const JWT_SECRET = require('../config/jwt-config').JWT_SECRET;
-
-const JwtStrategy = require('passport-jwt').Strategy;
-const ExtractJwt = require('passport-jwt').ExtractJwt;
-
 const LocalStrategy = require('passport-local').Strategy;
 
 const User = require('../models').User;
 
-/**
- * JWT authentication
- */
-const jwtOptions = {
-  jwtFromRequest: ExtractJwt.fromHeader('token'),
-  secretOrKey: JWT_SECRET
-};
-const jwtLogin = new JwtStrategy(jwtOptions, (payload, done) => {
-  console.log(payload);
-  User.findById(payload.sub).then((user) => {
-    if (user) {
-      return done(null, user);
-    }
-    return done(null, false);
-  }).catch((err) => {
-    return done(err, false);
-  });
-});
-
-
-/**
- * user login authentication
- */
 const localOptions = {
   usernameField: 'email',
   passwordField: 'password'
 };
+
 const localLogin = new LocalStrategy(localOptions, (email, password, done) => {
   User.findOne({ where: { email } }).then(user => {
     if (!user) {
@@ -54,7 +27,21 @@ const localLogin = new LocalStrategy(localOptions, (email, password, done) => {
   });
 });
 
-passport.use(jwtLogin);
 passport.use(localLogin);
 
-module.exports = passport;
+const requireSignin = (req, res, next) => {
+  passport.authenticate('local', (err, user, info) => {
+    if (err) { return next(err); }
+    if (!user) {
+      const newErr = new Error();
+      newErr.status = 401;
+      newErr.field = info.field;
+      newErr.message = info.message;
+      return next(newErr);
+    }
+    req.user = user;
+    return next();
+  })(req, res, next);
+};
+
+module.exports = requireSignin;

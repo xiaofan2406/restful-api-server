@@ -2,58 +2,49 @@ const express = require('express');
 const router = express.Router();
 const models = require('../models');
 const { User } = models;
-const passport = require('../helpers/authentication');
-const requireAuth = passport.authenticate('jwt', { session: false });
-
-const requireSignin = (req, res, next) => {
-  passport.authenticate('local', (err, user, info) => {
-    if (err) { return next(err); }
-    if (!user) {
-      const newErr = new Error();
-      newErr.status = 401;
-      newErr.field = info.field;
-      newErr.message = info.message;
-      return next(newErr);
-    }
-    req.user = user;
-    return next();
-  })(req, res, next);
-};
+const requireAuth = require('../helpers/passport-jwt');
+const requireSignin = require('../helpers/passport-local');
 
 const Utils = require('../helpers/utils.js');
 
-router.get('/', requireAuth, (req, res) => {
-  res.status(200).json({ message: 'index page' });
-});
-
-
-const signup = (req, res, next) => {
+function validateReqBody(req, res, next) {
   const { email, password } = req.body;
-  if (!Utils.isEmail(email)) {
-    const err = new Error('Not a valid email');
-    err.status = 400;
-    next(err);
-    return;
-  }
 
-  User.create({ email, password }).then((user) => {
+  if (!Utils.isThere(email) || !Utils.isThere(password) || !Utils.isEmail(email)) {
+    const err = new Error();
+    err.message = 'Invalid request data';
+    err.status = 422;
+    next(err);
+  }
+  next();
+}
+
+function signUp(req, res, next) {
+  const { email, password } = req.body;
+
+  User.create({ email, password, displayName: email }).then(user => {
     res.status(201).json({
       token: user.getToken(),
-      email: user.email,
-      id: user.id
+      displayName: user.displayName
     });
-  }).catch((err) => {
-    next(err);
+  }).catch(error => {
+    next(error);
   });
-};
+}
 
-
-router.post('/signup', signup);
-
-router.post('/signin', requireSignin, (req, res) => {
+function signIn(req, res) {
   res.status(200).json({
-    token: req.user.getToken()
+    token: req.user.getToken(),
+    displayName: req.user.displayName
   });
+}
+
+router.post('/signup', validateReqBody, signUp);
+
+router.post('/signin', validateReqBody, requireSignin, signIn);
+
+router.get('/', requireAuth, (req, res) => {
+  res.status(200).json({ message: 'index page' });
 });
 
 

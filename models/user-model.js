@@ -36,6 +36,10 @@ module.exports = (sequelize, DataTypes) => {
     password: {
       type: DataTypes.STRING,
       allowNull: false
+    },
+    displayName: {
+      type: DataTypes.STRING,
+      allowNull: false
     }
   }, {
     freezeTableName: true, // stop Sequelize automatically name tables
