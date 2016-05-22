@@ -11,14 +11,14 @@ const localOptions = {
 const localLogin = new LocalStrategy(localOptions, (email, password, done) => {
   User.findOne({ where: { email } }).then(user => {
     if (!user) {
-      return done(null, false, { field: 'email', message: 'Incorrect email' });
+      return done(null, false, { message: 'The email is not registered' });
     }
     return user.validPassword(password, (err, isMatch) => {
       if (err) {
         return done(err, false);
       }
       if (!isMatch) {
-        return done(null, false, { field: 'password', message: 'Incorrect password' });
+        return done(null, false, { message: 'The password does not match the email address' });
       }
       return done(null, user);
     });
@@ -30,13 +30,11 @@ const localLogin = new LocalStrategy(localOptions, (email, password, done) => {
 passport.use(localLogin);
 
 const requireSignin = (req, res, next) => {
-  passport.authenticate('local', (err, user, info) => {
+  passport.authenticate('local', { session: false }, (err, user, info) => {
     if (err) { return next(err); }
     if (!user) {
-      const newErr = new Error();
+      const newErr = new Error(info.message);
       newErr.status = 401;
-      newErr.field = info.field;
-      newErr.message = info.message;
       return next(newErr);
     }
     req.user = user;

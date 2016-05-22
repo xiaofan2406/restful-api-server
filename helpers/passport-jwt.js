@@ -22,4 +22,18 @@ const jwtLogin = new JwtStrategy(jwtOptions, (payload, done) => {
 });
 
 passport.use(jwtLogin);
-module.exports = passport.authenticate('jwt', { session: false });
+
+const requireJwt = (req, res, next) => {
+  passport.authenticate('jwt', { session: false }, (err, user, info) => {
+    if (err) { return next(err); }
+    if (!user) {
+      const newErr = new Error(info.message);
+      newErr.status = 401;
+      return next(newErr);
+    }
+    req.user = user;
+    return next();
+  })(req, res, next);
+};
+
+module.exports = requireJwt;

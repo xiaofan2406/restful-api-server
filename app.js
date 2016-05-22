@@ -38,7 +38,8 @@ if (app.get('env') === 'development') {
   app.use((err, req, res, next) => {
     res.status(err.status || 500);
     res.json({
-      error: Object.assign(err, { message: err.message })
+      message: err.message,
+      error: err
     });
     next();
   });
@@ -46,7 +47,8 @@ if (app.get('env') === 'development') {
 app.use((err, req, res, next) => {
   res.status(err.status || 500);
   res.json({
-    error: Object.assign(err, { message: err.message })
+    message: err.message,
+    error: err
   });
   next();
 });
