@@ -14,6 +14,9 @@ const {
 const unprocessableEntityError = new Error('Invalid request data');
 unprocessableEntityError.status = 422;
 
+/**
+ * middlewares for validations
+ */
 
 function requireEmailPasswordInBody(req, res, next) {
   const { email, password } = req.body;
@@ -58,67 +61,53 @@ function sendVerificationEmail(to, userHash) {
   return mailer(mailOptions);
 }
 
+
+/**
+ * controllers for each routes,
+ * all the req data should be considered in valid format beyond here
+ */
+
 function checkEmail(req, res, next) {
   const { email } = req.query;
-  User.findOne({ where: { email } }).then(user => {
-    res.status(200);
-    if (!user) {
-      res.json({
-        isRegistered: false
-      });
-    } else {
-      res.json({
-        isRegistered: true
-      });
-    }
-  }).catch(error => {
+  User.findOne({ where: { email } })
+  .then(user => {
+    res.status(200).json({
+      isRegistered: Boolean(user)
+    });
+  })
+  .catch(error => { // database query error
+    error.status = 500;
+    return next(error);
+  });
+}
+
+function signUp(req, res, next) {
+  const { email, password } = req.body;
+  User.create({ email, password, displayName: email })
+  .then(user => {
+    sendVerificationEmail(user.email, user.UUID);
+    res.status(202).json({
+      displayName: user.displayName
+    });
+  })
+  .catch(error => { // database query error, most likely database validation
     error.status = 422;
     return next(error);
   });
 }
 
 function activateAccount(req, res, next) {
-  const err = new Error();
   const { email, hash } = req.query;
-  console.log(email, hash);
   User.findOne({ where: { email } }).then(user => {
-    if (user.activated === true) {
-      err.message = 'Account was already activated.';
-      err.status = 409;
-      return next(err);
-    }
     user.activateAccount(email, hash).then(updatedUser => {
       res.status(200).json({
         activated: updatedUser.activated,
         displayName: updatedUser.displayName
       });
     }).catch(error => {
-      next(error);
+      return next(error);
     });
-  }).catch(error => {
-    error.status = 422;
-    return next(error);
-  });
-}
-
-
-function refreshToken(req, res) {
-  res.status(200).json({
-    token: req.user.getToken(),
-    displayName: req.user.displayName
-  });
-}
-
-
-function signUp(req, res, next) {
-  const { email, password } = req.body;
-  User.create({ email, password, displayName: email }).then(user => {
-    sendVerificationEmail(user.email, user.UUID);
-    res.status(202).json({
-      user: user.email,
-      result: 'okay'
-    });
-  }).catch(error => {
+  }).catch(error => { // email is not found
     error.status = 422;
     return next(error);
   });
@@ -131,16 +120,23 @@ function signIn(req, res) {
   });
 }
 
+function refreshToken(req, res) {
+  res.status(200).json({
+    token: req.user.getToken(),
+    displayName: req.user.displayName
+  });
+}
+
 
 router.get('/checkEmail', requireEmailInQuery, checkEmail);
 
-router.get('/activateAccount', requireEmailHashInQuery, activateAccount);
-
-router.get('/refreshToken', requireAuth, refreshToken);
-
 router.post('/signUp', requireEmailPasswordInBody, signUp);
 
+router.get('/activateAccount', requireEmailHashInQuery, activateAccount);
+
 router.post('/signIn', requireEmailPasswordInBody, requireSignin, signIn);
+
+router.get('/refreshToken', requireAuth, refreshToken);
 
 router.get('/', requireAuth, (req, res) => {
   res.status(200).json({ message: 'index page' });

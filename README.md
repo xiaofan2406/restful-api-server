@@ -10,6 +10,11 @@
 * define routes
 
 # Roadmap
+* **HTTP status code**
+* **Documentation**
+* promisify callbacks
+* email log
+* testing
 * view engine setup
 * express middleware config
 * ~~user authentication~~
@@ -17,8 +22,6 @@
 * production setup
 * folder structure
 * webpack es6 babel
-* testing
-* email log
 
 # Conventions
 ### Nodejs Naming

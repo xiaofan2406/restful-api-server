@@ -70,20 +70,22 @@ module.exports = (sequelize, DataTypes) => {
       },
       activateAccount(email, hash) {
         return new Promise((resolve, reject) => {
+          const err = new Error();
           if (this.activated === true) {
-            return reject('Account was arealdy activated');
+            err.message = 'Account was already activated.';
+            err.status = 409;
+            return reject(err);
           }
           if (email !== this.email || hash !== this.UUID) {
-            return reject('Email and hash did not match');
+            err.message = 'Email and hash did not match';
+            err.status = 401;
+            return reject(err);
           }
           return resolve(this.update({ activated: true }));
         });
       }
     },
     hooks: {
-      beforeUpdate(user) {
-        hashPassword(user);
-      },
       beforeCreate(user) {
         hashPassword(user);
       }

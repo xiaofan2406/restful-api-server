@@ -18,7 +18,16 @@ const localLogin = new LocalStrategy(localOptions, (email, password, done) => {
         return done(err, false);
       }
       if (!isMatch) {
-        return done(null, false, { message: 'The password does not match the email address' });
+        return done(null, false, {
+          message: 'The password does not match the email address',
+          status: 401
+        });
+      }
+      if (!user.activated) {
+        return done(null, false, {
+          message: 'The user has not yet verify his email address',
+          status: 400
+        });
       }
       return done(null, user);
     });
@@ -34,7 +43,7 @@ const requireSignin = (req, res, next) => {
     if (err) { return next(err); }
     if (!user) {
       const newErr = new Error(info.message);
-      newErr.status = 401;
+      newErr.status = info.status;
       return next(newErr);
     }
     req.user = user;
