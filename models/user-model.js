@@ -46,7 +46,7 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: DataTypes.UUIDV4,
       allowNull: false
     },
-    valid: {
+    activated: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
       allowNull: false
@@ -67,6 +67,13 @@ module.exports = (sequelize, DataTypes) => {
         const timestamp = new Date().getTime();
         // token expires in 30 minutes
         return jwt.sign({ sub: this.id, iat: timestamp }, JWT_SECRET, { expiresIn: 60 * 30 });
+      },
+      activateAccount(email, hash) {
+        if (email !== this.email || hash !== this.UUID) {
+          return false;
+        }
+        this.activated = true;
+        return true;
       }
     },
     hooks: {
