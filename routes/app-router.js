@@ -4,14 +4,14 @@ const models = require('../models');
 const { User } = models;
 const requireAuth = require('../helpers/passport-jwt');
 const requireSignin = require('../helpers/passport-local');
-const jwt = require('jsonwebtoken');
-const JWT_SECRET = require('../config/jwt-config').JWT_SECRET;
+const {
+  isEmail,
+  isPassword
+} = require('../helpers/validator.js');
 
-const Utils = require('../helpers/utils.js');
-
-function requireEmailPassword(req, res, next) {
+function requireEmailPasswordInBody(req, res, next) {
   const { email, password } = req.body;
-  if (!Utils.isThere(password) || !Utils.isEmail(email)) {
+  if (!isPassword(password) || !isEmail(email)) {
     const err = new Error();
     err.message = 'Invalid request data';
     err.status = 422;
@@ -20,9 +20,9 @@ function requireEmailPassword(req, res, next) {
   next();
 }
 
-function requireEmail(req, res, next) {
+function requireEmailInQuery(req, res, next) {
   const { email } = req.query;
-  if (!Utils.isEmail(email)) {
+  if (!isEmail(email)) {
     const err = new Error();
     err.message = 'Invalid request data';
     err.status = 422;
@@ -76,13 +76,13 @@ function checkEmail(req, res, next) {
   });
 }
 
-router.get('/checkEmail', requireEmail, checkEmail);
+router.get('/checkEmail', requireEmailInQuery, checkEmail);
 
 router.get('/refreshToken', requireAuth, refreshToken);
 
-router.post('/signUp', requireEmailPassword, signUp);
+router.post('/signUp', requireEmailPasswordInBody, signUp);
 
-router.post('/signIn', requireEmailPassword, requireSignin, signIn);
+router.post('/signIn', requireEmailPasswordInBody, requireSignin, signIn);
 
 router.get('/', requireAuth, (req, res) => {
   res.status(200).json({ message: 'index page' });

@@ -3,6 +3,7 @@ function isThere(target) {
   return target !== undefined && target !== null && target !== '';
 }
 
+
 function isEmail(email) {
   if (!isThere(email)) {
     return false;
@@ -13,7 +14,13 @@ function isEmail(email) {
 }
 
 
+function isPassword(password) {
+  return isThere(password);
+}
+
+
 module.exports = {
   isEmail,
+  isPassword,
   isThere
 };
