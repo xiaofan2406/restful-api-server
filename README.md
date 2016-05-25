@@ -18,6 +18,7 @@
 * folder structure
 * webpack es6 babel
 * testing
+* email log
 
 # Conventions
 ### Nodejs Naming

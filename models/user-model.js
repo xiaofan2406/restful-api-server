@@ -69,11 +69,15 @@ module.exports = (sequelize, DataTypes) => {
         return jwt.sign({ sub: this.id, iat: timestamp }, JWT_SECRET, { expiresIn: 60 * 30 });
       },
       activateAccount(email, hash) {
-        if (email !== this.email || hash !== this.UUID) {
-          return false;
-        }
-        this.activated = true;
-        return true;
+        return new Promise((resolve, reject) => {
+          if (this.activated === true) {
+            return reject('Account was arealdy activated');
+          }
+          if (email !== this.email || hash !== this.UUID) {
+            return reject('Email and hash did not match');
+          }
+          return resolve(this.update({ activated: true }));
+        });
       }
     },
     hooks: {

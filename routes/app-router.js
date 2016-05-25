@@ -14,6 +14,7 @@ const {
 const unprocessableEntityError = new Error('Invalid request data');
 unprocessableEntityError.status = 422;
 
+
 function requireEmailPasswordInBody(req, res, next) {
   const { email, password } = req.body;
   if (!isPassword(password) || !isEmail(email)) {
@@ -46,7 +47,7 @@ function sendVerificationEmail(to, userHash) {
       }
     </style>
     <p>Please click the following link to activate your account.</p>
-    <p><a href="http://192.168.1.49:3000/activateAccount?hash=${userHash}&email=${to}">Click here to activate.</a></p>
+    <p><a href="http://localhost:3000/activateAccount?hash=${userHash}&email=${to}">Click here to activate.</a></p>
   `;
   const mailOptions = {
     from: '"Admin" <admin@restful.com>',
@@ -77,19 +78,23 @@ function checkEmail(req, res, next) {
 }
 
 function activateAccount(req, res, next) {
+  const err = new Error();
   const { email, hash } = req.query;
+  console.log(email, hash);
   User.findOne({ where: { email } }).then(user => {
     if (user.activated === true) {
-      // some something
+      err.message = 'Account was already activated.';
+      err.status = 409;
+      return next(err);
     }
-
-    if (user.activateAccount(email, hash)) { // success
+    user.activateAccount(email, hash).then(updatedUser => {
       res.status(200).json({
-        activated: true
+        activated: updatedUser.activated,
+        displayName: updatedUser.displayName
       });
-    } else { // fail activation
-
-    }
+    }).catch(error => {
+      next(error);
+    });
   }).catch(error => {
     error.status = 422;
     return next(error);
@@ -108,11 +113,11 @@ function refreshToken(req, res) {
 function signUp(req, res, next) {
   const { email, password } = req.body;
   User.create({ email, password, displayName: email }).then(user => {
-    res.status(201).json({
+    sendVerificationEmail(user.email, user.UUID);
+    res.status(202).json({
       user: user.email,
       result: 'okay'
     });
-    sendVerificationEmail(user.email, user.UUID);
   }).catch(error => {
     error.status = 422;
     return next(error);
