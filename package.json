@@ -18,6 +18,7 @@
     "express": "",
     "jsonwebtoken": "",
     "morgan": "",
+    "nodemailer": "",
     "passport": "",
     "passport-jwt": "",
     "passport-local": "",
