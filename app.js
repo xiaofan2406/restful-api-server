@@ -11,7 +11,7 @@ const apiRouter = require('./routes/api-router');
 const app = express();
 app.use(morgan('dev', { stream: HTTPLogger.stream })); // morgan http logger
 app.use(cors()); // enable CORS request
-app.use(bodyParser.json({ type: '*/*' })); // parse JSON data
+app.use(bodyParser.json()); // parse JSON data
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 
@@ -34,24 +34,14 @@ app.use((req, res, next) => {
  * Error handlers, these must be defined at last, after app.use() and routes call
  * error handler functions always take four arguments (err, req, res, next)
  */
-if (app.get('env') === 'development') {
-  app.use((err, req, res, next) => {
-    res.status(err.status || 500);
-    res.json({
-      message: err.message,
-      error: err
-    });
-    next();
-  });
-}
+ /* eslint-disable no-unused-vars */
 app.use((err, req, res, next) => {
   res.status(err.status || 500);
   res.json({
     message: err.message,
     error: err
   });
-  next();
 });
-
+ /* eslint-enable no-unused-vars */
 
 module.exports = app;

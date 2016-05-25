@@ -5,16 +5,19 @@
 
 # Setup
 * `npm i`
-* modify config files under `config/` directory, duplicat files without `.sample`
+* modify config files under `config/` directory
 * define models
 * define routes
 
 # Roadmap
-* view engine
-* middleware
-* user authentication
-* database migrations
-* production
+* view engine setup
+* express middleware config
+* ~~user authentication~~
+* sequelize database migrations
+* production setup
+* folder structure
+* webpack es6 babel
+* testing
 
 # Conventions
 ### Nodejs Naming

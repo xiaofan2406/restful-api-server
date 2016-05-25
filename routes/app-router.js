@@ -9,13 +9,13 @@ const {
   isPassword
 } = require('../helpers/validator.js');
 
+const unprocessableEntityError = new Error('Invalid request data');
+unprocessableEntityError.status = 422;
+
 function requireEmailPasswordInBody(req, res, next) {
   const { email, password } = req.body;
   if (!isPassword(password) || !isEmail(email)) {
-    const err = new Error();
-    err.message = 'Invalid request data';
-    err.status = 422;
-    next(err);
+    return next(unprocessableEntityError);
   }
   next();
 }
@@ -23,39 +23,9 @@ function requireEmailPasswordInBody(req, res, next) {
 function requireEmailInQuery(req, res, next) {
   const { email } = req.query;
   if (!isEmail(email)) {
-    const err = new Error();
-    err.message = 'Invalid request data';
-    err.status = 422;
-    next(err);
+    return next(unprocessableEntityError);
   }
   next();
-}
-
-function refreshToken(req, res) {
-  res.status(200).json({
-    token: req.user.getToken(),
-    displayName: req.user.displayName
-  });
-}
-
-function signUp(req, res, next) {
-  const { email, password } = req.body;
-
-  User.create({ email, password, displayName: email }).then(user => {
-    res.status(201).json({
-      token: user.getToken(),
-      displayName: user.displayName
-    });
-  }).catch(error => {
-    next(error);
-  });
-}
-
-function signIn(req, res) {
-  res.status(200).json({
-    token: req.user.getToken(),
-    displayName: req.user.displayName
-  });
 }
 
 function checkEmail(req, res, next) {
@@ -72,9 +42,39 @@ function checkEmail(req, res, next) {
       });
     }
   }).catch(error => {
-    next(error);
+    error.status = 422;
+    return next(error);
   });
 }
+
+function refreshToken(req, res) {
+  res.status(200).json({
+    token: req.user.getToken(),
+    displayName: req.user.displayName
+  });
+}
+
+
+function signUp(req, res, next) {
+  const { email, password } = req.body;
+  User.create({ email, password, displayName: email }).then(user => {
+    res.status(201).json({
+      token: user.getToken(),
+      displayName: user.displayName
+    });
+  }).catch(error => {
+    error.status = 422;
+    return next(error);
+  });
+}
+
+function signIn(req, res) {
+  res.status(200).json({
+    token: req.user.getToken(),
+    displayName: req.user.displayName
+  });
+}
+
 
 router.get('/checkEmail', requireEmailInQuery, checkEmail);
 
