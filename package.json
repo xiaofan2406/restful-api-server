@@ -23,7 +23,8 @@
     "passport-local": "",
     "pg": "",
     "sequelize": "",
-    "winston": ""
+    "winston": "",
+    "winston-daily-rotate-file": ""
   },
   "devDependencies": {
     "eslint": "",

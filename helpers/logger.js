@@ -1,9 +1,10 @@
 const winston = require('winston');
 const path = require('path');
+const DailyRotateFile = require('winston-daily-rotate-file');
 
 const SQLLogger = new (winston.Logger)({
   transports: [
-    new (winston.transports.File)({
+    new (DailyRotateFile)({
       filename: path.join(__dirname, '../logs/sql.log'),
       json: false,
       timestamp() {
@@ -16,9 +17,10 @@ const SQLLogger = new (winston.Logger)({
   ]
 });
 
+
 const HTTPLogger = new (winston.Logger)({
   transports: [
-    new (winston.transports.File)({
+    new (DailyRotateFile)({
       filename: path.join(__dirname, '../logs/http.log'),
       json: false,
       timestamp() {
