@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const models = require('../models');
+const encodeHTML = require('entities').encodeHTML;
 const { User } = models;
 const requireAuth = require('../helpers/passport-jwt');
 const requireSignin = require('../helpers/passport-local');
@@ -50,7 +51,7 @@ function sendVerificationEmail(to, userHash) {
       }
     </style>
     <p>Please click the following link to activate your account.</p>
-    <p><a href="http://localhost:3000/activateAccount?hash=${userHash}&email=${to}">Click here to activate.</a></p>
+  <p><a href="http://localhost:8080/activateAccount/${encodeHTML(to)}/${encodeHTML(userHash)}">Click here to activate</a></p>
   `;
   const mailOptions = {
     from: '"Admin" <admin@restful.com>',
@@ -102,6 +103,7 @@ function activateAccount(req, res, next) {
     user.activateAccount(email, hash).then(updatedUser => {
       res.status(200).json({
         activated: updatedUser.activated,
+        token: user.getToken(),
         displayName: updatedUser.displayName
       });
     }).catch(error => {
