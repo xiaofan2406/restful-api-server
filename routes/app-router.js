@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const models = require('../models');
-const encodeHTML = require('entities').encodeHTML;
 const { User } = models;
 const requireAuth = require('../helpers/passport-jwt');
 const requireSignin = require('../helpers/passport-local');
