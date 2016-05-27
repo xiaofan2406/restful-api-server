@@ -11,6 +11,7 @@ const {
   isPassword,
   isThere
 } = require('../helpers/validator.js');
+const { CLIENT_URL } = require('../config/app-config');
 
 const unprocessableEntityError = new Error('Invalid request data');
 unprocessableEntityError.status = 422;
@@ -35,8 +36,8 @@ function requireEmailInQuery(req, res, next) {
   next();
 }
 
-function requireEmailHashInQuery(req, res, next) {
-  const { email, hash } = req.query;
+function requireEmailHashInBody(req, res, next) {
+  const { email, hash } = req.body;
   if (!isEmail(email) || !isThere(hash)) {
     return next(unprocessableEntityError);
   }
@@ -51,7 +52,11 @@ function sendVerificationEmail(to, userHash) {
       }
     </style>
     <p>Please click the following link to activate your account.</p>
-  <p><a href="http://localhost:8080/activateAccount/${encodeHTML(to)}/${encodeHTML(userHash)}">Click here to activate</a></p>
+    <p>
+      <a href="${CLIENT_URL}/activateAccount?email=${to}&hash=${userHash}">
+        Click here to activate
+      </a>
+    </p>
   `;
   const mailOptions = {
     from: '"Admin" <admin@restful.com>',
@@ -98,7 +103,7 @@ function signUp(req, res, next) {
 }
 
 function activateAccount(req, res, next) {
-  const { email, hash } = req.query;
+  const { email, hash } = req.body;
   User.findOne({ where: { email } }).then(user => {
     user.activateAccount(email, hash).then(updatedUser => {
       res.status(200).json({
@@ -134,7 +139,7 @@ router.get('/checkEmail', requireEmailInQuery, checkEmail);
 
 router.post('/signUp', requireEmailPasswordInBody, signUp);
 
-router.get('/activateAccount', requireEmailHashInQuery, activateAccount);
+router.patch('/activateAccount', requireEmailHashInBody, activateAccount);
 
 router.post('/signIn', requireEmailPasswordInBody, requireSignin, signIn);
 
