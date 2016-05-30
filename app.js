@@ -1,4 +1,5 @@
-const express = require('express');
+// const express = require('express');
+import express from 'express';
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');

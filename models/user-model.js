@@ -53,7 +53,7 @@ module.exports = (sequelize, DataTypes) => {
     }
   }, {
     freezeTableName: true, // stop Sequelize automatically name tables
-    tableName: 'user',
+    tableName: 'users',
     instanceMethods: {
       validPassword(password, cb) {
         bcrypt.compare(password, this.password, (err, isMatch) => {
@@ -65,8 +65,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       getToken() {
         const timestamp = new Date().getTime();
-        // token expires in 30 minutes
-        return jwt.sign({ sub: this.id, iat: timestamp }, JWT_SECRET, { expiresIn: 60 * 30 });
+        return jwt.sign({ sub: this.id, iat: timestamp }, JWT_SECRET);
       },
       activateAccount(email, hash) {
         return new Promise((resolve, reject) => {
@@ -84,6 +83,9 @@ module.exports = (sequelize, DataTypes) => {
           return resolve(this.update({ activated: true }));
         });
       }
+    },
+    classMethods: {
+      // TODO this is the model, define classMethods here
     },
     hooks: {
       beforeCreate(user) {

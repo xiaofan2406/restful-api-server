@@ -14,11 +14,13 @@ const { CLIENT_URL } = require('../config/app-config');
 
 const unprocessableEntityError = new Error('Invalid request data');
 unprocessableEntityError.status = 422;
+const internalServerError = new Error('Internal server error');
+internalServerError.status = 500;
 
 /**
  * middlewares for validations
  */
-
+// TODO manage all request parameters in a combinde middleware
 function requireEmailPasswordInBody(req, res, next) {
   const { email, password } = req.body;
   if (!isPassword(password) || !isEmail(email)) {
@@ -43,6 +45,7 @@ function requireEmailHashInBody(req, res, next) {
   next();
 }
 
+// TODO create a module to contain all emails
 function sendVerificationEmail(to, userHash) {
   const content = `
     <style>
@@ -96,7 +99,7 @@ function signUp(req, res, next) {
     });
   })
   .catch(error => { // database query error, most likely database validation
-    error.status = 422;
+    error.status = 500;
     return next(error);
   });
 }
@@ -104,17 +107,24 @@ function signUp(req, res, next) {
 function activateAccount(req, res, next) {
   const { email, hash } = req.body;
   User.findOne({ where: { email } }).then(user => {
+    if (!user) { // email not registered
+      return next(unprocessableEntityError);
+    }
     user.activateAccount(email, hash).then(updatedUser => {
-      res.status(200).json({
-        activated: updatedUser.activated,
-        token: user.getToken(),
-        displayName: updatedUser.displayName
-      });
+      if (updatedUser.activated) { // user should have been updated
+        res.status(200).json({
+          token: user.getToken(),
+          displayName: updatedUser.displayName
+        });
+      }
+      // this should never happend
+      return next(internalServerError);
     }).catch(error => {
+      error.status = error.status || 500;
       return next(error);
     });
-  }).catch(error => { // email is not found
-    error.status = 422;
+  }).catch(error => { // database query error
+    error.status = 500;
     return next(error);
   });
 }
@@ -126,6 +136,7 @@ function signIn(req, res) {
   });
 }
 
+// TODO review how jwt token works
 function refreshToken(req, res) {
   res.status(200).json({
     token: req.user.getToken(),
