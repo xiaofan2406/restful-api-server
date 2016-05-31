@@ -11,8 +11,13 @@ const {
 } = require('../helpers/validator.js');
 const { CLIENT_URL } = require('../config/app-config');
 
+// put these some where else
 const unprocessableEntityError = new Error('Invalid request data');
 unprocessableEntityError.status = 422;
+const conflictRequestError = new Error('Conflict request');
+conflictRequestError.status = 409;
+const unauthorizedError = new Error('Unauthorized');
+unauthorizedError.status = 401;
 const internalServerError = new Error('Internal server error');
 internalServerError.status = 500;
 
@@ -90,6 +95,16 @@ function checkEmail(req, res, next) {
 
 function signUp(req, res, next) {
   const { email, password } = req.body;
+
+  User.findByEmail(email).then(user => {
+    if (user) {
+      return next(conflictRequestError);
+    }
+  }).catch(error => { // database query error
+    error.status = 500;
+    return next(error);
+  });
+
   User.create({ email, password, displayName: email })
   .then(user => {
     sendVerificationEmail(user.email, user.UUID);
@@ -97,7 +112,7 @@ function signUp(req, res, next) {
       displayName: user.displayName
     });
   })
-  .catch(error => { // database query error, most likely database validation
+  .catch(error => { // database query error
     error.status = 500;
     return next(error);
   });
@@ -107,7 +122,7 @@ function activateAccount(req, res, next) {
   const { email, hash } = req.body;
   User.findByEmail(email).then(user => {
     if (!user) { // email not registered
-      return next(unprocessableEntityError);
+      return next(unauthorizedError);
     }
     user.activateAccount(email, hash).then(updatedUser => {
       if (updatedUser.activated) { // user should have been updated
@@ -118,7 +133,7 @@ function activateAccount(req, res, next) {
       }
       // this should never happend
       return next(internalServerError);
-    }).catch(error => {
+    }).catch(error => { // database query error
       error.status = error.status || 500;
       return next(error);
     });

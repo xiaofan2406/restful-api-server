@@ -9,32 +9,76 @@ const { SERVER_URL } = require('../config/app-config');
 describe('/signUp', function() {
   const correctEmail = 'test@mail.com';
 
+  describe('with mal-formed request data', function() {
+
+    it('return 422 error when email is in wrong format', function(done) {
+      axios.post(`${SERVER_URL}/signUp`, {
+        email: 'wrongformated.emailaddress',
+        password: 'password'
+      })
+      .catch(err => {
+        expect(err.status).to.equal(422);
+        done();
+      });
+    });
+
+    it('return 422 error when email is an empty string', function(done) {
+      axios.post(`${SERVER_URL}/signUp`, {
+        email: '',
+        password: 'password'
+      })
+      .catch(err => {
+        expect(err.status).to.equal(422);
+        done();
+      });
+    });
+
+    it('return 422 error when password is an empty string', function(done) {
+      axios.post(`${SERVER_URL}/signUp`, {
+        email: correctEmail,
+        password: ''
+      })
+      .catch(err => {
+        expect(err.status).to.equal(422);
+        done();
+      });
+    });
+
+    it('return 422 error when request body is empty', function(done) {
+      axios.post(`${SERVER_URL}/signUp`, {})
+      .catch(err => {
+        expect(err.status).to.equal(422);
+        done();
+      });
+    });
+  });
+
   describe('with correct request data', function() {
-    let errorRes, response;
-    const email = correctEmail;
-    const password = 'password';
-    const hashPassword = bcrypt.hashSync(password, bcrypt.genSaltSync(10), null);
+    let response;
+    const correctPassword = 'password';
 
     before(function(done) {
-      axios.post(`${SERVER_URL}/signUp`, { email,  password })
+      axios.post(`${SERVER_URL}/signUp`, {
+        email: correctEmail,
+        password: correctPassword
+      })
       .then(res => {
         response = res;
         done();
       })
       .catch(err => {
-        errorRes = err;
         done(err);
       });
     });
 
-    it('should create a new entry in the database', function(done) {
-      User.findByEmail(email).then(user => {
+    it('create a new entry in the database', function(done) {
+      User.findByEmail(correctEmail).then(user => {
         expect(user).to.exist;
-        expect(user.email).to.equal(email);
-        expect(user.displayName).to.equal(email);
+        expect(user.email).to.equal(correctEmail);
+        expect(user.displayName).to.equal(correctEmail);
         expect(user.UUID).to.exist;
         expect(user.activated).to.be.false;
-        bcrypt.compare(password, user.password, (err, isMatch) => {
+        bcrypt.compare(correctPassword, user.password, (err, isMatch) => {
           if (err) {
             return done(err);
           }
@@ -44,102 +88,25 @@ describe('/signUp', function() {
       });
     });
 
-    it('should return the user displayName', function() {
+    it('return 202 with user displayName', function() {
       expect(response.status).to.equal(202);
-      expect(response.data.displayName).to.equal(email);
+      expect(response.data.displayName).to.equal(correctEmail);
     });
   });
 
-  describe('with mal-formed request data', function() {
+  describe('with semantically incorrect data', function() {
 
-  });
-
-  describe('with wrong email format', function() {
-    let errorRes, response;
-    const email = 'email';
-    const password = 'password';
-
-    before(function(done) {
-      axios.post(`${SERVER_URL}/signUp`, { email,  password })
-      .then(res => {
-        response = res;
-        done();
+    it('return 409 error when email was registered', function(done) {
+      axios.post(`${SERVER_URL}/signUp`, {
+        email: correctEmail,
+        password: 'password'
       })
       .catch(err => {
-        errorRes = err;
+        expect(err.status).to.equal(409);
         done();
       });
     });
 
-    it('should return an 422 error', function() {
-      expect(errorRes.status).to.equal(422);
-    });
-  });
-
-  describe('with empty email', function() {
-    let errorRes, response;
-    const email = '';
-    const password = 'password';
-
-    before(function(done) {
-      axios.post(`${SERVER_URL}/signUp`, { email, password })
-      .then(res => {
-        response = res;
-        done();
-      })
-      .catch(err => {
-        errorRes = err;
-        done();
-      });
-    });
-
-    it('should return an 422 error', function() {
-      expect(errorRes.status).to.equal(422);
-    });
-  });
-
-  describe('with no password', function() {
-    let errorRes, response;
-    const email = 'email@mail.com';
-    const password = '';
-
-    before(function(done) {
-      axios.post(`${SERVER_URL}/signUp`, { email, password })
-      .then(res => {
-        response = res;
-        done();
-      })
-      .catch(err => {
-        errorRes = err;
-        done();
-      });
-    });
-
-    it('should return an 422 error', function() {
-      expect(errorRes.status).to.equal(422);
-    });
-  });
-
-  describe('duplicate account', function() {
-    let errorRes, response;
-    const email = correctEmail;
-    const password = 'password';
-
-    before(function(done) {
-      axios.post(`${SERVER_URL}/signUp`, { email, password })
-      .then(res => {
-        response = res;
-        done();
-      })
-      .catch(err => {
-        errorRes = err;
-        done();
-      });
-    });
-
-    it('should return an 500 error', function() {
-      expect(errorRes.status).to.equal(500);
-    });
   });
 
   after(function(done) {
@@ -152,8 +119,8 @@ describe('/signUp', function() {
 });
 
 describe('/activateAccount', function() {
-  let newUser;
   const correctEmail = 'test@mail.com';
+  let correctHash;
 
   before(function(done) {
     axios.post(`${SERVER_URL}/signUp`, {
@@ -164,7 +131,7 @@ describe('/activateAccount', function() {
       return User.findByEmail(correctEmail);
     })
     .then(user => {
-      newUser = user;
+      correctHash = user.UUID;
       done();
     })
     .catch(err => {
@@ -172,63 +139,90 @@ describe('/activateAccount', function() {
     });
   });
 
-  describe('with non-existing email', function() {
-    let errorRes, response;
-    const email = 'non-existing@mail.com';
+  describe('with mal-formed request data', function() {
 
-    before(function(done) {
-      const hash = newUser.UUID;
-      axios.patch(`${SERVER_URL}/activateAccount`, { email, hash })
-      .then(res => {
-        response = res;
-        done();
+    it('return 422 error when email is in wrong format', function(done) {
+      axios.patch(`${SERVER_URL}/activateAccount`, {
+        email: 'wrongformated.emailaddress',
+        hash: correctHash
       })
       .catch(err => {
-        errorRes = err;
+        expect(err.status).to.equal(422);
         done();
       });
     });
 
-    it('should return an 422 error', function() {
-      expect(errorRes.status).to.equal(422);
+    it('return 422 error when email is an empty string', function(done) {
+      axios.patch(`${SERVER_URL}/activateAccount`, {
+        email: '',
+        hash: correctHash
+      })
+      .catch(err => {
+        expect(err.status).to.equal(422);
+        done();
+      });
     });
+
+    it('return 422 error when hash is an empty string', function(done) {
+      axios.patch(`${SERVER_URL}/activateAccount`, {
+        email: correctEmail,
+        hash: ''
+      })
+      .catch(err => {
+        expect(err.status).to.equal(422);
+        done();
+      });
+    });
+
+    it('return 422 error when request body is empty', function(done) {
+      axios.patch(`${SERVER_URL}/activateAccount`, {})
+      .catch(err => {
+        expect(err.status).to.equal(422);
+        done();
+      });
+    });
+
   });
 
-  describe('with non-matching hash', function() {
-    let errorRes, response;
-    const email = correctEmail;
+  describe('with semantically incorrect data', function() {
 
-    before(function(done) {
-      const hash = 'some non-matching hash';
-      axios.patch(`${SERVER_URL}/activateAccount`, { email, hash })
-      .then(res => {
-        response = res;
-        done();
+    it('return 401 error when email is not registered', function(done) {
+      axios.patch(`${SERVER_URL}/activateAccount`, {
+        email: 'nonregistered@mail.com',
+        hash: correctHash
       })
       .catch(err => {
-        errorRes = err;
+        expect(err.status).to.equal(401);
         done();
       });
     });
 
-    it('should return an 401 error', function() {
-      expect(errorRes.status).to.equal(401);
+    it('return 401 error when hash is not matched', function(done) {
+      axios.patch(`${SERVER_URL}/activateAccount`, {
+        email: correctEmail,
+        hash: 'somewronghash'
+      })
+      .catch(err => {
+        expect(err.status).to.equal(401);
+        done();
+      });
     });
   });
 
   describe('with correct request data', function() {
-    let errorRes, response;
-    const email = correctEmail;
-
+    let response;
+    let activatedUser;
     before(function(done) {
-      const hash = newUser.UUID;
-      axios.patch(`${SERVER_URL}/activateAccount`, { email, hash })
+      axios.patch(`${SERVER_URL}/activateAccount`, {
+        email: correctEmail,
+        hash: correctHash
+      })
       .then(res => {
         response = res;
-        return User.findByEmail(email);
+        return User.findByEmail(correctEmail);
       })
       .then(user => {
-        newUser = user;
+        activatedUser = user;
         done();
       })
       .catch(err => {
@@ -236,41 +230,30 @@ describe('/activateAccount', function() {
       });
     });
 
-    it('should activate the user in database', function() {
-      expect(newUser.activated).to.be.true;
+    it('activate the user in database', function() {
+      expect(activatedUser.activated).to.be.true;
     });
 
-    it('should return an user token and displayName', function() {
+    it('return 200 with user token and displayName', function() {
       expect(response.status).to.equal(200);
       expect(response.data.token).to.exist;
-      expect(response.data.displayName).to.equal(email);
+      expect(response.data.displayName).to.equal(correctEmail);
     });
   });
 
-  describe('with mal-formed request data', function() {
+  describe('with semantically incorrect data', function() {
 
-  });
-
-  describe('duplicate activation', function() {
-    let errorRes, response;
-    const email = correctEmail;
-
-    before(function(done) {
-      const hash = newUser.UUID;
-      axios.patch(`${SERVER_URL}/activateAccount`, { email, hash })
-      .then(res => {
-        response = res;
-        done();
+    it('return 409 error when account was activated', function(done) {
+      axios.patch(`${SERVER_URL}/activateAccount`, {
+        email: correctEmail,
+        hash: correctHash
       })
       .catch(err => {
-        errorRes = err;
+        expect(err.status).to.equal(409);
         done();
       });
     });
 
-    it('should return an 409 error', function() {
-      expect(errorRes.status).to.equal(409);
-    });
   });
 
   after(function(done) {
@@ -283,19 +266,21 @@ describe('/activateAccount', function() {
 });
 
 describe('/signIn', function() {
-  let newUser;
+
   const correctEmail = 'test@mail.com';
+  const correctPassword = 'password';
+  let correctHash;
 
   before(function(done) {
     axios.post(`${SERVER_URL}/signUp`, {
       email: correctEmail,
-      password: 'password'
+      password: correctPassword
     })
     .then(res => {
       return User.findByEmail(correctEmail);
     })
     .then(user => {
-      newUser = user;
+      correctHash = user.UUID;
       done();
     })
     .catch(err => {
@@ -303,106 +288,121 @@ describe('/signIn', function() {
     });
   });
 
-  describe('with non-activated user', function() {
-    let errorRes, response;
-    const email = correctEmail;
-    const password = 'password';
+  describe('with mal-formed request data', function() {
 
-    before(function(done) {
-      axios.post(`${SERVER_URL}/signIn`, { email, password })
-      .then(res => {
-        response = res;
-        done();
+    it('return 422 error when email is in wrong format', function(done) {
+      axios.post(`${SERVER_URL}/signIn`, {
+        email: 'wrongformated.emailaddress',
+        password: correctPassword
       })
       .catch(err => {
-        errorRes = err;
+        expect(err.status).to.equal(422);
         done();
-      })
+      });
     });
 
-    it('should return an 400 error', function() {
-      expect(errorRes.status).to.equal(400);
+    it('return 422 error when email is an empty string', function(done) {
+      axios.post(`${SERVER_URL}/signIn`, {
+        email: '',
+        password: correctPassword
+      })
+      .catch(err => {
+        expect(err.status).to.equal(422);
+        done();
+      });
+    });
+
+    it('return 422 error when password is an empty string', function(done) {
+      axios.post(`${SERVER_URL}/signIn`, {
+        email: correctEmail,
+        password: ''
+      })
+      .catch(err => {
+        expect(err.status).to.equal(422);
+        done();
+      });
+    });
+
+    it('return 422 error when request body is empty', function(done) {
+      axios.post(`${SERVER_URL}/signIn`, {})
+      .catch(err => {
+        expect(err.status).to.equal(422);
+        done();
+      });
+    });
+
+  });
+
+  describe('with semantically incorrect data', function() {
+
+    it('return 401 error when user is not activated', function(done) {
+      axios.post(`${SERVER_URL}/signIn`, {
+        email: correctEmail,
+        password: correctPassword
+      })
+      .catch(err => {
+        expect(err.status).to.equal(401);
+        done();
+      })
     });
 
     after(function(done) {
       axios.patch(`${SERVER_URL}/activateAccount`, {
         email: correctEmail,
-        hash: newUser.UUID
+        hash: correctHash
       }).then(res => {
         done();
       });
     });
+
   });
 
   describe('with correct request data', function() {
-    let errorRes, response;
-    const email = correctEmail;
-    const password = 'password';
+    let response;
 
     before(function(done) {
-      axios.post(`${SERVER_URL}/signIn`, { email, password })
+      axios.post(`${SERVER_URL}/signIn`, {
+        email: correctEmail,
+        password: correctPassword
+      })
       .then(res => {
         response = res;
         done();
       })
       .catch(err => {
-        errorRes = err;
-        done();
+        done(err);
       })
     });
 
-    it('should return user token and displayName', function() {
+    it('return 200 with user token and displayName', function() {
       expect(response.status).to.equal(200);
       expect(response.data.token).to.exist;
-      expect(response.data.displayName).to.equal(email);
+      expect(response.data.displayName).to.equal(correctEmail);
     });
   });
 
-  describe('with mal-formed request data', function() {
+  describe('with semantically incorrect data', function() {
 
-  });
-
-  describe('with non-matching password', function() {
-    let errorRes, response;
-    const email = correctEmail;
-    const password = 'some other password';
-
-    before(function(done) {
-      axios.post(`${SERVER_URL}/signIn`, { email, password })
-      .then(res => {
-        response = res;
-        done();
+    it('return 401 error when password is not matched', function(done) {
+      axios.post(`${SERVER_URL}/signIn`, {
+        email: correctEmail,
+        password: 'other password'
       })
       .catch(err => {
-        errorRes = err;
+        expect(err.status).to.equal(401);
         done();
       })
     });
 
-    it('should return a 401 error', function() {
-      expect(errorRes.status).to.equal(401);
-    });
-  });
-
-  describe('with non-existing email', function() {
-    let errorRes, response;
-    const email = 'non-existing@mail.com';
-    const password = 'password';
-
-    before(function(done) {
-      axios.post(`${SERVER_URL}/signIn`, { email, password })
-      .then(res => {
-        response = res;
-        done();
+    it('return 401 error when email is not registered', function(done) {
+      axios.post(`${SERVER_URL}/signIn`, {
+        email: 'nonregistered@mail.com',
+        password: correctPassword
       })
       .catch(err => {
-        errorRes = err;
+        expect(err.status).to.equal(401);
         done();
       })
-    });
-
-    it('should return a 422 error', function() {
-      expect(errorRes.status).to.equal(422);
     });
   });
 
@@ -438,8 +438,77 @@ describe('/checkEmail', function() {
 
   describe('with mal-formed request data', function() {
 
+    it('return 422 error when email is an empty string', function(done) {
+      axios.get(`${SERVER_URL}/checkEmail`, {
+        params: {
+          email: ''
+        }
+      })
+      .catch(err => {
+        expect(err.status).to.equal(422);
+        done();
+      });
+    });
+
+    it('return 422 error when email is in wrong format', function(done) {
+      axios.get(`${SERVER_URL}/checkEmail`, {
+        params: {
+          email: 'wrongformated.emailaddress'
+        }
+      })
+      .catch(err => {
+        expect(err.status).to.equal(422);
+        done();
+      });
+    });
+
+    it('return 422 error when query is empty', function(done) {
+      axios.get(`${SERVER_URL}/checkEmail`, {
+        params: {}
+      })
+      .catch(err => {
+        expect(err.status).to.equal(422);
+        done();
+      });
+    });
+
   });
 
+  describe('with correct request data', function() {
+
+    it('return 200 with isRegistered true when email is registered', function(done) {
+      axios.get(`${SERVER_URL}/checkEmail`, {
+        params: {
+          email: correctEmail
+        }
+      })
+      .then(res => {
+        expect(res.status).to.equal(200);
+        expect(res.data.isRegistered).to.be.true;
+        done();
+      })
+      .catch(err => {
+        done(err);
+      });
+    });
+
+    it('return 200 with isRegistered false when email is not registered', function(done) {
+      axios.get(`${SERVER_URL}/checkEmail`, {
+        params: {
+          email: "nonregistered@mail.com"
+        }
+      })
+      .then(res => {
+        expect(res.status).to.equal(200);
+        expect(res.data.isRegistered).to.be.false;
+        done();
+      })
+      .catch(err => {
+        done(err);
+      });
+    });
+
+  });
 
   after(function(done) {
     User.findByEmail(correctEmail).then(user => {
@@ -448,4 +517,8 @@ describe('/checkEmail', function() {
     });
   });
 
+});
+
+describe('/refreshToken', function() {
+  // TODO
 });

@@ -13,7 +13,7 @@ const localLogin = new LocalStrategy(localOptions, (email, password, done) => {
     if (!user) {
       return done(null, false, {
         message: 'The email is not registered',
-        status: 422
+        status: 401
       });
     }
     return user.validPassword(password, (err, isMatch) => {
@@ -29,7 +29,7 @@ const localLogin = new LocalStrategy(localOptions, (email, password, done) => {
       if (!user.activated) {
         return done(null, false, {
           message: 'The user has not yet verify his email address',
-          status: 400
+          status: 401
         });
       }
       return done(null, user);
