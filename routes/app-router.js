@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const models = require('../models');
-const { User } = models;
+const { User } = require('../models');
 const requireAuth = require('../helpers/passport-jwt');
 const requireSignin = require('../helpers/passport-local');
 const mailer = require('../helpers/mailer');
@@ -77,7 +76,7 @@ function sendVerificationEmail(to, userHash) {
 
 function checkEmail(req, res, next) {
   const { email } = req.query;
-  User.findOne({ where: { email } })
+  User.findByEmail(email)
   .then(user => {
     res.status(200).json({
       isRegistered: Boolean(user)
@@ -106,7 +105,7 @@ function signUp(req, res, next) {
 
 function activateAccount(req, res, next) {
   const { email, hash } = req.body;
-  User.findOne({ where: { email } }).then(user => {
+  User.findByEmail(email).then(user => {
     if (!user) { // email not registered
       return next(unprocessableEntityError);
     }

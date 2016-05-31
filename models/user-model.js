@@ -44,6 +44,7 @@ module.exports = (sequelize, DataTypes) => {
     UUID: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
+      unique: true,
       allowNull: false
     },
     activated: {
@@ -85,7 +86,9 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     classMethods: {
-      // TODO this is the model, define classMethods here
+      findByEmail(email) {
+        return this.findOne({ where: { email } });
+      }
     },
     hooks: {
       beforeCreate(user) {
