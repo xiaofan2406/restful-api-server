@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "DEBUG=* nodemon ./bin/www -i tests/",
-    "test": "./node_modules/.bin/mocha tests",
+    "test": "mocha tests",
     "preversion": "npm test",
     "version": "",
     "postversion": "git push && git push --tags"
@@ -24,6 +24,7 @@
     "sequelize": ""
   },
   "devDependencies": {
+    "axios": "^0.11.1",
     "babel-core": "^6.9.1",
     "babel-plugin-transform-object-rest-spread": "^6.8.0",
     "babel-preset-es2015": "^6.9.0",
