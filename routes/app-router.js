@@ -120,26 +120,16 @@ function signUp(req, res, next) {
 
 function activateAccount(req, res, next) {
   const { email, hash } = req.body;
-  User.findByEmail(email).then(user => {
-    if (!user) { // email not registered
-      return next(unauthorizedError);
-    }
-    user.activateAccount(email, hash).then(updatedUser => {
-      if (updatedUser.activated) { // user should have been updated
-        res.status(200).json({
-          token: user.getToken(),
-          ...user.selfie()
-        });
-      }
-      // this should never happend
-      return next(internalServerError);
-    }).catch(error => { // database query error
-      error.status = error.status || 500;
-      return next(error);
+  User.activateAccount(email, hash)
+  .then(updatedUser => {
+    res.status(200).json({
+      token: updatedUser.getToken(),
+      ...updatedUser.selfie()
     });
-  }).catch(error => { // database query error
-    error.status = 500;
-    return next(error);
+  })
+  .catch(error => {
+    error.status = error.status || 500;
+    next(error);
   });
 }
 

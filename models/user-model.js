@@ -68,22 +68,6 @@ module.exports = (sequelize, DataTypes) => {
         const timestamp = new Date().getTime();
         return jwt.sign({ sub: this.id, iat: timestamp }, JWT_SECRET);
       },
-      activateAccount(email, hash) {
-        return new Promise((resolve, reject) => {
-          const err = new Error();
-          if (this.activated === true) {
-            err.message = 'Account was already activated.';
-            err.status = 409;
-            return reject(err);
-          }
-          if (email !== this.email || hash !== this.UUID) {
-            err.message = 'Email and hash did not match';
-            err.status = 401;
-            return reject(err);
-          }
-          return resolve(this.update({ activated: true }));
-        });
-      },
       isAbleToCreateArticle() {
         return this.activated;
       },
@@ -97,6 +81,33 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     classMethods: {
+      activateAccount(email, hash) {
+        const err = new Error();
+        return new Promise((resolve, reject) => {
+          this.findByEmail(email)
+          .then(user => {
+            if (!user) {
+              err.message = 'Email not registered.';
+              err.status = 401;
+              return reject(err);
+            }
+            if (user.activated === true) {
+              err.message = 'Account was already activated.';
+              err.status = 409;
+              return reject(err);
+            }
+            if (email !== user.email || hash !== user.UUID) {
+              err.message = 'Email and hash did not match';
+              err.status = 401;
+              return reject(err);
+            }
+            return resolve(user.update({ activated: true }));
+          })
+          .catch(error => {
+            return reject(error);
+          });
+        });
+      },
       findByEmail(email) {
         return this.findOne({ where: { email } });
       },
