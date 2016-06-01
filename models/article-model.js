@@ -41,12 +41,38 @@ module.exports = (sequelize, DataTypes) => {
           foreignKey: {
             name: 'userId',
             allowNull: false
-          }
+          },
+          onDelete: 'cascade'
+        });
+      },
+      findAllPublic() {
+        return this.findAll({ where: { isPublic: true } });
+      },
+      createTestArticles(startingUserId) {
+        const articles = [];
+        for (let i = 0; i < 5; i++) {
+          articles.push({
+            title: `ariticle number ${i}`,
+            content: `${i} an interesting ariticle ${i}`,
+            userId: startingUserId + i,
+            isPublic: false
+          });
+          articles.push({
+            title: `public ariticle number ${i}`,
+            content: `${i} an interesting public ariticle ${i}`,
+            userId: startingUserId + i,
+            isPublic: true
+          });
+        }
+        return this.bulkCreate(articles, {
+          individualHooks: true,
+          validate: true
         });
       }
     },
     hooks: {
-      beforeCreate(article) {
+      beforeValidate(article) {
+        article.idWithAuthor = `U${article.userId}A${article.title}`;
       }
     }
   });

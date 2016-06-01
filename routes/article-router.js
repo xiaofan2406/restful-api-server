@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Article } = require('../models');
+const { Article, User } = require('../models');
 const requireAuth = require('../helpers/passport-jwt');
 
 const unauthorizedError = new Error('Unauthorized');
@@ -12,8 +12,7 @@ function createArticle(req, res, next) {
   Article.create({
     title,
     content,
-    userId,
-    idWithAuthor: `U${userId}A${title}`
+    userId
   })
   .then(article => {
     res.json(article);
@@ -23,7 +22,7 @@ function createArticle(req, res, next) {
   });
 }
 
-function getArticle(req, res, next) {
+function getSingleArticle(req, res, next) {
   const { id } = req.params;
   const userId = req.user.id;
   Article.findById(id).then(article => {
@@ -36,9 +35,48 @@ function getArticle(req, res, next) {
   });
 }
 
+// TODO paging?
+function getAllArticles(req, res, next) {
+  requireAuth(req, res, next)(req, res, next);
+  res.json({
+    all: true
+  });
+}
+
+function getPublicAriticles(req, res, next) {
+  Article.findAll({
+    where: {
+      isPublic: true
+    },
+    include: {
+      model: User,
+      attributes: ['displayName']
+    }
+  }).then(result => {
+    res.status(200).json(result);
+  }).catch(error => {
+    next(error);
+  });
+}
+
+function getArticles(req, res, next) {
+  if (req.query.scope === 'all') {
+    getAllArticles(req, res, next);
+  } else {
+    getPublicAriticles(req, res, next);
+  }
+}
+
+
 router.post('/', requireAuth, createArticle);
 
-router.get('/:id', requireAuth, getArticle);
+
+router.get('/:id(\\d+)', requireAuth, getSingleArticle);
+
+
+router.get('/public', getPublicAriticles);
+
+router.get('/all', requireAuth, getArticles);
 
 
 module.exports = router;

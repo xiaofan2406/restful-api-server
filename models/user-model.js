@@ -88,6 +88,23 @@ module.exports = (sequelize, DataTypes) => {
     classMethods: {
       findByEmail(email) {
         return this.findOne({ where: { email } });
+      },
+      createTestUsers() {
+        const users = [];
+        for (let i = 0; i < 5; i++) {
+          users.push({
+            email: `testaccount${i}@mail.com`,
+            password: 'password',
+            displayName: `testaccount${i}@mail.com`,
+            activated: true
+          });
+        }
+        return this.bulkCreate(users, { returning: true });
+      },
+      removeTestUsers() {
+        return this.destroy({
+          where: { email: { $like: '%testaccount%' } }
+        });
       }
     },
     hooks: {

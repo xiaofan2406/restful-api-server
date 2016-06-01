@@ -1,9 +1,7 @@
-const supertest = require('supertest');
 const expect = require('chai').expect;
 const bcrypt = require('bcrypt-nodejs');
 const axios = require('axios');
 const { User } = require('../models');
-
 const { SERVER_URL } = require('../config/app-config');
 
 describe('/signUp', function() {
