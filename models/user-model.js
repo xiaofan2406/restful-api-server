@@ -91,12 +91,13 @@ module.exports = (sequelize, DataTypes) => {
       },
       createTestUsers() {
         const users = [];
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 6; i++) {
           users.push({
             email: `testaccount${i}@mail.com`,
             password: 'password',
             displayName: `testaccount${i}@mail.com`,
-            activated: true
+            activated: (i !== 5),
+            isAdmin: (i === 4)
           });
         }
         return this.bulkCreate(users, { returning: true });

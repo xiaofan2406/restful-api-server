@@ -7,9 +7,9 @@ const { SERVER_URL } = require('../config/app-config');
 describe('/signUp', function() {
   const correctEmail = 'test@mail.com';
 
-  describe('with mal-formed request data', function() {
+  context('with mal-formed request data', function() {
 
-    it('return 422 error when email is in wrong format', function(done) {
+    it('return 422 when email is in wrong format', function(done) {
       axios.post(`${SERVER_URL}/signUp`, {
         email: 'wrongformated.emailaddress',
         password: 'password'
@@ -20,7 +20,7 @@ describe('/signUp', function() {
       });
     });
 
-    it('return 422 error when email is an empty string', function(done) {
+    it('return 422 when email is an empty string', function(done) {
       axios.post(`${SERVER_URL}/signUp`, {
         email: '',
         password: 'password'
@@ -31,7 +31,7 @@ describe('/signUp', function() {
       });
     });
 
-    it('return 422 error when password is an empty string', function(done) {
+    it('return 422 when password is an empty string', function(done) {
       axios.post(`${SERVER_URL}/signUp`, {
         email: correctEmail,
         password: ''
@@ -42,7 +42,7 @@ describe('/signUp', function() {
       });
     });
 
-    it('return 422 error when request body is empty', function(done) {
+    it('return 422 when request body is empty', function(done) {
       axios.post(`${SERVER_URL}/signUp`, {})
       .catch(err => {
         expect(err.status).to.equal(422);
@@ -51,7 +51,7 @@ describe('/signUp', function() {
     });
   });
 
-  describe('with correct request data', function() {
+  context('with correct request data', function() {
     let response;
     const correctPassword = 'password';
 
@@ -92,9 +92,9 @@ describe('/signUp', function() {
     });
   });
 
-  describe('with semantically incorrect data', function() {
+  context('with semantically incorrect data', function() {
 
-    it('return 409 error when email was registered', function(done) {
+    it('return 409 when email was registered', function(done) {
       axios.post(`${SERVER_URL}/signUp`, {
         email: correctEmail,
         password: 'password'
@@ -137,9 +137,9 @@ describe('/activateAccount', function() {
     });
   });
 
-  describe('with mal-formed request data', function() {
+  context('with mal-formed request data', function() {
 
-    it('return 422 error when email is in wrong format', function(done) {
+    it('return 422 when email is in wrong format', function(done) {
       axios.patch(`${SERVER_URL}/activateAccount`, {
         email: 'wrongformated.emailaddress',
         hash: correctHash
@@ -150,7 +150,7 @@ describe('/activateAccount', function() {
       });
     });
 
-    it('return 422 error when email is an empty string', function(done) {
+    it('return 422 when email is an empty string', function(done) {
       axios.patch(`${SERVER_URL}/activateAccount`, {
         email: '',
         hash: correctHash
@@ -161,7 +161,7 @@ describe('/activateAccount', function() {
       });
     });
 
-    it('return 422 error when hash is an empty string', function(done) {
+    it('return 422 when hash is an empty string', function(done) {
       axios.patch(`${SERVER_URL}/activateAccount`, {
         email: correctEmail,
         hash: ''
@@ -172,7 +172,7 @@ describe('/activateAccount', function() {
       });
     });
 
-    it('return 422 error when request body is empty', function(done) {
+    it('return 422 when request body is empty', function(done) {
       axios.patch(`${SERVER_URL}/activateAccount`, {})
       .catch(err => {
         expect(err.status).to.equal(422);
@@ -182,9 +182,9 @@ describe('/activateAccount', function() {
 
   });
 
-  describe('with semantically incorrect data', function() {
+  context('with semantically incorrect data', function() {
 
-    it('return 401 error when email is not registered', function(done) {
+    it('return 401 when email is not registered', function(done) {
       axios.patch(`${SERVER_URL}/activateAccount`, {
         email: 'nonregistered@mail.com',
         hash: correctHash
@@ -195,7 +195,7 @@ describe('/activateAccount', function() {
       });
     });
 
-    it('return 401 error when hash is not matched', function(done) {
+    it('return 401 when hash is not matched', function(done) {
       axios.patch(`${SERVER_URL}/activateAccount`, {
         email: correctEmail,
         hash: 'somewronghash'
@@ -207,7 +207,7 @@ describe('/activateAccount', function() {
     });
   });
 
-  describe('with correct request data', function() {
+  context('with correct request data', function() {
     let response;
     let activatedUser;
     before(function(done) {
@@ -239,7 +239,7 @@ describe('/activateAccount', function() {
     });
   });
 
-  describe('with semantically incorrect data', function() {
+  context('with semantically incorrect data', function() {
 
     it('return 409 error when account was activated', function(done) {
       axios.patch(`${SERVER_URL}/activateAccount`, {
@@ -286,9 +286,9 @@ describe('/signIn', function() {
     });
   });
 
-  describe('with mal-formed request data', function() {
+  context('with mal-formed request data', function() {
 
-    it('return 422 error when email is in wrong format', function(done) {
+    it('return 422 when email is in wrong format', function(done) {
       axios.post(`${SERVER_URL}/signIn`, {
         email: 'wrongformated.emailaddress',
         password: correctPassword
@@ -299,7 +299,7 @@ describe('/signIn', function() {
       });
     });
 
-    it('return 422 error when email is an empty string', function(done) {
+    it('return 422 when email is an empty string', function(done) {
       axios.post(`${SERVER_URL}/signIn`, {
         email: '',
         password: correctPassword
@@ -310,7 +310,7 @@ describe('/signIn', function() {
       });
     });
 
-    it('return 422 error when password is an empty string', function(done) {
+    it('return 422 when password is an empty string', function(done) {
       axios.post(`${SERVER_URL}/signIn`, {
         email: correctEmail,
         password: ''
@@ -321,7 +321,7 @@ describe('/signIn', function() {
       });
     });
 
-    it('return 422 error when request body is empty', function(done) {
+    it('return 422 when request body is empty', function(done) {
       axios.post(`${SERVER_URL}/signIn`, {})
       .catch(err => {
         expect(err.status).to.equal(422);
@@ -331,9 +331,9 @@ describe('/signIn', function() {
 
   });
 
-  describe('with semantically incorrect data', function() {
+  context('with semantically incorrect data', function() {
 
-    it('return 401 error when user is not activated', function(done) {
+    it('return 401 when user is not activated', function(done) {
       axios.post(`${SERVER_URL}/signIn`, {
         email: correctEmail,
         password: correctPassword
@@ -355,7 +355,7 @@ describe('/signIn', function() {
 
   });
 
-  describe('with correct request data', function() {
+  context('with correct request data', function() {
     let response;
 
     before(function(done) {
@@ -379,9 +379,9 @@ describe('/signIn', function() {
     });
   });
 
-  describe('with semantically incorrect data', function() {
+  context('with semantically incorrect data', function() {
 
-    it('return 401 error when password is not matched', function(done) {
+    it('return 401 when password is not matched', function(done) {
       axios.post(`${SERVER_URL}/signIn`, {
         email: correctEmail,
         password: 'other password'
@@ -392,7 +392,7 @@ describe('/signIn', function() {
       })
     });
 
-    it('return 401 error when email is not registered', function(done) {
+    it('return 401 when email is not registered', function(done) {
       axios.post(`${SERVER_URL}/signIn`, {
         email: 'nonregistered@mail.com',
         password: correctPassword
@@ -434,9 +434,9 @@ describe('/checkEmail', function() {
     });
   });
 
-  describe('with mal-formed request data', function() {
+  context('with mal-formed request data', function() {
 
-    it('return 422 error when email is an empty string', function(done) {
+    it('return 422 when email is an empty string', function(done) {
       axios.get(`${SERVER_URL}/checkEmail`, {
         params: {
           email: ''
@@ -448,7 +448,7 @@ describe('/checkEmail', function() {
       });
     });
 
-    it('return 422 error when email is in wrong format', function(done) {
+    it('return 422 when email is in wrong format', function(done) {
       axios.get(`${SERVER_URL}/checkEmail`, {
         params: {
           email: 'wrongformated.emailaddress'
@@ -460,7 +460,7 @@ describe('/checkEmail', function() {
       });
     });
 
-    it('return 422 error when query is empty', function(done) {
+    it('return 422 when query is empty', function(done) {
       axios.get(`${SERVER_URL}/checkEmail`, {
         params: {}
       })
@@ -472,7 +472,7 @@ describe('/checkEmail', function() {
 
   });
 
-  describe('with correct request data', function() {
+  context('with correct request data', function() {
 
     it('return 200 with isRegistered true when email is registered', function(done) {
       axios.get(`${SERVER_URL}/checkEmail`, {

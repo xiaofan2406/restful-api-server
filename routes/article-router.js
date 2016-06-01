@@ -15,7 +15,10 @@ function createArticle(req, res, next) {
     userId
   })
   .then(article => {
-    res.json(article);
+    res.status(201).json({
+      title: article.title,
+      author: req.user.displayName
+    });
   })
   .catch(error => {
     next(error);
