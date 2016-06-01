@@ -83,6 +83,17 @@ module.exports = (sequelize, DataTypes) => {
           }
           return resolve(this.update({ activated: true }));
         });
+      },
+      isAbleToCreateArticle() {
+        return this.activated;
+      },
+      selfie() { // all public information to return to user
+        return {
+          email: this.email,
+          displayName: this.displayName,
+          activated: this.activated,
+          createdAt: this.createdAt.toISOString()
+        };
       }
     },
     classMethods: {

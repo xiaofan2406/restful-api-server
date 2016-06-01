@@ -52,7 +52,7 @@ describe('/signUp', function() {
   });
 
   context('with correct request data', function() {
-    let response;
+    let response, createdUser;
     const correctPassword = 'password';
 
     before(function(done) {
@@ -71,6 +71,7 @@ describe('/signUp', function() {
 
     it('create a new entry in the database', function(done) {
       User.findByEmail(correctEmail).then(user => {
+        createdUser = user;
         expect(user).to.exist;
         expect(user.email).to.equal(correctEmail);
         expect(user.displayName).to.equal(correctEmail);
@@ -86,9 +87,9 @@ describe('/signUp', function() {
       });
     });
 
-    it('return 202 with user displayName', function() {
+    it('return 202 with user email', function() {
       expect(response.status).to.equal(202);
-      expect(response.data.displayName).to.equal(correctEmail);
+      expect(response.data.email).to.deep.equal(correctEmail);
     });
   });
 
@@ -232,10 +233,13 @@ describe('/activateAccount', function() {
       expect(activatedUser.activated).to.be.true;
     });
 
-    it('return 200 with user token and displayName', function() {
+    it('return 200 with user token and user selfie', function() {
       expect(response.status).to.equal(200);
       expect(response.data.token).to.exist;
-      expect(response.data.displayName).to.equal(correctEmail);
+      const userData = activatedUser.selfie();
+      for(let key in userData) {
+        expect(response.data[key]).to.equal(userData[key]);
+      }
     });
   });
 
@@ -356,7 +360,7 @@ describe('/signIn', function() {
   });
 
   context('with correct request data', function() {
-    let response;
+    let response, signedInUser;
 
     before(function(done) {
       axios.post(`${SERVER_URL}/signIn`, {
@@ -365,6 +369,10 @@ describe('/signIn', function() {
       })
       .then(res => {
         response = res;
+        return User.findByEmail(correctEmail);
+      })
+      .then(user => {
+        signedInUser = user;
         done();
       })
       .catch(err => {
@@ -372,10 +380,13 @@ describe('/signIn', function() {
       })
     });
 
-    it('return 200 with user token and displayName', function() {
+    it('return 200 with user token and selfie', function() {
       expect(response.status).to.equal(200);
       expect(response.data.token).to.exist;
-      expect(response.data.displayName).to.equal(correctEmail);
+      const userData = signedInUser.selfie();
+      for(let key in userData) {
+        expect(response.data[key]).to.equal(userData[key]);
+      }
     });
   });
 

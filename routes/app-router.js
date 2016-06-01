@@ -109,7 +109,7 @@ function signUp(req, res, next) {
   .then(user => {
     sendVerificationEmail(user.email, user.UUID);
     res.status(202).json({
-      displayName: user.displayName
+      email
     });
   })
   .catch(error => { // database query error
@@ -128,7 +128,7 @@ function activateAccount(req, res, next) {
       if (updatedUser.activated) { // user should have been updated
         res.status(200).json({
           token: user.getToken(),
-          displayName: updatedUser.displayName
+          ...user.selfie()
         });
       }
       // this should never happend
@@ -146,7 +146,7 @@ function activateAccount(req, res, next) {
 function signIn(req, res) {
   res.status(200).json({
     token: req.user.getToken(),
-    displayName: req.user.displayName
+    ...req.user.selfie()
   });
 }
 

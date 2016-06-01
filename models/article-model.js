@@ -52,14 +52,14 @@ module.exports = (sequelize, DataTypes) => {
         const articles = [];
         for (let i = 0; i < 5; i++) {
           articles.push({
-            title: `ariticle number ${i}`,
-            content: `${i} an interesting ariticle ${i}`,
+            title: `article number ${i}`,
+            content: `${i} an interesting article ${i}`,
             userId: startingUserId + i,
             isPublic: false
           });
           articles.push({
-            title: `public ariticle number ${i}`,
-            content: `${i} an interesting public ariticle ${i}`,
+            title: `public article number ${i}`,
+            content: `${i} an interesting public article ${i}`,
             userId: startingUserId + i,
             isPublic: true
           });
@@ -68,6 +68,18 @@ module.exports = (sequelize, DataTypes) => {
           individualHooks: true,
           validate: true
         });
+      },
+      isThereDuplicate(userId, title) {
+        return this.findOne({ where: { idWithAuthor: `U${userId}A${title}` } });
+      },
+      selfie() {
+        return {
+          title: this.title,
+          content: this.content,
+          categories: this.categories,
+          tags: this.tags,
+          isPublic: this.isPublic
+        };
       }
     },
     hooks: {

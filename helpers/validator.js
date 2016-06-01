@@ -1,8 +1,16 @@
+const util = require('util');
 
 function isThere(target) {
   return target !== undefined && target !== null && target !== '';
 }
 
+function isNumber(target) {
+  return !isNaN(+target);
+}
+
+function isEmptyObject(target) {
+  return !util.isObject(target) || Object.keys(target).length === 0;
+}
 
 function isEmail(email) {
   if (!isThere(email)) {
@@ -22,5 +30,7 @@ function isPassword(password) {
 module.exports = {
   isEmail,
   isPassword,
-  isThere
+  isThere,
+  isNumber,
+  isEmptyObject
 };
