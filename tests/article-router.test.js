@@ -5,6 +5,8 @@ const { User, Article } = require('../models');
 const { SERVER_URL } = require('../config/app-config');
 const ARTICLE_API = `${SERVER_URL}/api/article`;
 
+// TODO edge cases?
+
 context('/api/article', function() {
 
 // userResults[4] is admin
@@ -247,7 +249,7 @@ describe('PATCH /:id', function() {
 
   context('with mal-formed request data', function() {
     it('return 422 when data values contain empty string', function(done) {
-      axios.patch(`${ARTICLE_API}/${ articleResults[0].id}`,
+      axios.patch(`${ARTICLE_API}/${articleResults[0].id}`,
         { content: '' },
         { headers: { token: userResults[0].getToken() } }
       )
@@ -258,7 +260,7 @@ describe('PATCH /:id', function() {
     });
 
     it('return 422 when data is not present', function(done) {
-      axios.patch(`${ARTICLE_API}/${ articleResults[0].id}`,
+      axios.patch(`${ARTICLE_API}/${articleResults[0].id}`,
         { },
         { headers: { token: userResults[0].getToken() } }
       )
@@ -276,12 +278,12 @@ describe('PATCH /:id', function() {
       content: "new article data",
       title: "new article title",
       tags: ['yeelo'],
-      isPublic: true
+      isPublic: false
     };
     before(function(done) {
-      article = articleResults[0];
+      article = articleResults[1];
       user = userResults[0];
-      axios.patch(`${ARTICLE_API}/${ article.id}`,
+      axios.patch(`${ARTICLE_API}/${article.id}`,
         articleUpdates,
         { headers: { token: user.getToken() } }
       )
@@ -406,8 +408,8 @@ describe('DELETE /:id', function() {
 describe('GET /:id', function() {
   context('with correct request data', function() {
     it('return 200 with article selfie and author publicSnapshot for public when token user is author', function(done) {
-      const author = userResults[0];
-      const article = articleResults[1];
+      const author = userResults[1];
+      const article = articleResults[3];
       axios.get(`${ARTICLE_API}/${article.id}`, {
         headers: { token: author.getToken() }
       })
@@ -429,8 +431,8 @@ describe('GET /:id', function() {
     });
 
     it('return 200 with article selfie and author publicSnapshot for public when token user is not author', function(done) {
-      const author = userResults[0];
-      const article = articleResults[1];
+      const author = userResults[1];
+      const article = articleResults[3];
       axios.get(`${ARTICLE_API}/${article.id}`, {
         headers: { token: userResults[3].getToken() }
       })
@@ -519,15 +521,61 @@ describe('GET /:id', function() {
 
 describe('GET /', function() {
   context('with semantically incorrect data', function() {
-    it('return 401 when token is invalid');
+    it('return 401 when token is invalid', function(done) {
+      axios.get(ARTICLE_API, {
+        headers: { token: 'someinvalidtoken' }
+      })
+      .catch(error => {
+        expect(error.status).to.equal(401);
+        done();
+      });
+    });
   });
+
   context('with correct request data', function() {
-    it('return 200 with public articles when token is not present');
-    it('return 200 with all articles when token user is admin');
-    it('return 200 with public articles when token user is not admin');
+    it('return 200 with public articles when token is not present', function(done) {
+      axios.get(ARTICLE_API)
+      .then(res => {
+        for(const article of res.data.articles) {
+          expect(article.isPublic).to.be.true;
+        }
+        expect(res.data.authors.length).to.equal(4);
+        done();
+      })
+      .catch(err => {
+        done(err);
+      });
+    });
+    it('return 200 with all articles when token user is admin', function(done) {
+      axios.get(ARTICLE_API, {
+        headers: { token: userResults[4].getToken() }
+      })
+      .then(res => {
+        expect(res.data.articles.length).to.equal(10);
+        expect(res.data.authors.length).to.equal(5);
+        done();
+      })
+      .catch(err => {
+        done(err);
+      });
+    });
+    it('return 200 with public articles when token user is not admin', function(done) {
+      axios.get(ARTICLE_API, {
+        headers: { token: userResults[2].getToken() }
+      })
+      .then(res => {
+        for(const article of res.data.articles) {
+          expect(article.isPublic).to.be.true;
+        }
+        expect(res.data.authors.length).to.equal(4);
+        done();
+      })
+      .catch(err => {
+        done(err);
+      });
+    });
   });
 });
-
 
 after(function(done) {
   User.removeTestUsers().then(res => {

@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt-nodejs');
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = require('../config/jwt-config').JWT_SECRET;
-
+const { type } = require('../constants/user-constants.js');
 /**
  * This is a sample Sequelize model
  */
@@ -51,6 +51,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
       allowNull: false
+    },
+    type: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false
     }
   }, {
     freezeTableName: true, // stop Sequelize automatically name tables
@@ -78,6 +83,9 @@ module.exports = (sequelize, DataTypes) => {
           activated: this.activated,
           createdAt: this.createdAt.toISOString()
         };
+      },
+      isAdmin() {
+        return this.type === type.ADMIN;
       },
       publicSnapshot() {
         return {
@@ -124,7 +132,7 @@ module.exports = (sequelize, DataTypes) => {
             password: 'password',
             displayName: `testaccount${i}@mail.com`,
             activated: (i !== 5),
-            isAdmin: (i === 4)
+            type: (i === 4) ? type.ADMIN : type.NORMAL
           });
         }
         return this.bulkCreate(users, { returning: true });

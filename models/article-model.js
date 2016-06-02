@@ -190,7 +190,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       getArticles(user) {
         let options = { where: { isPublic: true } };
-        if (user && user.isAdmin) {
+        if (user && user.isAdmin()) {
           options = {};
         }
         return new Promise((resolve, reject) => {
