@@ -30,7 +30,6 @@ before('populate fake data', function(done) {
 });
 
 describe('POST /', function() {
-
   context('with semantically incorrect data', function() {
 
     it('return 401 when token is invalid', function(done) {
@@ -154,13 +153,13 @@ describe('POST /', function() {
 
     it('return 201 with article selfie and user selfie', function() {
       expect(response.status).to.equal(201);
-      const userData = user.selfie();
+      const userData = user.publicSnapshot();
       for(let key in userData) {
         expect(response.data.author[key]).to.deep.equal(userData[key]);
       }
-      const ariticleData = newArticle.selfie();
-      for(let key in ariticleData) {
-        expect(response.data[key]).to.deep.equal(ariticleData[key]);
+      const articleData = newArticle.selfie();
+      for(let key in articleData) {
+        expect(response.data[key]).to.deep.equal(articleData[key]);
       }
     });
 
@@ -178,11 +177,9 @@ describe('POST /', function() {
       });
     });
   });
-
 });
 
 describe('PATCH /:id', function() {
-
   context('with semantically incorrect data', function() {
     it('return 401 when token is invalid', function(done) {
       axios.patch(`${ARTICLE_API}/${articleResults[0].id}`,
@@ -321,17 +318,16 @@ describe('PATCH /:id', function() {
 
     it('return 200 with article selfie and author selfie', function() {
       expect(response.status).to.equal(200);
-      const userData = user.selfie();
+      const userData = user.publicSnapshot();
       for(let key in userData) {
         expect(response.data.author[key]).to.deep.equal(userData[key]);
       }
-      const ariticleData = updatedArticle.selfie();
-      for(let key in ariticleData) {
-        expect(response.data[key]).to.deep.equal(ariticleData[key]);
+      const articleData = updatedArticle.selfie();
+      for(let key in articleData) {
+        expect(response.data[key]).to.deep.equal(articleData[key]);
       }
     });
   });
-
 });
 
 describe('DELETE /:id', function() {
@@ -346,7 +342,7 @@ describe('DELETE /:id', function() {
       });
     });
     it('return 401 when token is not present', function(done) {
-      axios.delete(`${ARTICLE_API}/${articleResults[0].id}`,)
+      axios.delete(`${ARTICLE_API}/${articleResults[0].id}`)
       .catch(err => {
         expect(err.status).to.equal(401);
         done();
@@ -371,60 +367,167 @@ describe('DELETE /:id', function() {
       });
     });
   });
+
   context('with correct request data', function() {
-    let response;
+    let response, article, user;
     before(function(done) {
-      axios.delete(`${ARTICLE_API}/${articleResults[0].id}`, {
-        headers: { token: userResults[0].getToken() }
+      article = articleResults[0];
+      user = userResults[0];
+      axios.delete(`${ARTICLE_API}/${article.id}`, {
+        headers: { token: user.getToken() }
+      })
+      .then(res => {
+        response = res;
+        done();
       })
       .catch(err => {
         expect(err.status).to.equal(412);
         done();
       });
     });
-    // TODO
-  });
-});
+    it('paranoid "delete" article in the database', function(done) {
+      Article.findAll({ where: { id: article.id }, paranoid: true })
+      .then(article => {
+        expect(article.deleteAt).to.not.be.null;
+        done();
+      })
+      .catch(error => {
+        console.log(error);
+        done(error);
+      });
+    });
 
-describe('GET /public', function() {
-  context('with semantically incorrect data', function() {
-
-  });
-  context('with mal-formed request data', function() {
-
-  });
-  context('with correct request data', function() {
-
-  });
-});
-
-describe('GET /all', function() {
-  context('with semantically incorrect data', function() {
-    it('return 401 when token is invalid');
-    it('return 401 when token is not present');
-    it('return 403 when token user is not admin');
-  });
-  context('with mal-formed request data', function() {
-
-  });
-  context('with correct request data', function() {
-
+    it('return 204', function() {
+      expect(response.status).to.equal(204);
+    });
   });
 });
 
 describe('GET /:id', function() {
-  context('with mal-formed request data', function() {
+  context('with correct request data', function() {
+    it('return 200 with article selfie and author publicSnapshot for public when token user is author', function(done) {
+      const author = userResults[0];
+      const article = articleResults[1];
+      axios.get(`${ARTICLE_API}/${article.id}`, {
+        headers: { token: author.getToken() }
+      })
+      .then(res => {
+        expect(res.status).to.equal(200);
+        const authorData = author.publicSnapshot();
+        for(let key in authorData) {
+          expect(res.data.author[key]).to.deep.equal(authorData[key]);
+        }
+        const articleData = article.selfie();
+        for(let key in articleData) {
+          expect(res.data[key]).to.deep.equal(articleData[key]);
+        }
+        done();
+      })
+      .catch(error => {
+        done(error);
+      });
+    });
+
+    it('return 200 with article selfie and author publicSnapshot for public when token user is not author', function(done) {
+      const author = userResults[0];
+      const article = articleResults[1];
+      axios.get(`${ARTICLE_API}/${article.id}`, {
+        headers: { token: userResults[3].getToken() }
+      })
+      .then(res => {
+        expect(res.status).to.equal(200);
+        const authorData = author.publicSnapshot();
+        for(let key in authorData) {
+          expect(res.data.author[key]).to.deep.equal(authorData[key]);
+        }
+        const articleData = article.selfie();
+        for(let key in articleData) {
+          expect(res.data[key]).to.deep.equal(articleData[key]);
+        }
+        done();
+      })
+      .catch(error => {
+        done(error);
+      });
+    });
+
+    it('return 200 with article selfie and author publicSnapshot for private when token user is author', function(done) {
+      const author = userResults[1];
+      const article = articleResults[2];
+      axios.get(`${ARTICLE_API}/${article.id}`, {
+        headers: { token: author.getToken() }
+      })
+      .then(res => {
+        expect(res.status).to.equal(200);
+        const authorData = author.publicSnapshot();
+        for(let key in authorData) {
+          expect(res.data.author[key]).to.deep.equal(authorData[key]);
+        }
+        const articleData = article.selfie();
+        for(let key in articleData) {
+          expect(res.data[key]).to.deep.equal(articleData[key]);
+        }
+        done();
+      })
+      .catch(error => {
+        done(error);
+      });
+    });
+  });
+
+  context('with semantically incorrect data', function() {
+    it('return 401 when token is invalid and article is private', function(done) {
+      axios.get(`${ARTICLE_API}/${articleResults[2].id}`, {
+        headers: { token: 'invalid token' }
+      })
+      .catch(error => {
+        expect(error.status).to.equal(401);
+        done();
+      });
+    });
+
+    it('return 401 when token is not valid and article is public', function(done) {
+      axios.get(`${ARTICLE_API}/${articleResults[1].id}`, {
+        headers: { token: 'invalid token' }
+      })
+      .catch(error => {
+        expect(error.status).to.equal(401);
+        done();
+      });
+    });
+
+    it('return 403 when token is not present and article is private', function(done) {
+      axios.get(`${ARTICLE_API}/${articleResults[2].id}`)
+      .catch(error => {
+        expect(error.status).to.equal(403);
+        done();
+      });
+    });
+
+    it('return 403 when token user is not the author and article is private', function(done) {
+      axios.get(`${ARTICLE_API}/${articleResults[2].id}`, {
+        headers: { token: userResults[0].getToken() }
+      })
+      .catch(error => {
+        expect(error.status).to.equal(403);
+        done();
+      });
+    });
 
   });
-  context('with correct request data', function() {
-    it('return 200 with article data and author intro');
-  });
+});
+
+describe('GET /', function() {
   context('with semantically incorrect data', function() {
-    it('return 401 when token is invalid and article is private');
-    it('return 401 when token is not present and article is private');
-    it('return 403 when token user is not the author and article is private');
+    it('return 401 when token is invalid');
+  });
+  context('with correct request data', function() {
+    it('return 200 with public articles when token is not present');
+    it('return 200 with all articles when token user is admin');
+    it('return 200 with public articles when token user is not admin');
   });
 });
+
 
 after(function(done) {
   User.removeTestUsers().then(res => {

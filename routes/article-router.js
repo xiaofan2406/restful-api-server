@@ -49,7 +49,7 @@ function createSingleArticle(req, res, next) {
   Article.createSingle(articleData)
   .then(article => {
     const selfie = article.selfie();
-    selfie.author = req.user.selfie();
+    selfie.author = req.user.publicSnapshot();
     res.status(201).json(selfie);
   })
   .catch(error => {
@@ -59,13 +59,13 @@ function createSingleArticle(req, res, next) {
 }
 
 function editSingleArticle(req, res, next) {
-  const authorId = req.user.id;
+  const user = req.user;
   const articleId = req.params.id;
   const updates = req.body;
-  Article.editSingle(articleId, authorId, updates)
+  Article.editSingle(articleId, user, updates)
   .then(updatedArticle => {
     const selfie = updatedArticle.selfie();
-    selfie.author = req.user.selfie();
+    selfie.author = user.publicSnapshot();
     res.status(200).json(selfie);
   })
   .catch(error => {
@@ -74,53 +74,100 @@ function editSingleArticle(req, res, next) {
   });
 }
 
-function getSingleArticle(req, res, next) {
-  const { id } = req.params;
-  const authorId = req.user.id;
-  Article.findById(id).then(article => {
-    if (!article.isPublic && article.authorId !== authorId) {
-      return next(unauthorizedError);
-    }
-    res.status(200).json(article);
-  }).catch(error => {
-    next(error);
+function deleteSingleArticle(req, res, next) {
+  const user = req.user;
+  const articleId = req.params.id;
+  Article.deleteSingle(articleId, user)
+  .then(() => {
+    res.status(204).end();
+  })
+  .catch(error => {
+    error.status = error.status || 500;
+    return next(error);
   });
 }
+
+
+function checkHeader(req, res, next) {
+  if (req.get('token')) {
+    requireAuth(req, res, next);
+  } else {
+    next();
+  }
+}
+
+function getSingleArticle(req, res, next) {
+  const articleId = req.params.id;
+  const user = req.user;
+  Article.getSingle(articleId, user)
+  .then(data => {
+    const selfie = data[0].selfie();
+    selfie.author = data[1].publicSnapshot();
+    res.status(200).json(selfie);
+  }).catch(error => {
+    error.status = error.status || 500;
+    return next(error);
+  });
+}
+
 
 // TODO paging?
 function getAllArticles(req, res, next) {
-  requireAuth(req, res, next)(req, res, next);
-  res.json({
-    all: true
+  const user = req.user;
+  Article.getArticles(user)
+  .then(data => {
+    const articles = data[0].map(article => {
+      return article.selfie();
+    });
+    const authors = data[1].map(author => {
+      return author.publicSnapshot();
+    });
+    res.status(200).json({
+      articles,
+      authors
+    });
+  }).catch(error => {
+    error.status = error.status || 500;
+    return next(error);
   });
 }
 
-function getPublicArticles(req, res, next) {
-  Article.findAll({
-    where: {
-      isPublic: true
-    },
-    include: {
-      model: User,
-      attributes: ['displayName']
-    }
-  }).then(result => {
-    res.status(200).json(result);
-  }).catch(error => {
-    next(error);
-  });
-}
+
+// function getAllArticles(req, res, next) {
+//   requireAuth(req, res, next)(req, res, next);
+//   res.json({
+//     all: true
+//   });
+// }
+//
+// function getPublicArticles(req, res, next) {
+//   Article.findAll({
+//     where: {
+//       isPublic: true
+//     },
+//     include: {
+//       model: User,
+//       attributes: ['displayName']
+//     }
+//   }).then(result => {
+//     res.status(200).json(result);
+//   }).catch(error => {
+//     next(error);
+//   });
+// }
 
 
 router.post('/', requireTitleContentInBody, requireAuth, createSingleArticle);
 
 router.patch('/:id(\\d+)', requireJsonBody, requireAuth, editSingleArticle);
 
-router.get('/:id(\\d+)', requireAuth, getSingleArticle);
+router.delete('/:id(\\d+)', requireAuth, deleteSingleArticle);
 
-router.get('/public', getPublicArticles);
+router.get('/:id(\\d+)', checkHeader, getSingleArticle);
 
-router.get('/all', requireAuth, getAllArticles);
+router.get('/', checkHeader, getAllArticles);
+
+
 
 
 module.exports = router;

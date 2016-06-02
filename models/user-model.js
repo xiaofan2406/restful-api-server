@@ -78,6 +78,11 @@ module.exports = (sequelize, DataTypes) => {
           activated: this.activated,
           createdAt: this.createdAt.toISOString()
         };
+      },
+      publicSnapshot() {
+        return {
+          displayName: this.displayName
+        };
       }
     },
     classMethods: {

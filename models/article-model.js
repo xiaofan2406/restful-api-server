@@ -32,6 +32,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     freezeTableName: true, // stop Sequelize automatically name tables
     tableName: 'articles',
+    paranoid: true,
     instanceMethods: {
       selfie() {
         return {
@@ -95,7 +96,7 @@ module.exports = (sequelize, DataTypes) => {
           });
         });
       },
-      editSingle(id, authorId, updates) {
+      editSingle(id, user, updates) {
         const err = new Error();
         return new Promise((resolve, reject) => {
           let currentArticle;
@@ -106,7 +107,7 @@ module.exports = (sequelize, DataTypes) => {
               err.status = 412;
               return reject(err);
             }
-            if (authorId !== article.authorId) {
+            if (user.id !== article.authorId) {
               err.message = 'Forbidden';
               err.status = 403;
               return reject(err);
@@ -118,7 +119,7 @@ module.exports = (sequelize, DataTypes) => {
             }
             currentArticle = article;
             return this.findOne({
-              where: { idWithAuthor: `U${authorId}A${updates.title}`, id: { $not: article.id } }
+              where: { idWithAuthor: `U${user.id}A${updates.title}`, id: { $not: article.id } }
             });
           })
           .then(dup => {
@@ -128,7 +129,7 @@ module.exports = (sequelize, DataTypes) => {
               return reject(err);
             }
             if (updates.title) {
-              updates.idWithAuthor = `U${authorId}A${updates.title}`;
+              updates.idWithAuthor = `U${currentArticle.id}A${updates.title}`;
             }
             return resolve(currentArticle.update(updates));
           })
@@ -137,8 +138,79 @@ module.exports = (sequelize, DataTypes) => {
           });
         });
       },
-      removeSingle(id) {
-        
+      deleteSingle(id, user) {
+        const err = new Error();
+        return new Promise((resolve, reject) => {
+          this.findById(id)
+          .then(article => {
+            if (!article) {
+              err.message = 'Article does not exist';
+              err.status = 412;
+              return reject(err);
+            }
+            if (user.id !== article.authorId) {
+              err.message = 'Forbidden';
+              err.status = 403;
+              return reject(err);
+            }
+            return resolve(article.destroy());
+          })
+          .catch(error => {
+            return reject(error);
+          });
+        });
+      },
+      getSingle(id, user) {
+        const err = new Error();
+        return new Promise((resolve, reject) => {
+          let foundArticle;
+          this.findById(id)
+          .then(article => {
+            if (!article) {
+              err.message = 'Article does not exist';
+              err.status = 412;
+              return reject(err);
+            }
+            if (!article.isPublic && (!user || article.authorId !== user.id)) {
+              err.message = 'Forbidden';
+              err.status = 403;
+              return reject(err);
+            }
+            const User = sequelize.models.User;
+            foundArticle = article;
+            return User.findById(article.authorId);
+          })
+          .then(author => {
+            return resolve([foundArticle, author]);
+          })
+          .catch(error => {
+            return reject(error);
+          });
+        });
+      },
+      getArticles(user) {
+        let options = { where: { isPublic: true } };
+        if (user && user.isAdmin) {
+          options = {};
+        }
+        return new Promise((resolve, reject) => {
+          let foundArticles;
+          this.findAll(options)
+          .then(articles => {
+            const authorIds = articles.map(article => {
+              return article.authorId;
+            });
+            foundArticles = articles;
+            const User = sequelize.models.User;
+            return User.findAll({ where: { id: authorIds } });
+          })
+          .then(authors => {
+            return resolve([foundArticles, authors]);
+          })
+          .catch(error => {
+            return reject(error);
+          });
+        });
       }
     },
     hooks: {
