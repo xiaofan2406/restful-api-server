@@ -4,7 +4,8 @@ const { Article, User } = require('../models');
 const requireAuth = require('../helpers/passport-jwt');
 const {
   isThere,
-  isEmptyObject
+  isEmptyObject,
+  objectHasEmptyValue
 } = require('../helpers/validator');
 
 const unauthorizedError = new Error('Unauthorized');
@@ -15,7 +16,7 @@ const forbiddenError = new Error('Forbidden');
 forbiddenError.status = 403;
 const duplicateError = new Error('Duplicate');
 duplicateError.status = 409;
-const preconditionError = new Error('Duplicate');
+const preconditionError = new Error('Precondition Fail');
 preconditionError.status = 412;
 
 function requireTitleContentInBody(req, res, next) {
@@ -27,7 +28,7 @@ function requireTitleContentInBody(req, res, next) {
 }
 
 function requireJsonBody(req, res, next) {
-  if (isEmptyObject(req.body)) {
+  if (isEmptyObject(req.body) || objectHasEmptyValue(req.body)) {
     return next(unprocessableEntityError);
   }
   next();
@@ -39,33 +40,21 @@ function createSingleArticle(req, res, next) {
   if (!req.user.isAbleToCreateArticle()) {
     return next(forbiddenError);
   }
-
   const userId = req.user.id;
-
-  Article.isThereDuplicate(userId, title).then(dupArticle => {
-    if (dupArticle) {
-      return next(duplicateError);
-    }
-  }).catch(error => {
-    error.status = 500;
-    return next(error);
-  });
-
-  Article.create({
+  const articleData = {
     title,
     content,
     userId
-  })
+  };
+  Article.createSingle(articleData)
   .then(article => {
-    res.status(201).json({
-      id: article.id,
-      title: article.title,
-      author: req.user.displayName
-    });
+    const selfie = article.selfie();
+    selfie.author = req.user.selfie();
+    res.status(201).json(selfie);
   })
   .catch(error => {
-    error.status = 500;
-    next(error);
+    error.status = error.status || 500;
+    return next(error);
   });
 }
 
@@ -73,41 +62,53 @@ function editSingleArticle(req, res, next) {
   const userId = req.user.id;
   const articleId = req.params.id;
   const updates = req.body;
-  Article.findById(articleId)
-  .then(article => {
-    if (!article) {
-      return next(preconditionError);
-    }
-    if (article.userId !== userId) {
-      return next(forbiddenError);
-    }
-    // TODO add allow fields for article updates
-    if (updates.userId) {
-      return next(forbiddenError);
-    }
-    if (updates.title) {
-      Article.isThereDuplicate(userId, updates.title).then(dupArticle => {
-        if (dupArticle) {
-          return next(duplicateError);
-        }
-      }).catch(error => {
-        error.status = 500;
-        return next(error);
-      });
-    }
-    article.update(updates)
-    .then(newArticle => {
-      res.status(200).json(newArticle.selfie());
-    })
-    .catch(error => {
-      error.status = 500;
-      return next(error);
-    });
+  Article.editSingle(articleId, userId, updates)
+  .then(updatedArticle => {
+    const selfie = updatedArticle.selfie();
+    selfie.author = req.user.selfie();
+    res.status(200).json(selfie);
   })
   .catch(error => {
-    error.status = 500;
-    next(error);
+    error.status = error.status || 500;
+    return next(error);
   });
+
+  // Article.findById(articleId)
+  // .then(article => {
+  //   if (!article) {
+  //     return next(preconditionError);
+  //   }
+  //   if (article.userId !== userId) {
+  //     return next(forbiddenError);
+  //   }
+  //   // TODO add allow fields for article updates
+  //   if (updates.userId) {
+  //     return next(forbiddenError);
+  //   }
+  //   if (updates.title) {
+  //     Article.isThereDuplicate(userId, updates.title)
+  //     .then(dupArticle => {
+  //       if (dupArticle) {
+  //         return next(duplicateError);
+  //       }
+  //     }).catch(error => {
+  //       error.status = 500;
+  //       return next(error);
+  //     });
+  //   }
+  //   article.update(updates)
+  //   .then(newArticle => {
+  //     res.status(200).json(newArticle.selfie());
+  //   })
+  //   .catch(error => {
+  //     error.status = 500;
+  //     return next(error);
+  //   });
+  // })
+  // .catch(error => {
+  //   error.status = 500;
+  //   next(error);
+  // });
 }
 
 function getSingleArticle(req, res, next) {
@@ -147,14 +148,6 @@ function getPublicArticles(req, res, next) {
   });
 }
 
-function getArticles(req, res, next) {
-  if (req.query.scope === 'all') {
-    getAllArticles(req, res, next);
-  } else {
-    getPublicArticles(req, res, next);
-  }
-}
-
 
 router.post('/', requireTitleContentInBody, requireAuth, createSingleArticle);
 
@@ -164,7 +157,7 @@ router.get('/:id(\\d+)', requireAuth, getSingleArticle);
 
 router.get('/public', getPublicArticles);
 
-router.get('/all', requireAuth, getArticles);
+router.get('/all', requireAuth, getAllArticles);
 
 
 module.exports = router;

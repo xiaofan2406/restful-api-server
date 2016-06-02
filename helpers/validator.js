@@ -12,6 +12,15 @@ function isEmptyObject(target) {
   return !util.isObject(target) || Object.keys(target).length === 0;
 }
 
+function objectHasEmptyValue(target) {
+  for (const key of Object.keys(target)) {
+    if (!isThere(target[key])) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function isEmail(email) {
   if (!isThere(email)) {
     return false;
@@ -32,5 +41,6 @@ module.exports = {
   isPassword,
   isThere,
   isNumber,
-  isEmptyObject
+  isEmptyObject,
+  objectHasEmptyValue
 };

@@ -504,7 +504,7 @@ describe('/checkEmail', function() {
     it('return 200 with isRegistered false when email is not registered', function(done) {
       axios.get(`${SERVER_URL}/checkEmail`, {
         params: {
-          email: "nonregistered@mail.com"
+          email: 'nonregistered@mail.com'
         }
       })
       .then(res => {
