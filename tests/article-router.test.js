@@ -123,7 +123,7 @@ describe('POST /', function() {
       axios.post(`${ARTICLE_API}/`,  {
         title,
         content,
-        userId: user.id
+        authorId: user.id
       }, {
         headers: {
           token: user.getToken()
@@ -144,7 +144,7 @@ describe('POST /', function() {
         expect(article.title).to.equal(title);
         expect(article.content).to.equal(content);
         expect(article.idWithAuthor).to.equal(`U${user.id}A${title}`);
-        expect(article.userId).to.equal(user.id);
+        expect(article.authorId).to.equal(user.id);
         done();
       })
       .catch(err => {
@@ -185,7 +185,7 @@ describe('PATCH /:id', function() {
 
   context('with semantically incorrect data', function() {
     it('return 401 when token is invalid', function(done) {
-      axios.patch(`${ARTICLE_API}/${ articleResults[0].id}`,
+      axios.patch(`${ARTICLE_API}/${articleResults[0].id}`,
         { content: 'new content' },
         { headers: { token: 'someinvalidtoken' } }
       )
@@ -196,7 +196,7 @@ describe('PATCH /:id', function() {
     });
 
     it('return 401 when token is not present', function(done) {
-      axios.patch(`${ARTICLE_API}/${ articleResults[0].id}`, { content: 'new content' })
+      axios.patch(`${ARTICLE_API}/${articleResults[0].id}`, { content: 'new content' })
       .catch(err => {
         expect(err.status).to.equal(401);
         done();
@@ -204,7 +204,7 @@ describe('PATCH /:id', function() {
     });
 
     it('return 403 when token user is not the author', function(done) {
-      axios.patch(`${ARTICLE_API}/${ articleResults[0].id}`,
+      axios.patch(`${ARTICLE_API}/${articleResults[0].id}`,
         { content: 'new content' },
         { headers: { token: userResults[1].getToken() } }
       )
@@ -215,7 +215,7 @@ describe('PATCH /:id', function() {
     });
 
     it('return 412 when article id does not exist', function(done) {
-      axios.patch(`${ARTICLE_API}/999999`,
+      axios.patch(`${ARTICLE_API}/99999999`,
         { content: 'new content' },
         { headers: { token: userResults[0].getToken() } }
       )
@@ -225,9 +225,9 @@ describe('PATCH /:id', function() {
       });
     });
 
-    it('return 403 when trying to modify userId', function(done) {
-      axios.patch(`${ARTICLE_API}/${ articleResults[0].id}`,
-        { content: 'new content', userId: '112' },
+    it('return 403 when trying to modify authorId', function(done) {
+      axios.patch(`${ARTICLE_API}/${articleResults[0].id}`,
+        { content: 'new content', authorId: '112' },
         { headers: { token: userResults[0].getToken() } }
       )
       .catch(err => {
@@ -237,7 +237,7 @@ describe('PATCH /:id', function() {
     });
 
     it('return 409 when token user had the same titled article already', function(done) {
-      axios.patch(`${ARTICLE_API}/${ articleResults[0].id}`,
+      axios.patch(`${ARTICLE_API}/${articleResults[0].id}`,
         { content: 'new content', title: articleResults[1].title },
         { headers: { token: userResults[0].getToken() } }
       )
@@ -311,6 +311,14 @@ describe('PATCH /:id', function() {
       });
     });
 
+    it('update column idWithAuthor in database when title is updated', function() {
+      if (articleUpdates.title) {
+        expect(updatedArticle.idWithAuthor).to.equal(`U${user.id}A${articleUpdates.title}`);
+      } else {
+        expect(updatedArticle.idWithAuthor).to.equal(article.idWithAuthor);
+      }
+    });
+
     it('return 200 with article selfie and author selfie', function() {
       expect(response.status).to.equal(200);
       const userData = user.selfie();
@@ -323,17 +331,58 @@ describe('PATCH /:id', function() {
       }
     });
   });
+
 });
 
 describe('DELETE /:id', function() {
   context('with semantically incorrect data', function() {
-    it('return 401 when token is invalid');
-    it('return 401 when token is not present');
-    it('return 403 when token user is not the author');
-    it('return 412 when article id does not exist');
+    it('return 401 when token is invalid', function(done) {
+      axios.delete(`${ARTICLE_API}/${articleResults[0].id}`, {
+        headers: { token: 'someinvalidtoken' }
+      })
+      .catch(err => {
+        expect(err.status).to.equal(401);
+        done();
+      });
+    });
+    it('return 401 when token is not present', function(done) {
+      axios.delete(`${ARTICLE_API}/${articleResults[0].id}`,)
+      .catch(err => {
+        expect(err.status).to.equal(401);
+        done();
+      });
+    });
+    it('return 403 when token user is not the author', function(done) {
+      axios.delete(`${ARTICLE_API}/${articleResults[0].id}`, {
+        headers: { token: userResults[2].getToken() }
+      })
+      .catch(err => {
+        expect(err.status).to.equal(403);
+        done();
+      });
+    });
+    it('return 412 when article id does not exist', function(done) {
+      axios.delete(`${ARTICLE_API}/99999999`, {
+        headers: { token: userResults[0].getToken() }
+      })
+      .catch(err => {
+        expect(err.status).to.equal(412);
+        done();
+      });
+    });
   });
   context('with correct request data', function() {
-
+    let response;
+    before(function(done) {
+      axios.delete(`${ARTICLE_API}/${articleResults[0].id}`, {
+        headers: { token: userResults[0].getToken() }
+      })
+      .catch(err => {
+        expect(err.status).to.equal(412);
+        done();
+      });
+    });
+    // TODO
   });
 });
 

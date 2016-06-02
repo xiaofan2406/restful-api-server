@@ -40,11 +40,11 @@ function createSingleArticle(req, res, next) {
   if (!req.user.isAbleToCreateArticle()) {
     return next(forbiddenError);
   }
-  const userId = req.user.id;
+  const authorId = req.user.id;
   const articleData = {
     title,
     content,
-    userId
+    authorId
   };
   Article.createSingle(articleData)
   .then(article => {
@@ -59,10 +59,10 @@ function createSingleArticle(req, res, next) {
 }
 
 function editSingleArticle(req, res, next) {
-  const userId = req.user.id;
+  const authorId = req.user.id;
   const articleId = req.params.id;
   const updates = req.body;
-  Article.editSingle(articleId, userId, updates)
+  Article.editSingle(articleId, authorId, updates)
   .then(updatedArticle => {
     const selfie = updatedArticle.selfie();
     selfie.author = req.user.selfie();
@@ -72,50 +72,13 @@ function editSingleArticle(req, res, next) {
     error.status = error.status || 500;
     return next(error);
   });
-
-  // Article.findById(articleId)
-  // .then(article => {
-  //   if (!article) {
-  //     return next(preconditionError);
-  //   }
-  //   if (article.userId !== userId) {
-  //     return next(forbiddenError);
-  //   }
-  //   // TODO add allow fields for article updates
-  //   if (updates.userId) {
-  //     return next(forbiddenError);
-  //   }
-  //   if (updates.title) {
-  //     Article.isThereDuplicate(userId, updates.title)
-  //     .then(dupArticle => {
-  //       if (dupArticle) {
-  //         return next(duplicateError);
-  //       }
-  //     }).catch(error => {
-  //       error.status = 500;
-  //       return next(error);
-  //     });
-  //   }
-  //   article.update(updates)
-  //   .then(newArticle => {
-  //     res.status(200).json(newArticle.selfie());
-  //   })
-  //   .catch(error => {
-  //     error.status = 500;
-  //     return next(error);
-  //   });
-  // })
-  // .catch(error => {
-  //   error.status = 500;
-  //   next(error);
-  // });
 }
 
 function getSingleArticle(req, res, next) {
   const { id } = req.params;
-  const userId = req.user.id;
+  const authorId = req.user.id;
   Article.findById(id).then(article => {
-    if (!article.isPublic && article.userId !== userId) {
+    if (!article.isPublic && article.authorId !== authorId) {
       return next(unauthorizedError);
     }
     res.status(200).json(article);

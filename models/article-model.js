@@ -48,7 +48,7 @@ module.exports = (sequelize, DataTypes) => {
       associate(models) {
         Article.belongsTo(models.User, {
           foreignKey: {
-            name: 'userId',
+            name: 'authorId',
             allowNull: false
           },
           onDelete: 'cascade'
@@ -57,19 +57,19 @@ module.exports = (sequelize, DataTypes) => {
       findAllPublic() {
         return this.findAll({ where: { isPublic: true } });
       },
-      createTestArticles(startingUserId) {
+      createTestArticles(startingAuthorId) {
         const articles = [];
         for (let i = 0; i < 5; i++) {
           articles.push({
             title: `article number ${i}`,
             content: `${i} an interesting article ${i}`,
-            userId: startingUserId + i,
+            authorId: startingAuthorId + i,
             isPublic: false
           });
           articles.push({
             title: `public article number ${i}`,
             content: `${i} an interesting public article ${i}`,
-            userId: startingUserId + i,
+            authorId: startingAuthorId + i,
             isPublic: true
           });
         }
@@ -78,13 +78,10 @@ module.exports = (sequelize, DataTypes) => {
           validate: true
         });
       },
-      isThereDuplicate(userId, title) {
-        return this.findOne({ where: { idWithAuthor: `U${userId}A${title}` } });
-      },
       createSingle(articleData) {
         const err = new Error();
         return new Promise((resolve, reject) => {
-          this.findOne({ where: { idWithAuthor: `U${articleData.userId}A${articleData.title}` } })
+          this.findOne({ where: { idWithAuthor: `U${articleData.authorId}A${articleData.title}` } })
           .then(dup => {
             if (dup) {
               err.message = 'Duplicate error';
@@ -98,7 +95,7 @@ module.exports = (sequelize, DataTypes) => {
           });
         });
       },
-      editSingle(id, userId, updates) {
+      editSingle(id, authorId, updates) {
         const err = new Error();
         return new Promise((resolve, reject) => {
           let currentArticle;
@@ -109,19 +106,19 @@ module.exports = (sequelize, DataTypes) => {
               err.status = 412;
               return reject(err);
             }
-            if (userId !== article.userId) {
+            if (authorId !== article.authorId) {
               err.message = 'Forbidden';
               err.status = 403;
               return reject(err);
             }
-            if (updates.userId) {
+            if (updates.authorId) {
               err.message = 'Cannot change author';
               err.status = 403;
               return reject(err);
             }
             currentArticle = article;
             return this.findOne({
-              where: { idWithAuthor: `U${userId}A${updates.title}`, id: { $not: article.id } }
+              where: { idWithAuthor: `U${authorId}A${updates.title}`, id: { $not: article.id } }
             });
           })
           .then(dup => {
@@ -131,7 +128,7 @@ module.exports = (sequelize, DataTypes) => {
               return reject(err);
             }
             if (updates.title) {
-              updates.idWithAuthor = `U${userId}A${updates.title}`;
+              updates.idWithAuthor = `U${authorId}A${updates.title}`;
             }
             return resolve(currentArticle.update(updates));
           })
@@ -139,11 +136,14 @@ module.exports = (sequelize, DataTypes) => {
             return reject(error);
           });
         });
+      },
+      removeSingle(id) {
+        
       }
     },
     hooks: {
       beforeValidate(article) {
-        article.idWithAuthor = `U${article.userId}A${article.title}`;
+        article.idWithAuthor = `U${article.authorId}A${article.title}`;
       }
     }
   });
