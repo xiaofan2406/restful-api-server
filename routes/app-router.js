@@ -144,7 +144,7 @@ function signIn(req, res) {
 function refreshToken(req, res) {
   res.status(200).json({
     token: req.user.getToken(),
-    displayName: req.user.displayName
+    ...req.user.selfie()
   });
 }
 

@@ -76,6 +76,9 @@ module.exports = (sequelize, DataTypes) => {
       isAbleToCreateArticle() {
         return this.activated;
       },
+      isAbleToCreateTodo() {
+        return this.activated;
+      },
       selfie() { // all public information to return to user
         return {
           email: this.email,
@@ -123,24 +126,6 @@ module.exports = (sequelize, DataTypes) => {
       },
       findByEmail(email) {
         return this.findOne({ where: { email } });
-      },
-      createTestUsers() {
-        const users = [];
-        for (let i = 0; i < 6; i++) {
-          users.push({
-            email: `testaccount${i}@mail.com`,
-            password: 'password',
-            displayName: `testaccount${i}@mail.com`,
-            activated: (i !== 5),
-            type: (i === 4) ? type.ADMIN : type.NORMAL
-          });
-        }
-        return this.bulkCreate(users, { returning: true });
-      },
-      removeTestUsers() {
-        return this.destroy({
-          where: { email: { $like: '%testaccount%' } }
-        });
       }
     },
     hooks: {

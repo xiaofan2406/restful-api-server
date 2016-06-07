@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Article, User } = require('../models');
+const { Article } = require('../models');
 const requireAuth = require('../helpers/passport-jwt');
 const {
   isThere,
@@ -110,7 +110,6 @@ function getSingleArticle(req, res, next) {
   });
 }
 
-
 // TODO paging?
 function getAllArticles(req, res, next) {
   const user = req.user;
@@ -132,31 +131,6 @@ function getAllArticles(req, res, next) {
   });
 }
 
-
-// function getAllArticles(req, res, next) {
-//   requireAuth(req, res, next)(req, res, next);
-//   res.json({
-//     all: true
-//   });
-// }
-//
-// function getPublicArticles(req, res, next) {
-//   Article.findAll({
-//     where: {
-//       isPublic: true
-//     },
-//     include: {
-//       model: User,
-//       attributes: ['displayName']
-//     }
-//   }).then(result => {
-//     res.status(200).json(result);
-//   }).catch(error => {
-//     next(error);
-//   });
-// }
-
-
 router.post('/', requireTitleContentInBody, requireAuth, createSingleArticle);
 
 router.patch('/:id(\\d+)', requireJsonBody, requireAuth, editSingleArticle);
@@ -166,8 +140,5 @@ router.delete('/:id(\\d+)', requireAuth, deleteSingleArticle);
 router.get('/:id(\\d+)', checkHeader, getSingleArticle);
 
 router.get('/', checkHeader, getAllArticles);
-
-
-
 
 module.exports = router;

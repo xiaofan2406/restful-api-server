@@ -4,6 +4,7 @@ const axios = require('axios');
 const { User, Article } = require('../models');
 const { SERVER_URL } = require('../config/app-config');
 const ARTICLE_API = `${SERVER_URL}/api/article`;
+const { sampleUsersData } = require('./helpers');
 
 // TODO edge cases?
 
@@ -12,28 +13,59 @@ context('/api/article', function() {
 // userResults[4] is admin
 // userResults[5] is not activated
 // userResults[0-4] has two articles with one being public one private
-let userResults, articleResults;
-const title = 'an article title';
-const content = 'the content of an article';
+let userResults, articleResults, publicArticle, privateArticle;
+const title = 'an new article title';
+const content = 'the new content of an article';
 
 before('populate fake data', function(done) {
-  User.createTestUsers()
+  User.bulkCreate(sampleUsersData, { returning: true })
   .then(result => {
     userResults = result;
-    return Article.createTestArticles(userResults[0].id);
+    const sampleArticlesData = [{
+      title: 'private article 1',
+      content: 'content for private article 1',
+      tags: ['greate'],
+      categories: ['personal'],
+      isPublic: false,
+      authorId: userResults[0].id
+    }, {
+      title: 'public article 2',
+      content: 'content for public article 2',
+      tags: ['greate'],
+      categories: ['personal'],
+      isPublic: true,
+      authorId: userResults[0].id
+    }, {
+      title: 'private article 3',
+      content: 'content for private article 3',
+      tags: ['greate'],
+      categories: ['personal'],
+      isPublic: false,
+      authorId: userResults[1].id
+    }, {
+      title: 'public article 4',
+      content: 'content for public article 4',
+      tags: ['greate'],
+      categories: ['personal'],
+      isPublic: true,
+      authorId: userResults[1].id
+    }];
+    return Article.bulkCreate(sampleArticlesData, {
+      returning: true,
+      validate: true,
+      individualHooks: true
+    });
   })
   .then(result => {
     articleResults = result;
     done();
-  })
-  .catch(error => {
+  }).catch(error => {
     done(error);
   });
 });
 
 describe('POST /', function() {
   context('with semantically incorrect data', function() {
-
     it('return 401 when token is invalid', function(done) {
       axios.post(`${ARTICLE_API}/`,
         { title, content },
@@ -58,7 +90,7 @@ describe('POST /', function() {
     it('return 403 when token user dose not have right to create article', function(done) {
       axios.post(`${ARTICLE_API}/`,
         { title, content },
-        { headers: { token: userResults[5].getToken() } }
+        { headers: { token: userResults[2].getToken() } }
       )
       .catch(err => {
         expect(err.status).to.equal(403);
@@ -66,10 +98,19 @@ describe('POST /', function() {
       });
     });
 
+    it('return 409 when token user had the same titled article already', function(done) {
+      axios.post(`${ARTICLE_API}/`,
+        { title: articleResults[0].title, content },
+        { headers: { token: userResults[0].getToken() } }
+      )
+      .catch(err => {
+        expect(err.status).to.equal(409);
+        done();
+      });
+    });
   });
 
   context('with mal-formed request data', function() {
-
     it('return 422 when title is not present', function(done) {
       axios.post(`${ARTICLE_API}/`,
         { content },
@@ -113,11 +154,9 @@ describe('POST /', function() {
         done();
       });
     });
-
   });
 
   context('with correct request data', function() {
-
     let response, user, newArticle;
     before(function(done) {
       user = userResults[0];
@@ -168,16 +207,7 @@ describe('POST /', function() {
   });
 
   context('with semantically incorrect data', function() {
-    it('return 409 when token user had the same titled article already', function(done) {
-      axios.post(`${ARTICLE_API}/`,
-        { title, content },
-        { headers: { token: userResults[0].getToken() } }
-      )
-      .catch(err => {
-        expect(err.status).to.equal(409);
-        done();
-      });
-    });
+
   });
 });
 
@@ -578,7 +608,13 @@ describe('GET /', function() {
 });
 
 after(function(done) {
-  User.removeTestUsers().then(res => {
+  User.destroy({
+    where: {
+      email: {
+        $like: '%@testmail.com%'
+      }
+    }
+  }).then(res => {
     done();
   }).catch(err => {
     done(err);

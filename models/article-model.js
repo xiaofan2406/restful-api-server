@@ -55,30 +55,6 @@ module.exports = (sequelize, DataTypes) => {
           onDelete: 'cascade'
         });
       },
-      findAllPublic() {
-        return this.findAll({ where: { isPublic: true } });
-      },
-      createTestArticles(startingAuthorId) {
-        const articles = [];
-        for (let i = 0; i < 5; i++) {
-          articles.push({
-            title: `article number ${i}`,
-            content: `${i} an interesting article ${i}`,
-            authorId: startingAuthorId + i,
-            isPublic: false
-          });
-          articles.push({
-            title: `public article number ${i}`,
-            content: `${i} an interesting public article ${i}`,
-            authorId: startingAuthorId + i,
-            isPublic: true
-          });
-        }
-        return this.bulkCreate(articles, {
-          individualHooks: true,
-          validate: true
-        });
-      },
       createSingle(articleData) {
         const err = new Error();
         return new Promise((resolve, reject) => {
