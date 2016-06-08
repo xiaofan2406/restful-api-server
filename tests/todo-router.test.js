@@ -475,17 +475,17 @@ describe('GET /:id', function() {
 //   });
 // });
 //
-// after(function(done) {
-//   User.destroy({
-//     where: {
-//       email: {
-//         $like: '%@testmail.com%'
-//       }
-//     }
-//   }).then(res => {
-//     done();
-//   }).catch(err => {
-//     done(err);
-//   });
-// });
-})
+after(function(done) {
+  User.destroy({
+    where: {
+      email: {
+        $like: '%@testmail.com%'
+      }
+    }
+  }).then(res => {
+    done();
+  }).catch(err => {
+    done(err);
+  });
+});
+});
