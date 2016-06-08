@@ -10,10 +10,7 @@ const { sampleUsersData } = require('./helpers');
 
 context('/api/article', function() {
 
-// userResults[4] is admin
-// userResults[5] is not activated
-// userResults[0-4] has two articles with one being public one private
-let userResults, articleResults, publicArticle, privateArticle;
+let userResults, articleResults;
 const title = 'an new article title';
 const content = 'the new content of an article';
 
@@ -108,6 +105,8 @@ describe('POST /', function() {
         done();
       });
     });
+
+    it('return 400 when unknow field is present request');
   });
 
   context('with mal-formed request data', function() {
@@ -163,7 +162,6 @@ describe('POST /', function() {
       axios.post(`${ARTICLE_API}/`,  {
         title,
         content,
-        authorId: user.id,
         isPublic: true
       }, {
         headers: {
@@ -194,7 +192,7 @@ describe('POST /', function() {
       });
     });
 
-    it('return 201 with article selfie and user selfie', function() {
+    it('return 201 with article selfie and author publicSnapshot', function() {
       expect(response.status).to.equal(201);
       const userData = user.publicSnapshot();
       for(let key in userData) {
@@ -205,10 +203,6 @@ describe('POST /', function() {
         expect(response.data[key]).to.deep.equal(articleData[key]);
       }
     });
-  });
-
-  context('with semantically incorrect data', function() {
-
   });
 });
 
@@ -257,7 +251,7 @@ describe('PATCH /:id', function() {
 
     it('return 403 when trying to modify authorId', function(done) {
       axios.patch(`${ARTICLE_API}/${articleResults[0].id}`,
-        { content: 'new content', authorId: '112' },
+        { content: 'new content', authorId: userResults[1].id },
         { headers: { token: userResults[0].getToken() } }
       )
       .catch(err => {
@@ -276,6 +270,8 @@ describe('PATCH /:id', function() {
         done();
       });
     });
+
+    it('return 400 when unknow field is present request');
   });
 
   context('with mal-formed request data', function() {
@@ -331,8 +327,9 @@ describe('PATCH /:id', function() {
       Article.findById(article.id)
       .then(arti => {
         updatedArticle = arti;
+        console.log(updatedArticle);
         for (const key in articleUpdates) {
-          expect(updatedArticle[key]).to.deep.equal(articleUpdates[key]);
+          expect(articleUpdates[key]).to.deep.equal(updatedArticle[key]);
         }
         done();
       })
@@ -349,7 +346,7 @@ describe('PATCH /:id', function() {
       }
     });
 
-    it('return 200 with article selfie and author selfie', function() {
+    it('return 200 with article selfie and author publicSnapshot', function() {
       expect(response.status).to.equal(200);
       const userData = user.publicSnapshot();
       for(let key in userData) {
@@ -425,7 +422,6 @@ describe('DELETE /:id', function() {
         done();
       })
       .catch(error => {
-        console.log(error);
         done(error);
       });
     });
@@ -623,5 +619,4 @@ after(function(done) {
     done(err);
   })
 });
-
 })
