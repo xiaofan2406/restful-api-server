@@ -551,7 +551,6 @@ describe('GET /:id', function() {
         done();
       });
     });
-
   });
 });
 

@@ -123,6 +123,28 @@ module.exports = (sequelize, DataTypes) => {
             return reject(error);
           });
         });
+      },
+      getSingle(id, user) {
+        return new Promise((resolve, reject) => {
+          const err = new Error();
+          this.findById(id)
+          .then(todo => {
+            if (!todo) {
+              err.message = 'Does not exist';
+              err.status = 412;
+              return reject(err);
+            }
+            if (user.id !== todo.ownerId) {
+              err.message = 'Forbidden';
+              err.status = 403;
+              return reject(err);
+            }
+            return todo.selfie();
+          })
+          .catch(error => {
+            return reject(error);
+          });
+        });
       }
     },
     hooks: {

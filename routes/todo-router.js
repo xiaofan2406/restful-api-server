@@ -34,6 +34,10 @@ function requireJsonBody(req, res, next) {
   next();
 }
 
+function requireUUID(req, res, next) {
+  next();
+}
+
 function createSingleTodo(req, res, next) {
   const todoData = req.body;
   const user = req.user;
@@ -70,14 +74,28 @@ function deleteSingleTodo(req, res, next) {
   });
 }
 
+function getSingleTodo(req, res, next) {
+  const user = req.user;
+  const todoId = req.params.id;
+  console.log(user, todoId);
+  Todo.getSingle(todoId, user)
+  .then(todoData => {
+    res.status(200).json(todoData);
+  })
+  .catch(error => {
+    error.status = error.status || 500;
+    return next(error);
+  });
+}
+
 router.post('/', requireTitleInBody, requireAuth, createSingleTodo);
 
-router.patch('/:id', requireJsonBody, requireAuth, editSingleTodo);
+router.patch('/:id', requireUUID, requireJsonBody, requireAuth, editSingleTodo);
 
-router.delete('/:id', requireAuth, deleteSingleTodo);
-//
-// router.get('/:id', checkHeader, getSingleTodo);
-//
+router.delete('/:id', requireUUID, requireAuth, deleteSingleTodo);
+
+router.get('/:id', requireUUID, requireAuth, getSingleTodo);
+
 // router.get('/', checkHeader, getAllTodos);
 
 module.exports = router;
