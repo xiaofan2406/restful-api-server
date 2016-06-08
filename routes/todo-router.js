@@ -5,7 +5,8 @@ const requireAuth = require('../helpers/passport-jwt');
 const {
   isThere,
   isEmptyObject,
-  objectHasEmptyValue
+  objectHasEmptyValue,
+  isUUID
 } = require('../helpers/validator');
 
 const unauthorizedError = new Error('Unauthorized');
@@ -34,7 +35,10 @@ function requireJsonBody(req, res, next) {
   next();
 }
 
-function requireUUID(req, res, next) {
+function requireUUIDParam(req, res, next) {
+  if (!isUUID(req.params.id)) {
+    return next(unprocessableEntityError);
+  }
   next();
 }
 
@@ -77,7 +81,6 @@ function deleteSingleTodo(req, res, next) {
 function getSingleTodo(req, res, next) {
   const user = req.user;
   const todoId = req.params.id;
-  console.log(user, todoId);
   Todo.getSingle(todoId, user)
   .then(todoData => {
     res.status(200).json(todoData);
@@ -88,14 +91,26 @@ function getSingleTodo(req, res, next) {
   });
 }
 
+function getAllTodos(req, res, next) {
+  const user = req.user;
+  Todo.getAll(user)
+  .then(todosData => {
+    res.status(200).json(todosData);
+  })
+  .catch(error => {
+    error.status = error.status || 500;
+    return next(error);
+  });
+}
+
 router.post('/', requireTitleInBody, requireAuth, createSingleTodo);
 
-router.patch('/:id', requireUUID, requireJsonBody, requireAuth, editSingleTodo);
+router.patch('/:id', requireUUIDParam, requireJsonBody, requireAuth, editSingleTodo);
 
-router.delete('/:id', requireUUID, requireAuth, deleteSingleTodo);
+router.delete('/:id', requireUUIDParam, requireAuth, deleteSingleTodo);
 
-router.get('/:id', requireUUID, requireAuth, getSingleTodo);
+router.get('/:id', requireUUIDParam, requireAuth, getSingleTodo);
 
-// router.get('/', checkHeader, getAllTodos);
+router.get('/', requireAuth, getAllTodos);
 
 module.exports = router;

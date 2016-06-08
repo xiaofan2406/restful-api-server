@@ -30,11 +30,15 @@ function isEmail(email) {
   return index > 0 && index !== email.length;
 }
 
-
 function isPassword(password) {
   return isThere(password);
 }
 
+const uuid = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/i;
+
+function isUUID(target) {
+  return uuid.test(target);
+}
 
 module.exports = {
   isEmail,
@@ -42,5 +46,6 @@ module.exports = {
   isThere,
   isNumber,
   isEmptyObject,
-  objectHasEmptyValue
+  objectHasEmptyValue,
+  isUUID
 };

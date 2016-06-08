@@ -139,7 +139,22 @@ module.exports = (sequelize, DataTypes) => {
               err.status = 403;
               return reject(err);
             }
-            return todo.selfie();
+            return resolve(todo.selfie());
+          })
+          .catch(error => {
+            return reject(error);
+          });
+        });
+      },
+      getAll(user) {
+        return new Promise((resolve, reject) => {
+          this.findAll({ where: { ownerId: user.id } })
+          .then(todos => {
+            const todosData = [];
+            for (const todo of todos) {
+              todosData.push(todo.selfie());
+            }
+            return resolve(todosData);
           })
           .catch(error => {
             return reject(error);

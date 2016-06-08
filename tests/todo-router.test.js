@@ -14,7 +14,7 @@ let sampleUsers, sampleTodos;
 const title = 'a new todo';
 const completed = false;
 before('populate fake data', function(done) {
-  User.bulkCreate(sampleUsersData, { returning: true })
+  User.bulkCreate(sampleUsersData, { returning: true, individualHooks: true })
   .then(result => {
     sampleUsers = result;
     const sampleTodosData = [{
@@ -270,11 +270,19 @@ describe('PATCH /:id', function() {
       });
     });
 
-    it('return 422 when id is not a UUID');
+    it('return 422 when id is not a UUID', function(done) {
+      axios.patch(`${TODO_API}/2313216545`,
+        { title: newTitle },
+        { headers: { token: sampleUsers[0].getToken() } }
+      )
+      .catch(err => {
+        expect(err.status).to.equal(422);
+        done();
+      });
+    });
   });
 
   context('with correct request data', function() {
-
     let patchingTodo, owner, response, updatedTodo;
     const todoUpdates = {
       title: newTitle,
@@ -322,12 +330,20 @@ describe('PATCH /:id', function() {
 
 describe('DELETE /:id', function() {
   context('with mal-formed request data', function() {
-    it('return 422 when id is not a UUID');
+    it('return 422 when id is not a UUID', function(done) {
+      axios.delete(`${TODO_API}/12354654`, {
+        headers: { token: sampleUsers[0].getToken() }
+      })
+      .catch(err => {
+        expect(err.status).to.equal(422);
+        done();
+      });
+    });
   });
 
   context('with semantically incorrect data', function() {
     it('return 401 when token is invalid', function(done) {
-      axios.delete(`${TODO_API}/${sampleTodos[1].id}`, {
+      axios.delete(`${TODO_API}/${sampleTodos[0].id}`, {
         headers: { token: 'someinvalidtoken' }
       })
       .catch(err => {
@@ -337,7 +353,7 @@ describe('DELETE /:id', function() {
     });
 
     it('return 401 when token is not present', function(done) {
-      axios.delete(`${TODO_API}/${sampleTodos[1].id}`)
+      axios.delete(`${TODO_API}/${sampleTodos[0].id}`)
       .catch(err => {
         expect(err.status).to.equal(401);
         done();
@@ -345,7 +361,7 @@ describe('DELETE /:id', function() {
     });
 
     it('return 403 when token user is not the owner', function(done) {
-      axios.delete(`${TODO_API}/${sampleTodos[1].id}`, {
+      axios.delete(`${TODO_API}/${sampleTodos[0].id}`, {
         headers: { token: sampleUsers[1].getToken() }
       })
       .catch(err => {
@@ -356,7 +372,7 @@ describe('DELETE /:id', function() {
 
     it('return 412 when todo id does not exist', function(done) {
       axios.delete(`${TODO_API}/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa`, {
-        headers: { token: sampleUsers[1].getToken() }
+        headers: { token: sampleUsers[0].getToken() }
       })
       .catch(err => {
         expect(err.status).to.equal(412);
@@ -368,7 +384,7 @@ describe('DELETE /:id', function() {
   context('with correct request data', function() {
     let response, todo, user;
     before(function(done) {
-      todo = sampleTodos[1];
+      todo = sampleTodos[0];
       user = sampleUsers[0];
       axios.delete(`${TODO_API}/${todo.id}`, {
         headers: { token: user.getToken() }
@@ -381,6 +397,7 @@ describe('DELETE /:id', function() {
         done(err);
       });
     });
+
     it('delete todo in the database', function(done) {
       Todo.findById(todo.id)
       .then(todo => {
@@ -399,23 +416,22 @@ describe('DELETE /:id', function() {
 });
 
 describe('GET /:id', function() {
-  // context('with mal-formed request data', function() {
-  //   it('return 422 when id is not a UUID', function(done) {
-  //     axios.get(`${TODO_API}/1919}`, {
-  //       headers: { token: 'invalid token' }
-  //     })
-  //     .catch(error => {
-  //       expect(error.status).to.equal(422);
-  //       done();
-  //     });
-  //   });
-  // });
+  context('with mal-formed request data', function() {
+    it('return 422 when id is not a UUID', function(done) {
+      axios.get(`${TODO_API}/1919}`, {
+        headers: { token: 'invalid token' }
+      })
+      .catch(error => {
+        expect(error.status).to.equal(422);
+        done();
+      });
+    });
+  });
 
   context('with correct request data', function() {
-
     it('return 200 with todo selfie', function(done) {
       const owner = sampleUsers[0];
-      const todo = sampleTodos[0];
+      const todo = sampleTodos[1];
       axios.get(`${TODO_API}/${todo.id}`, {
         headers: { token: owner.getToken() }
       })
@@ -436,7 +452,7 @@ describe('GET /:id', function() {
 
   context('with semantically incorrect data', function() {
     it('return 401 when token is invalid', function(done) {
-      axios.get(`${TODO_API}/${sampleTodos[0].id}`, {
+      axios.get(`${TODO_API}/${sampleTodos[1].id}`, {
         headers: { token: 'invalid token' }
       })
       .catch(error => {
@@ -446,7 +462,7 @@ describe('GET /:id', function() {
     });
 
     it('return 401 when token is not present', function(done) {
-      axios.get(`${TODO_API}/${sampleTodos[0].id}`)
+      axios.get(`${TODO_API}/${sampleTodos[1].id}`)
       .catch(error => {
         expect(error.status).to.equal(401);
         done();
@@ -454,7 +470,7 @@ describe('GET /:id', function() {
     });
 
     it('return 403 when token user is not the owner', function(done) {
-      axios.get(`${TODO_API}/${sampleTodos[0].id}`, {
+      axios.get(`${TODO_API}/${sampleTodos[1].id}`, {
         headers: { token: sampleUsers[1].getToken() }
       })
       .catch(error => {
@@ -464,17 +480,45 @@ describe('GET /:id', function() {
     });
   });
 });
-//
-// describe('GET /', function() {
-//   context('with semantically incorrect data', function() {
-//
-//   });
-//
-//   context('with correct request data', function() {
-//
-//   });
-// });
-//
+
+describe('GET /', function() {
+  context('with semantically incorrect data', function() {
+    it('return 401 when token is invalid', function(done) {
+      axios.get(TODO_API, {
+        headers: { token: 'someinvalidtoken' }
+      })
+      .catch(error => {
+        expect(error.status).to.equal(401);
+        done();
+      });
+    });
+
+    it('return 401 when token is not present', function(done) {
+      axios.get(TODO_API)
+      .catch(error => {
+        expect(error.status).to.equal(401);
+        done();
+      });
+    });
+  });
+
+  context('with correct request data', function() {
+    it('return 200 with token users todos selfies', function(done) {
+      axios.get(TODO_API, {
+        headers: { token: sampleUsers[1].getToken() }
+      })
+      .then(res => {
+        expect(res.status).to.equal(200);
+        expect(res.data.length).to.equal(4);
+        done();
+      })
+      .catch(error => {
+        done(error);
+      });
+    });
+  });
+});
+
 after(function(done) {
   User.destroy({
     where: {
