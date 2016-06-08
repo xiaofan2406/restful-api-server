@@ -16,19 +16,19 @@ const localLogin = new LocalStrategy(localOptions, (email, password, done) => {
         status: 401
       });
     }
-    return user.validPassword(password, (err, isMatch) => {
+    if (!user.activated) {
+      return done(null, false, {
+        message: 'The user has not yet verify his email address',
+        status: 401
+      });
+    }
+    user.validPassword(password, (err, isMatch) => {
       if (err) {
         return done(err, false);
       }
       if (!isMatch) {
         return done(null, false, {
           message: 'The password does not match the email address',
-          status: 401
-        });
-      }
-      if (!user.activated) {
-        return done(null, false, {
-          message: 'The user has not yet verify his email address',
           status: 401
         });
       }
