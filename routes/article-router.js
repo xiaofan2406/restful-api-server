@@ -35,15 +35,12 @@ function requireJsonBody(req, res, next) {
 }
 
 function createSingleArticle(req, res, next) {
-  const { title, content } = req.body;
-
   if (!req.user.isAbleToCreateArticle()) {
     return next(forbiddenError);
   }
   const authorId = req.user.id;
   const articleData = {
-    title,
-    content,
+    ...req.body,
     authorId
   };
   Article.createSingle(articleData)

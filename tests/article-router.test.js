@@ -163,7 +163,8 @@ describe('POST /', function() {
       axios.post(`${ARTICLE_API}/`,  {
         title,
         content,
-        authorId: user.id
+        authorId: user.id,
+        isPublic: true
       }, {
         headers: {
           token: user.getToken()
@@ -185,6 +186,7 @@ describe('POST /', function() {
         expect(article.content).to.equal(content);
         expect(article.idWithAuthor).to.equal(`U${user.id}A${title}`);
         expect(article.authorId).to.equal(user.id);
+        expect(article.isPublic).to.be.true;
         done();
       })
       .catch(err => {
@@ -203,7 +205,6 @@ describe('POST /', function() {
         expect(response.data[key]).to.deep.equal(articleData[key]);
       }
     });
-
   });
 
   context('with semantically incorrect data', function() {
@@ -569,26 +570,28 @@ describe('GET /', function() {
         for(const article of res.data.articles) {
           expect(article.isPublic).to.be.true;
         }
-        expect(res.data.authors.length).to.equal(4);
+        expect(res.data.authors.length).to.equal(2);
         done();
       })
       .catch(err => {
         done(err);
       });
     });
+
     it('return 200 with all articles when token user is admin', function(done) {
       axios.get(ARTICLE_API, {
-        headers: { token: userResults[4].getToken() }
+        headers: { token: userResults[3].getToken() }
       })
       .then(res => {
-        expect(res.data.articles.length).to.equal(10);
-        expect(res.data.authors.length).to.equal(5);
+        expect(res.data.articles.length).to.equal(4);
+        expect(res.data.authors.length).to.equal(2);
         done();
       })
       .catch(err => {
         done(err);
       });
     });
+
     it('return 200 with public articles when token user is not admin', function(done) {
       axios.get(ARTICLE_API, {
         headers: { token: userResults[2].getToken() }
@@ -597,7 +600,7 @@ describe('GET /', function() {
         for(const article of res.data.articles) {
           expect(article.isPublic).to.be.true;
         }
-        expect(res.data.authors.length).to.equal(4);
+        expect(res.data.authors.length).to.equal(2);
         done();
       })
       .catch(err => {
