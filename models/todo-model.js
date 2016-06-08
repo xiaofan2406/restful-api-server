@@ -37,19 +37,52 @@ module.exports = (sequelize, DataTypes) => {
           onDelete: 'cascade'
         });
       },
+      validFields() {
+        return [
+          'title',
+          'completed',
+          'ownerId'
+        ];
+      },
+      editableFields() {
+        return [
+          'title',
+          'completed'
+        ];
+      },
       createSingle(todoData, user) {
         return new Promise((resolve, reject) => {
-          if (!user.isAbleToCreateTodo()) {
-            const forbiddenError = new Error('Forbidden');
-            forbiddenError.status = 403;
-            return reject(forbiddenError);
+          const err = new Error();
+          const validFields = this.validFields();
+          const requestFields = Object.keys(todoData);
+          for (const field of requestFields) {
+            if (validFields.indexOf(field) === -1) {
+              err.message = 'Invalid field in request data';
+              err.status = 400;
+              return reject(err);
+            }
           }
+          if (!user.isAbleToCreateTodo()) {
+            err.message = 'Forbidden';
+            err.status = 403;
+            return reject(err);
+          }
+          todoData.ownerId = user.id;
           return resolve(this.create(todoData));
         });
       },
       editSingle(id, updates, user) {
-        const err = new Error();
         return new Promise((resolve, reject) => {
+          const err = new Error();
+          const editableFields = this.editableFields();
+          const requestFields = Object.keys(updates);
+          for (const field of requestFields) {
+            if (editableFields.indexOf(field) === -1) {
+              err.message = 'Un-editable field in request data';
+              err.status = 400;
+              return reject(err);
+            }
+          }
           this.findById(id)
           .then(todo => {
             if (!todo) {
@@ -62,11 +95,6 @@ module.exports = (sequelize, DataTypes) => {
               err.status = 403;
               return reject(err);
             }
-            if (updates.ownerId) {
-              err.message = 'Cannot change author';
-              err.status = 403;
-              return reject(err);
-            }
             return resolve(todo.update(updates));
           })
           .catch(error => {
@@ -75,8 +103,8 @@ module.exports = (sequelize, DataTypes) => {
         });
       },
       deleteSingle(id, user) {
-        const err = new Error();
         return new Promise((resolve, reject) => {
+          const err = new Error();
           this.findById(id)
           .then(todo => {
             if (!todo) {

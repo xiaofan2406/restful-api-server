@@ -97,6 +97,25 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     classMethods: {
+      validFields() {
+        return [
+          'email',
+          'password',
+          'displayName',
+          'UUID',
+          'activated',
+          'type'
+        ];
+      },
+      editableFields() {
+        return [
+          'email',
+          'password',
+          'displayName',
+          'activated',
+          'type'
+        ];
+      },
       activateAccount(email, hash) {
         const err = new Error();
         return new Promise((resolve, reject) => {

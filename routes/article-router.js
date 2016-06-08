@@ -35,19 +35,11 @@ function requireJsonBody(req, res, next) {
 }
 
 function createSingleArticle(req, res, next) {
-  if (!req.user.isAbleToCreateArticle()) {
-    return next(forbiddenError);
-  }
-  const authorId = req.user.id;
-  const articleData = {
-    ...req.body,
-    authorId
-  };
-  Article.createSingle(articleData)
+  const articleData = req.body;
+  const user = req.user;
+  Article.createSingle(articleData, user)
   .then(article => {
-    const selfie = article.selfie();
-    selfie.author = req.user.publicSnapshot();
-    res.status(201).json(selfie);
+    res.status(201).json(article.selfie());
   })
   .catch(error => {
     error.status = error.status || 500;
@@ -59,11 +51,9 @@ function editSingleArticle(req, res, next) {
   const user = req.user;
   const articleId = req.params.id;
   const updates = req.body;
-  Article.editSingle(articleId, user, updates)
+  Article.editSingle(articleId, updates, user)
   .then(updatedArticle => {
-    const selfie = updatedArticle.selfie();
-    selfie.author = user.publicSnapshot();
-    res.status(200).json(selfie);
+    res.status(200).json(updatedArticle.selfie());
   })
   .catch(error => {
     error.status = error.status || 500;
@@ -83,7 +73,6 @@ function deleteSingleArticle(req, res, next) {
     return next(error);
   });
 }
-
 
 function checkHeader(req, res, next) {
   if (req.get('token')) {

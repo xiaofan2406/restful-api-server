@@ -35,11 +35,9 @@ function requireJsonBody(req, res, next) {
 }
 
 function createSingleTodo(req, res, next) {
-  const todoData = {
-    ...req.body,
-    ownerId: req.user.id
-  };
-  Todo.createSingle(todoData, req.user).then(todo => {
+  const todoData = req.body;
+  const user = req.user;
+  Todo.createSingle(todoData, user).then(todo => {
     res.status(201).json(todo.selfie());
   }).catch(error => {
     error.status = error.status || 500;

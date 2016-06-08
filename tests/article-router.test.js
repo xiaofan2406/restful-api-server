@@ -10,42 +10,42 @@ const { sampleUsersData } = require('./helpers');
 
 context('/api/article', function() {
 
-let userResults, articleResults;
+let sampleUsers, sampleArticles;
 const title = 'an new article title';
 const content = 'the new content of an article';
 
 before('populate fake data', function(done) {
   User.bulkCreate(sampleUsersData, { returning: true })
   .then(result => {
-    userResults = result;
+    sampleUsers = result;
     const sampleArticlesData = [{
       title: 'private article 1',
       content: 'content for private article 1',
       tags: ['greate'],
       categories: ['personal'],
       isPublic: false,
-      authorId: userResults[0].id
+      authorId: sampleUsers[0].id
     }, {
       title: 'public article 2',
       content: 'content for public article 2',
       tags: ['greate'],
       categories: ['personal'],
       isPublic: true,
-      authorId: userResults[0].id
+      authorId: sampleUsers[0].id
     }, {
       title: 'private article 3',
       content: 'content for private article 3',
       tags: ['greate'],
       categories: ['personal'],
       isPublic: false,
-      authorId: userResults[1].id
+      authorId: sampleUsers[1].id
     }, {
       title: 'public article 4',
       content: 'content for public article 4',
       tags: ['greate'],
       categories: ['personal'],
       isPublic: true,
-      authorId: userResults[1].id
+      authorId: sampleUsers[1].id
     }];
     return Article.bulkCreate(sampleArticlesData, {
       returning: true,
@@ -54,7 +54,7 @@ before('populate fake data', function(done) {
     });
   })
   .then(result => {
-    articleResults = result;
+    sampleArticles = result;
     done();
   }).catch(error => {
     done(error);
@@ -87,7 +87,7 @@ describe('POST /', function() {
     it('return 403 when token user dose not have right to create article', function(done) {
       axios.post(`${ARTICLE_API}/`,
         { title, content },
-        { headers: { token: userResults[2].getToken() } }
+        { headers: { token: sampleUsers[2].getToken() } }
       )
       .catch(err => {
         expect(err.status).to.equal(403);
@@ -97,8 +97,8 @@ describe('POST /', function() {
 
     it('return 409 when token user had the same titled article already', function(done) {
       axios.post(`${ARTICLE_API}/`,
-        { title: articleResults[0].title, content },
-        { headers: { token: userResults[0].getToken() } }
+        { title: sampleArticles[0].title, content },
+        { headers: { token: sampleUsers[0].getToken() } }
       )
       .catch(err => {
         expect(err.status).to.equal(409);
@@ -106,14 +106,23 @@ describe('POST /', function() {
       });
     });
 
-    it('return 400 when unknow field is present request');
+    it('return 400 when unknown field is present in request', function(done) {
+      axios.post(`${ARTICLE_API}/`,
+        { title, content, 'unknownField': 'some content' },
+        { headers: { token: sampleUsers[0].getToken() } }
+      )
+      .catch(err => {
+        expect(err.status).to.equal(400);
+        done();
+      });
+    });
   });
 
   context('with mal-formed request data', function() {
     it('return 422 when title is not present', function(done) {
       axios.post(`${ARTICLE_API}/`,
         { content },
-        { headers: { token: userResults[0].getToken() } }
+        { headers: { token: sampleUsers[0].getToken() } }
       )
       .catch(err => {
         expect(err.status).to.equal(422);
@@ -124,7 +133,7 @@ describe('POST /', function() {
     it('return 422 when title is an empty string', function(done) {
       axios.post(`${ARTICLE_API}/`,
         { title: '', content },
-        { headers: { token: userResults[0].getToken() } }
+        { headers: { token: sampleUsers[0].getToken() } }
       )
       .catch(err => {
         expect(err.status).to.equal(422);
@@ -135,7 +144,7 @@ describe('POST /', function() {
     it('return 422 when content is not present', function(done) {
       axios.post(`${ARTICLE_API}/`,
         { title },
-        { headers: { token: userResults[0].getToken() } }
+        { headers: { token: sampleUsers[0].getToken() } }
       )
       .catch(err => {
         expect(err.status).to.equal(422);
@@ -146,7 +155,7 @@ describe('POST /', function() {
     it('return 422 when content is an empty string', function(done) {
       axios.post(`${ARTICLE_API}/`,
         { title, content: '' },
-        { headers: { token: userResults[0].getToken() } }
+        { headers: { token: sampleUsers[0].getToken() } }
       )
       .catch(err => {
         expect(err.status).to.equal(422);
@@ -158,7 +167,7 @@ describe('POST /', function() {
   context('with correct request data', function() {
     let response, user, newArticle;
     before(function(done) {
-      user = userResults[0];
+      user = sampleUsers[0];
       axios.post(`${ARTICLE_API}/`,  {
         title,
         content,
@@ -194,13 +203,9 @@ describe('POST /', function() {
 
     it('return 201 with article selfie and author publicSnapshot', function() {
       expect(response.status).to.equal(201);
-      const userData = user.publicSnapshot();
-      for(let key in userData) {
-        expect(response.data.author[key]).to.deep.equal(userData[key]);
-      }
       const articleData = newArticle.selfie();
       for(let key in articleData) {
-        expect(response.data[key]).to.deep.equal(articleData[key]);
+        expect(articleData[key]).to.deep.equal(response.data[key]);
       }
     });
   });
@@ -209,7 +214,7 @@ describe('POST /', function() {
 describe('PATCH /:id', function() {
   context('with semantically incorrect data', function() {
     it('return 401 when token is invalid', function(done) {
-      axios.patch(`${ARTICLE_API}/${articleResults[0].id}`,
+      axios.patch(`${ARTICLE_API}/${sampleArticles[0].id}`,
         { content: 'new content' },
         { headers: { token: 'someinvalidtoken' } }
       )
@@ -220,7 +225,7 @@ describe('PATCH /:id', function() {
     });
 
     it('return 401 when token is not present', function(done) {
-      axios.patch(`${ARTICLE_API}/${articleResults[0].id}`, { content: 'new content' })
+      axios.patch(`${ARTICLE_API}/${sampleArticles[0].id}`, { content: 'new content' })
       .catch(err => {
         expect(err.status).to.equal(401);
         done();
@@ -228,9 +233,9 @@ describe('PATCH /:id', function() {
     });
 
     it('return 403 when token user is not the author', function(done) {
-      axios.patch(`${ARTICLE_API}/${articleResults[0].id}`,
+      axios.patch(`${ARTICLE_API}/${sampleArticles[0].id}`,
         { content: 'new content' },
-        { headers: { token: userResults[1].getToken() } }
+        { headers: { token: sampleUsers[1].getToken() } }
       )
       .catch(err => {
         expect(err.status).to.equal(403);
@@ -241,7 +246,7 @@ describe('PATCH /:id', function() {
     it('return 412 when article id does not exist', function(done) {
       axios.patch(`${ARTICLE_API}/99999999`,
         { content: 'new content' },
-        { headers: { token: userResults[0].getToken() } }
+        { headers: { token: sampleUsers[0].getToken() } }
       )
       .catch(err => {
         expect(err.status).to.equal(412);
@@ -249,36 +254,45 @@ describe('PATCH /:id', function() {
       });
     });
 
-    it('return 403 when trying to modify authorId', function(done) {
-      axios.patch(`${ARTICLE_API}/${articleResults[0].id}`,
-        { content: 'new content', authorId: userResults[1].id },
-        { headers: { token: userResults[0].getToken() } }
+    it('return 400 when trying to modify unknown fields', function(done) {
+      axios.patch(`${ARTICLE_API}/${sampleArticles[0].id}`,
+        { unknownField: 'some content' },
+        { headers: { token: sampleUsers[0].getToken() } }
       )
       .catch(err => {
-        expect(err.status).to.equal(403);
+        expect(err.status).to.equal(400);
+        done();
+      });
+    });
+
+    it('return 400 when trying to modify Un-editable fields', function(done) {
+      axios.patch(`${ARTICLE_API}/${sampleArticles[0].id}`,
+        { content: 'new content', authorId: sampleUsers[1].id },
+        { headers: { token: sampleUsers[0].getToken() } }
+      )
+      .catch(err => {
+        expect(err.status).to.equal(400);
         done();
       });
     });
 
     it('return 409 when token user had the same titled article already', function(done) {
-      axios.patch(`${ARTICLE_API}/${articleResults[0].id}`,
-        { content: 'new content', title: articleResults[1].title },
-        { headers: { token: userResults[0].getToken() } }
+      axios.patch(`${ARTICLE_API}/${sampleArticles[0].id}`,
+        { content: 'new content', title: sampleArticles[1].title },
+        { headers: { token: sampleUsers[0].getToken() } }
       )
       .catch(err => {
         expect(err.status).to.equal(409);
         done();
       });
     });
-
-    it('return 400 when unknow field is present request');
   });
 
   context('with mal-formed request data', function() {
     it('return 422 when data values contain empty string', function(done) {
-      axios.patch(`${ARTICLE_API}/${articleResults[0].id}`,
+      axios.patch(`${ARTICLE_API}/${sampleArticles[0].id}`,
         { content: '' },
-        { headers: { token: userResults[0].getToken() } }
+        { headers: { token: sampleUsers[0].getToken() } }
       )
       .catch(err => {
         expect(err.status).to.equal(422);
@@ -287,9 +301,9 @@ describe('PATCH /:id', function() {
     });
 
     it('return 422 when data is not present', function(done) {
-      axios.patch(`${ARTICLE_API}/${articleResults[0].id}`,
+      axios.patch(`${ARTICLE_API}/${sampleArticles[0].id}`,
         { },
-        { headers: { token: userResults[0].getToken() } }
+        { headers: { token: sampleUsers[0].getToken() } }
       )
       .catch(err => {
         expect(err.status).to.equal(422);
@@ -308,8 +322,8 @@ describe('PATCH /:id', function() {
       isPublic: false
     };
     before(function(done) {
-      article = articleResults[1];
-      user = userResults[0];
+      article = sampleArticles[1];
+      user = sampleUsers[0];
       axios.patch(`${ARTICLE_API}/${article.id}`,
         articleUpdates,
         { headers: { token: user.getToken() } }
@@ -327,7 +341,6 @@ describe('PATCH /:id', function() {
       Article.findById(article.id)
       .then(arti => {
         updatedArticle = arti;
-        console.log(updatedArticle);
         for (const key in articleUpdates) {
           expect(articleUpdates[key]).to.deep.equal(updatedArticle[key]);
         }
@@ -346,15 +359,11 @@ describe('PATCH /:id', function() {
       }
     });
 
-    it('return 200 with article selfie and author publicSnapshot', function() {
+    it('return 200 with article selfie', function() {
       expect(response.status).to.equal(200);
-      const userData = user.publicSnapshot();
-      for(let key in userData) {
-        expect(response.data.author[key]).to.deep.equal(userData[key]);
-      }
       const articleData = updatedArticle.selfie();
       for(let key in articleData) {
-        expect(response.data[key]).to.deep.equal(articleData[key]);
+        expect(articleData[key]).to.deep.equal(response.data[key]);
       }
     });
   });
@@ -363,7 +372,7 @@ describe('PATCH /:id', function() {
 describe('DELETE /:id', function() {
   context('with semantically incorrect data', function() {
     it('return 401 when token is invalid', function(done) {
-      axios.delete(`${ARTICLE_API}/${articleResults[0].id}`, {
+      axios.delete(`${ARTICLE_API}/${sampleArticles[0].id}`, {
         headers: { token: 'someinvalidtoken' }
       })
       .catch(err => {
@@ -372,15 +381,15 @@ describe('DELETE /:id', function() {
       });
     });
     it('return 401 when token is not present', function(done) {
-      axios.delete(`${ARTICLE_API}/${articleResults[0].id}`)
+      axios.delete(`${ARTICLE_API}/${sampleArticles[0].id}`)
       .catch(err => {
         expect(err.status).to.equal(401);
         done();
       });
     });
     it('return 403 when token user is not the author', function(done) {
-      axios.delete(`${ARTICLE_API}/${articleResults[0].id}`, {
-        headers: { token: userResults[2].getToken() }
+      axios.delete(`${ARTICLE_API}/${sampleArticles[0].id}`, {
+        headers: { token: sampleUsers[2].getToken() }
       })
       .catch(err => {
         expect(err.status).to.equal(403);
@@ -389,7 +398,7 @@ describe('DELETE /:id', function() {
     });
     it('return 412 when article id does not exist', function(done) {
       axios.delete(`${ARTICLE_API}/99999999`, {
-        headers: { token: userResults[0].getToken() }
+        headers: { token: sampleUsers[0].getToken() }
       })
       .catch(err => {
         expect(err.status).to.equal(412);
@@ -401,8 +410,8 @@ describe('DELETE /:id', function() {
   context('with correct request data', function() {
     let response, article, user;
     before(function(done) {
-      article = articleResults[0];
-      user = userResults[0];
+      article = sampleArticles[0];
+      user = sampleUsers[0];
       axios.delete(`${ARTICLE_API}/${article.id}`, {
         headers: { token: user.getToken() }
       })
@@ -435,8 +444,8 @@ describe('DELETE /:id', function() {
 describe('GET /:id', function() {
   context('with correct request data', function() {
     it('return 200 with article selfie and author publicSnapshot for public when token user is author', function(done) {
-      const author = userResults[1];
-      const article = articleResults[3];
+      const author = sampleUsers[1];
+      const article = sampleArticles[3];
       axios.get(`${ARTICLE_API}/${article.id}`, {
         headers: { token: author.getToken() }
       })
@@ -458,10 +467,10 @@ describe('GET /:id', function() {
     });
 
     it('return 200 with article selfie and author publicSnapshot for public when token user is not author', function(done) {
-      const author = userResults[1];
-      const article = articleResults[3];
+      const author = sampleUsers[1];
+      const article = sampleArticles[3];
       axios.get(`${ARTICLE_API}/${article.id}`, {
-        headers: { token: userResults[3].getToken() }
+        headers: { token: sampleUsers[3].getToken() }
       })
       .then(res => {
         expect(res.status).to.equal(200);
@@ -481,8 +490,8 @@ describe('GET /:id', function() {
     });
 
     it('return 200 with article selfie and author publicSnapshot for private when token user is author', function(done) {
-      const author = userResults[1];
-      const article = articleResults[2];
+      const author = sampleUsers[1];
+      const article = sampleArticles[2];
       axios.get(`${ARTICLE_API}/${article.id}`, {
         headers: { token: author.getToken() }
       })
@@ -506,7 +515,7 @@ describe('GET /:id', function() {
 
   context('with semantically incorrect data', function() {
     it('return 401 when token is invalid and article is private', function(done) {
-      axios.get(`${ARTICLE_API}/${articleResults[2].id}`, {
+      axios.get(`${ARTICLE_API}/${sampleArticles[2].id}`, {
         headers: { token: 'invalid token' }
       })
       .catch(error => {
@@ -516,7 +525,7 @@ describe('GET /:id', function() {
     });
 
     it('return 401 when token is not valid and article is public', function(done) {
-      axios.get(`${ARTICLE_API}/${articleResults[1].id}`, {
+      axios.get(`${ARTICLE_API}/${sampleArticles[1].id}`, {
         headers: { token: 'invalid token' }
       })
       .catch(error => {
@@ -526,7 +535,7 @@ describe('GET /:id', function() {
     });
 
     it('return 403 when token is not present and article is private', function(done) {
-      axios.get(`${ARTICLE_API}/${articleResults[2].id}`)
+      axios.get(`${ARTICLE_API}/${sampleArticles[2].id}`)
       .catch(error => {
         expect(error.status).to.equal(403);
         done();
@@ -534,8 +543,8 @@ describe('GET /:id', function() {
     });
 
     it('return 403 when token user is not the author and article is private', function(done) {
-      axios.get(`${ARTICLE_API}/${articleResults[2].id}`, {
-        headers: { token: userResults[0].getToken() }
+      axios.get(`${ARTICLE_API}/${sampleArticles[2].id}`, {
+        headers: { token: sampleUsers[0].getToken() }
       })
       .catch(error => {
         expect(error.status).to.equal(403);
@@ -576,7 +585,7 @@ describe('GET /', function() {
 
     it('return 200 with all articles when token user is admin', function(done) {
       axios.get(ARTICLE_API, {
-        headers: { token: userResults[3].getToken() }
+        headers: { token: sampleUsers[3].getToken() }
       })
       .then(res => {
         expect(res.data.articles.length).to.equal(4);
@@ -590,7 +599,7 @@ describe('GET /', function() {
 
     it('return 200 with public articles when token user is not admin', function(done) {
       axios.get(ARTICLE_API, {
-        headers: { token: userResults[2].getToken() }
+        headers: { token: sampleUsers[2].getToken() }
       })
       .then(res => {
         for(const article of res.data.articles) {

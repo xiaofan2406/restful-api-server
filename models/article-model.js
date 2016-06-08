@@ -41,7 +41,8 @@ module.exports = (sequelize, DataTypes) => {
           content: this.content,
           categories: this.categories,
           tags: this.tags,
-          isPublic: this.isPublic
+          isPublic: this.isPublic,
+          authorId: this.authorId
         };
       }
     },
@@ -55,9 +56,44 @@ module.exports = (sequelize, DataTypes) => {
           onDelete: 'cascade'
         });
       },
-      createSingle(articleData) {
-        const err = new Error();
+      validFields() {
+        return [
+          'title',
+          'content',
+          'categories',
+          'tags',
+          'idWithAuthor',
+          'isPublic',
+          'authorId'
+        ];
+      },
+      editableFields() { // by user edit
+        return [
+          'title',
+          'content',
+          'categories',
+          'tags',
+          'isPublic'
+        ];
+      },
+      createSingle(articleData, user) {
         return new Promise((resolve, reject) => {
+          const err = new Error();
+          const validFields = this.validFields();
+          const requestFields = Object.keys(articleData);
+          for (const field of requestFields) {
+            if (validFields.indexOf(field) === -1) {
+              err.message = 'Invalid field in request data';
+              err.status = 400;
+              return reject(err);
+            }
+          }
+          if (!user.isAbleToCreateArticle()) {
+            err.message = 'User cannot create article';
+            err.status = 403;
+            return reject(err);
+          }
+          articleData.authorId = user.id;
           this.findOne({ where: { idWithAuthor: `U${articleData.authorId}A${articleData.title}` } })
           .then(dup => {
             if (dup) {
@@ -72,9 +108,18 @@ module.exports = (sequelize, DataTypes) => {
           });
         });
       },
-      editSingle(id, user, updates) {
-        const err = new Error();
+      editSingle(id, updates, user) {
         return new Promise((resolve, reject) => {
+          const err = new Error();
+          const editableFields = this.editableFields();
+          const requestFields = Object.keys(updates);
+          for (const field of requestFields) {
+            if (editableFields.indexOf(field) === -1) {
+              err.message = 'Un-editable field in request data';
+              err.status = 400;
+              return reject(err);
+            }
+          }
           let currentArticle;
           this.findById(id)
           .then(article => {
@@ -85,11 +130,6 @@ module.exports = (sequelize, DataTypes) => {
             }
             if (user.id !== article.authorId) {
               err.message = 'Forbidden';
-              err.status = 403;
-              return reject(err);
-            }
-            if (updates.authorId) {
-              err.message = 'Cannot change author';
               err.status = 403;
               return reject(err);
             }
@@ -115,8 +155,8 @@ module.exports = (sequelize, DataTypes) => {
         });
       },
       deleteSingle(id, user) {
-        const err = new Error();
         return new Promise((resolve, reject) => {
+          const err = new Error();
           this.findById(id)
           .then(article => {
             if (!article) {
@@ -137,8 +177,8 @@ module.exports = (sequelize, DataTypes) => {
         });
       },
       getSingle(id, user) {
-        const err = new Error();
         return new Promise((resolve, reject) => {
+          const err = new Error();
           let foundArticle;
           this.findById(id)
           .then(article => {

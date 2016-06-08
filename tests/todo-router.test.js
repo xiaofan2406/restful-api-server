@@ -99,7 +99,16 @@ describe('POST /', function() {
       });
     });
 
-    it('return 400 when unknow field is present request');
+    it('return 400 when unknown field is present request', function() {
+      axios.post(`${TODO_API}/`,
+        { title, unknownField: 'some content' },
+        { headers: { token: sampleUsers[0].getToken() } }
+      )
+      .catch(err => {
+        expect(err.status).to.equal(400);
+        done();
+      });
+    });
   });
 
   context('with mal-formed request data', function() {
@@ -215,18 +224,27 @@ describe('PATCH /:id', function() {
       });
     });
 
-    it('return 403 when trying to modify ownerId', function(done) {
+    it('return 400 when trying to modify unknown field', function(done) {
+      axios.patch(`${TODO_API}/${sampleTodos[0].id}`,
+        { title: newTitle, unknownField: 'some content' },
+        { headers: { token: sampleUsers[0].getToken() } }
+      )
+      .catch(err => {
+        expect(err.status).to.equal(400);
+        done();
+      });
+    });
+
+    it('return 400 when trying to modify un-editable field', function(done) {
       axios.patch(`${TODO_API}/${sampleTodos[0].id}`,
         { title: newTitle, ownerId: sampleUsers[1].id },
         { headers: { token: sampleUsers[0].getToken() } }
       )
       .catch(err => {
-        expect(err.status).to.equal(403);
+        expect(err.status).to.equal(400);
         done();
       });
     });
-
-    it('return 400 when unknow field is present request');
   });
 
   context('with mal-formed request data', function() {
