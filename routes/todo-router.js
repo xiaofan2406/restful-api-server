@@ -146,7 +146,7 @@ router.patch('/:id/toggleCompletion', requireUUIDParam, requireAuth, toggleSingl
 
 router.delete('/:id', requireUUIDParam, requireAuth, deleteSingleTodo);
 
-router.get('/all', requireAuth, getAllTodos);
+router.get('/', requireAuth, getAllTodos);
 
 router.get('/active', requireAuth, getActiveTodos);
 
