@@ -102,6 +102,28 @@ module.exports = (sequelize, DataTypes) => {
           });
         });
       },
+      toggleSingle(id, user) {
+        return new Promise((resolve, reject) => {
+          const err = new Error();
+          this.findById(id)
+          .then(todo => {
+            if (!todo) {
+              err.message = 'Todo does not exist';
+              err.status = 412;
+              return reject(err);
+            }
+            if (user.id !== todo.ownerId) {
+              err.message = 'Forbidden';
+              err.status = 403;
+              return reject(err);
+            }
+            return resolve(todo.update({ completed: !todo.completed }));
+          })
+          .catch(error => {
+            return reject(error);
+          });
+        });
+      },
       deleteSingle(id, user) {
         return new Promise((resolve, reject) => {
           const err = new Error();

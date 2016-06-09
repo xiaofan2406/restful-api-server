@@ -328,6 +328,86 @@ describe('PATCH /:id', function() {
   });
 });
 
+describe('PATCH /:id/toggleCompletion', function() {
+  context('with mal-formed request data', function() {
+    it('return 422 when id is not a UUID', function(done) {
+      axios.patch(`${TODO_API}/123321321/toggleCompletion`, {}, {
+        headers: { token: sampleUsers[0].getToken() }
+      })
+      .catch(err => {
+        expect(err.status).to.equal(422);
+        done();
+      });
+    });
+  });
+
+  context('with semantically incorrect data', function() {
+    it('return 401 when token is invalid', function(done) {
+      axios.patch(`${TODO_API}/${sampleTodos[0].id}/toggleCompletion`, {}, {
+        headers: { token: 'someinvalidtoken' }
+      })
+      .catch(err => {
+        expect(err.status).to.equal(401);
+        done();
+      });
+    });
+
+    it('return 401 when token is not present', function(done) {
+      axios.patch(`${TODO_API}/${sampleTodos[0].id}/toggleCompletion`, {})
+      .catch(err => {
+        expect(err.status).to.equal(401);
+        done();
+      });
+    });
+
+    it('retunr 403 when token user is not the owner', function(done) {
+      axios.patch(`${TODO_API}/${sampleTodos[0].id}/toggleCompletion`, {}, {
+        headers: { token: sampleUsers[1].getToken() }
+      })
+      .catch(err => {
+        expect(err.status).to.equal(403);
+        done();
+      });
+    });
+  });
+
+  context('with correct request data', function() {
+    let beforeToggle;
+    let afterToggle;
+    before(function(done) {
+      beforeToggle = sampleTodos[2];
+      axios.patch(`${TODO_API}/${beforeToggle.id}/toggleCompletion`, {}, {
+        headers: { token: sampleUsers[0].getToken() }
+      })
+      .then(res => {
+        response = res;
+        done();
+      })
+      .catch(err => {
+        done(err);
+      });
+    });
+
+    it('updates the completed field in database', function(done) {
+      Todo.findById(beforeToggle.id).then(todo => {
+        afterToggle = todo;
+        expect(todo.completed).to.not.equal(beforeToggle.completed);
+        expect(todo.title).to.equal(beforeToggle.title);
+        done();
+      }).catch(err => {
+        done(err);
+      })
+    });
+    it('return 200 with todo selfie', function(){
+      expect(response.status).to.equal(200);
+      const todoData = afterToggle.selfie();
+      for(let key in todoData) {
+        expect(response.data[key]).to.deep.equal(todoData[key]);
+      }
+    });
+  })
+});
+
 describe('DELETE /:id', function() {
   context('with mal-formed request data', function() {
     it('return 422 when id is not a UUID', function(done) {
