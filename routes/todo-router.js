@@ -114,6 +114,30 @@ function getAllTodos(req, res, next) {
   });
 }
 
+function getActiveTodos(req, res, next) {
+  const user = req.user;
+  Todo.getActive(user)
+  .then(todosData => {
+    res.status(200).json(todosData);
+  })
+  .catch(error => {
+    error.status = error.status || 500;
+    return next(error);
+  });
+}
+
+function getCompletedTodos(req, res, next) {
+  const user = req.user;
+  Todo.getCompleted(user)
+  .then(todosData => {
+    res.status(200).json(todosData);
+  })
+  .catch(error => {
+    error.status = error.status || 500;
+    return next(error);
+  });
+}
+
 router.post('/', requireTitleInBody, requireAuth, createSingleTodo);
 
 router.patch('/:id', requireUUIDParam, requireJsonBody, requireAuth, editSingleTodo);
@@ -122,8 +146,12 @@ router.patch('/:id/toggleCompletion', requireUUIDParam, requireAuth, toggleSingl
 
 router.delete('/:id', requireUUIDParam, requireAuth, deleteSingleTodo);
 
-router.get('/:id', requireUUIDParam, requireAuth, getSingleTodo);
+router.get('/all', requireAuth, getAllTodos);
 
-router.get('/', requireAuth, getAllTodos);
+router.get('/active', requireAuth, getActiveTodos);
+
+router.get('/completed', requireAuth, getCompletedTodos);
+
+router.get('/:id', requireUUIDParam, requireAuth, getSingleTodo);
 
 module.exports = router;

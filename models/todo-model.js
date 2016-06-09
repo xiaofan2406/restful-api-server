@@ -182,6 +182,36 @@ module.exports = (sequelize, DataTypes) => {
             return reject(error);
           });
         });
+      },
+      getActive(user) {
+        return new Promise((resolve, reject) => {
+          this.findAll({ where: { ownerId: user.id, completed: false } })
+          .then(todos => {
+            const todosData = [];
+            for (const todo of todos) {
+              todosData.push(todo.selfie());
+            }
+            return resolve(todosData);
+          })
+          .catch(error => {
+            return reject(error);
+          });
+        });
+      },
+      getCompleted(user) {
+        return new Promise((resolve, reject) => {
+          this.findAll({ where: { ownerId: user.id, completed: true } })
+          .then(todos => {
+            const todosData = [];
+            for (const todo of todos) {
+              todosData.push(todo.selfie());
+            }
+            return resolve(todosData);
+          })
+          .catch(error => {
+            return reject(error);
+          });
+        });
       }
     },
     hooks: {
