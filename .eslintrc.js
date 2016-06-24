@@ -16,6 +16,7 @@ module.exports = {
     "arrow-body-style": 0, // skip arrow function style
     "new-cap": 0, // disable new-cap for Sequalize
     "no-param-reassign": 0, // disable for express middleware
-    "consistent-return": 0 // disable for 'return callback()'
+    "consistent-return": 0, // disable for 'return callback()'
+    "no-underscore-dangle": ["error", { "allowAfterThis": true }]
   }
 };

@@ -16,7 +16,7 @@ ERROR403.status = 403;
 const ERROR412 = new Error('Precondition fail');
 ERROR412.status = 412;
 
-export default {
+module.exports = {
   ERROR422,
   ERROR409,
   ERROR401,

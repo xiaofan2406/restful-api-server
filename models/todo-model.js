@@ -1,3 +1,4 @@
+const ERRORS = require('../constants/errors');
 
 module.exports = (sequelize, DataTypes) => {
   const Todo = sequelize.define('Todo', {
@@ -52,49 +53,44 @@ module.exports = (sequelize, DataTypes) => {
       },
       createSingle(todoData, user) {
         return new Promise((resolve, reject) => {
-          const err = new Error();
           const validFields = this.validFields();
           const requestFields = Object.keys(todoData);
           for (const field of requestFields) {
             if (validFields.indexOf(field) === -1) {
-              err.message = 'Invalid field in request data';
-              err.status = 400;
-              return reject(err);
+              return reject(ERRORS.ERROR400);
             }
           }
           if (!user.isAbleToCreateTodo()) {
-            err.message = 'Forbidden';
-            err.status = 403;
-            return reject(err);
+            return reject(ERRORS.ERROR403);
           }
           todoData.ownerId = user.id;
           return resolve(this.create(todoData));
         });
       },
+      _operateOn(todo, user) {
+        return new Promise((resolve, reject) => {
+          if (!todo) {
+            return reject(ERRORS.ERROR412);
+          }
+          if (user.id !== todo.ownerId) {
+            return reject(ERRORS.ERROR403);
+          }
+          return resolve(todo);
+        });
+      },
       editSingle(id, updates, user) {
         return new Promise((resolve, reject) => {
-          const err = new Error();
           const editableFields = this.editableFields();
           const requestFields = Object.keys(updates);
           for (const field of requestFields) {
             if (editableFields.indexOf(field) === -1) {
-              err.message = 'Un-editable field in request data';
-              err.status = 400;
-              return reject(err);
+              return reject(ERRORS.ERROR400);
             }
           }
           this.findById(id)
           .then(todo => {
-            if (!todo) {
-              err.message = 'Todo does not exist';
-              err.status = 412;
-              return reject(err);
-            }
-            if (user.id !== todo.ownerId) {
-              err.message = 'Forbidden';
-              err.status = 403;
-              return reject(err);
-            }
+            return this._operateOn(todo, user);
+          }).then((todo) => {
             return resolve(todo.update(updates));
           })
           .catch(error => {
@@ -104,18 +100,13 @@ module.exports = (sequelize, DataTypes) => {
       },
       toggleSingle(id, user) {
         return new Promise((resolve, reject) => {
-          const err = new Error();
           this.findById(id)
           .then(todo => {
             if (!todo) {
-              err.message = 'Todo does not exist';
-              err.status = 412;
-              return reject(err);
+              return reject(ERRORS.ERROR412);
             }
             if (user.id !== todo.ownerId) {
-              err.message = 'Forbidden';
-              err.status = 403;
-              return reject(err);
+              return reject(ERRORS.ERROR403);
             }
             return resolve(todo.update({ completed: !todo.completed }));
           })
@@ -126,18 +117,13 @@ module.exports = (sequelize, DataTypes) => {
       },
       deleteSingle(id, user) {
         return new Promise((resolve, reject) => {
-          const err = new Error();
           this.findById(id)
           .then(todo => {
             if (!todo) {
-              err.message = 'Todo does not exist';
-              err.status = 412;
-              return reject(err);
+              return reject(ERRORS.ERROR412);
             }
             if (user.id !== todo.ownerId) {
-              err.message = 'Forbidden';
-              err.status = 403;
-              return reject(err);
+              return reject(ERRORS.ERROR403);
             }
             return resolve(todo.destroy());
           })
@@ -148,18 +134,13 @@ module.exports = (sequelize, DataTypes) => {
       },
       getSingle(id, user) {
         return new Promise((resolve, reject) => {
-          const err = new Error();
           this.findById(id)
           .then(todo => {
             if (!todo) {
-              err.message = 'Does not exist';
-              err.status = 412;
-              return reject(err);
+              return reject(ERRORS.ERROR412);
             }
             if (user.id !== todo.ownerId) {
-              err.message = 'Forbidden';
-              err.status = 403;
-              return reject(err);
+              return reject(ERRORS.ERROR403);
             }
             return resolve(todo.selfie());
           })
