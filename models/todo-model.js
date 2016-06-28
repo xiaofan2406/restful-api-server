@@ -1,4 +1,4 @@
-const Error = require('../constants/errors');
+const Error = require('../helpers/errors');
 
 module.exports = (sequelize, DataTypes) => {
   const Todo = sequelize.define('Todo', {

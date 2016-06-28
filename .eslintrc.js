@@ -17,6 +17,6 @@ module.exports = {
     "new-cap": 0, // disable new-cap for Sequalize
     "no-param-reassign": 0, // disable for express middleware
     "consistent-return": 0, // disable for 'return callback()'
-    "no-underscore-dangle": ["error", { "allowAfterThis": true }]
+    "no-underscore-dangle": 0 // underscore definition as private
   }
 };

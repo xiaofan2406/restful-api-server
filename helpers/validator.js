@@ -12,7 +12,7 @@ function isEmptyObject(target) {
   return !util.isObject(target) || Object.keys(target).length === 0;
 }
 
-function objectHasEmptyValue(target) {
+function _objectHasEmptyValue(target) {
   for (const key of Object.keys(target)) {
     if (!isThere(target[key])) {
       return true;
@@ -40,12 +40,16 @@ function isUUID(target) {
   return uuid.test(target);
 }
 
+function isJSON(target) {
+  return !isEmptyObject(target) && !_objectHasEmptyValue(target);
+}
+
 module.exports = {
   isEmail,
   isPassword,
   isThere,
   isNumber,
   isEmptyObject,
-  objectHasEmptyValue,
-  isUUID
+  isUUID,
+  isJSON
 };

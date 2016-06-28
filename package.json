@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "DEBUG=* nodemon ./bin/www -i tests/",
+    "start": "nodemon ./bin/www -i tests/",
     "test": "mocha tests",
     "preversion": "npm test",
     "version": "",

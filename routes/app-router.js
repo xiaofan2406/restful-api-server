@@ -11,15 +11,8 @@ const {
 } = require('../helpers/validator.js');
 const { CLIENT_URL } = require('../config/app-config');
 
-// put these some where else
-const unprocessableEntityError = new Error('Invalid request data');
-unprocessableEntityError.status = 422;
-const conflictRequestError = new Error('Conflict request');
-conflictRequestError.status = 409;
-const unauthorizedError = new Error('Unauthorized');
-unauthorizedError.status = 401;
-const internalServerError = new Error('Internal server error');
-internalServerError.status = 500;
+const Error = require('../helpers/errors');
+const unprocessableEntityError = Error(422, 'Invalid request data');
 
 /**
  * middlewares for validations
@@ -88,32 +81,20 @@ function checkEmail(req, res, next) {
     });
   })
   .catch(error => { // database query error
-    error.status = 500;
-    return next(error);
+    next(error);
   });
 }
 
 function signUp(req, res, next) {
-  const { email, password } = req.body;
-
-  User.findByEmail(email).then(user => {
-    if (user) {
-      return next(conflictRequestError);
-    }
-  }).catch(error => { // database query error
-    error.status = 500;
-    return next(error);
-  });
-
-  User.create({ email, password, displayName: email })
+  const userData = req.body;
+  User.createSingle(userData)
   .then(user => {
     sendVerificationEmail(user.email, user.UUID);
     res.status(202).json({
-      email
+      email: user.email
     });
   })
-  .catch(error => { // database query error
-    error.status = 500;
+  .catch(error => {
     return next(error);
   });
 }
@@ -128,7 +109,6 @@ function activateAccount(req, res, next) {
     });
   })
   .catch(error => {
-    error.status = error.status || 500;
     next(error);
   });
 }
@@ -148,7 +128,6 @@ function refreshToken(req, res) {
   });
 }
 
-
 router.get('/checkEmail', requireEmailInQuery, checkEmail);
 
 router.post('/signUp', requireEmailPasswordInBody, signUp);
@@ -160,8 +139,8 @@ router.post('/signIn', requireEmailPasswordInBody, requireSignin, signIn);
 router.get('/refreshToken', requireAuth, refreshToken);
 
 router.get('/', requireAuth, (req, res) => {
+  // todo send documentation
   res.status(200).json({ message: 'index page' });
 });
-
 
 module.exports = router;

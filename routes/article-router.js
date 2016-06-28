@@ -4,20 +4,10 @@ const { Article } = require('../models');
 const requireAuth = require('../helpers/passport-jwt');
 const {
   isThere,
-  isEmptyObject,
-  objectHasEmptyValue
+  isJSON
 } = require('../helpers/validator');
-
-const unauthorizedError = new Error('Unauthorized');
-unauthorizedError.status = 401;
-const unprocessableEntityError = new Error('Invalid request data');
-unprocessableEntityError.status = 422;
-const forbiddenError = new Error('Forbidden');
-forbiddenError.status = 403;
-const duplicateError = new Error('Duplicate');
-duplicateError.status = 409;
-const preconditionError = new Error('Precondition Fail');
-preconditionError.status = 412;
+const Error = require('../helpers/errors');
+const unprocessableEntityError = Error(422, 'Invalid request data');
 
 function requireTitleContentInBody(req, res, next) {
   const { title, content } = req.body;
@@ -28,7 +18,7 @@ function requireTitleContentInBody(req, res, next) {
 }
 
 function requireJsonBody(req, res, next) {
-  if (isEmptyObject(req.body) || objectHasEmptyValue(req.body)) {
+  if (!isJSON(req.body)) {
     return next(unprocessableEntityError);
   }
   next();

@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt-nodejs');
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = require('../config/jwt-config').JWT_SECRET;
 const { type } = require('../constants/user-constants.js');
-const Error = require('../constants/errors');
+const Error = require('../helpers/errors');
 /**
  * This is a sample Sequelize model
  */
@@ -116,6 +116,31 @@ module.exports = (sequelize, DataTypes) => {
           'activated',
           'type'
         ];
+      },
+      createSingle(userData) {
+        // safe assumption: userData has email and password fields
+        return new Promise((resolve, reject) => {
+          const editableFields = this.editableFields();
+          const requestFields = Object.keys(userData);
+          for (const field of requestFields) {
+            if (editableFields.indexOf(field) === -1) {
+              return reject(Error(400, 'Invalid field in request data'));
+            }
+          }
+          if (!userData.hasOwnProperty('displayName')) {
+            userData.displayName = userData.email;
+          }
+          this.findByEmail(userData.email)
+          .then(user => {
+            if (user) {
+              return reject(Error(409, 'Email has been registered already'));
+            }
+            return resolve(User.create(userData));
+          })
+          .catch(error => {
+            return reject(error);
+          });
+        });
       },
       activateAccount(email, hash) {
         return new Promise((resolve, reject) => {

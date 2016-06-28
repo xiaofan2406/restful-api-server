@@ -4,21 +4,11 @@ const { Todo } = require('../models');
 const requireAuth = require('../helpers/passport-jwt');
 const {
   isThere,
-  isEmptyObject,
-  objectHasEmptyValue,
-  isUUID
+  isUUID,
+  isJSON
 } = require('../helpers/validator');
-
-const unauthorizedError = new Error('Unauthorized');
-unauthorizedError.status = 401;
-const unprocessableEntityError = new Error('Invalid request data');
-unprocessableEntityError.status = 422;
-const forbiddenError = new Error('Forbidden');
-forbiddenError.status = 403;
-const duplicateError = new Error('Duplicate');
-duplicateError.status = 409;
-const preconditionError = new Error('Precondition Fail');
-preconditionError.status = 412;
+const Error = require('../helpers/errors');
+const unprocessableEntityError = Error(422, 'Invalid request data');
 
 function requireTitleInBody(req, res, next) {
   const { title } = req.body;
@@ -29,7 +19,7 @@ function requireTitleInBody(req, res, next) {
 }
 
 function requireJsonBody(req, res, next) {
-  if (isEmptyObject(req.body) || objectHasEmptyValue(req.body)) {
+  if (!isJSON(req.body)) {
     return next(unprocessableEntityError);
   }
   next();
@@ -48,7 +38,6 @@ function createSingleTodo(req, res, next) {
   Todo.createSingle(todoData, user).then(todo => {
     res.status(201).json(todo.selfie());
   }).catch(error => {
-    error.status = error.status || 500;
     next(error);
   });
 }
@@ -60,7 +49,6 @@ function editSingleTodo(req, res, next) {
   Todo.editSingle(todoId, updates, user).then(updatedTodo => {
     res.status(200).json(updatedTodo.selfie());
   }).catch(error => {
-    error.status = error.status || 500;
     next(error);
   });
 }
@@ -71,7 +59,6 @@ function toggleSingleTodo(req, res, next) {
   Todo.toggleSingle(todoId, user).then(updatedTodo => {
     res.status(200).json(updatedTodo.selfie());
   }).catch(error => {
-    error.status = error.status || 500;
     next(error);
   });
 }
@@ -84,7 +71,6 @@ function deleteSingleTodo(req, res, next) {
     res.status(204).end();
   })
   .catch(error => {
-    error.status = error.status || 500;
     return next(error);
   });
 }
@@ -97,7 +83,6 @@ function getSingleTodo(req, res, next) {
     res.status(200).json(todoData);
   })
   .catch(error => {
-    error.status = error.status || 500;
     return next(error);
   });
 }
@@ -109,7 +94,6 @@ function getAllTodos(req, res, next) {
     res.status(200).json(todosData);
   })
   .catch(error => {
-    error.status = error.status || 500;
     return next(error);
   });
 }
@@ -121,7 +105,6 @@ function getActiveTodos(req, res, next) {
     res.status(200).json(todosData);
   })
   .catch(error => {
-    error.status = error.status || 500;
     return next(error);
   });
 }
@@ -133,7 +116,6 @@ function getCompletedTodos(req, res, next) {
     res.status(200).json(todosData);
   })
   .catch(error => {
-    error.status = error.status || 500;
     return next(error);
   });
 }
