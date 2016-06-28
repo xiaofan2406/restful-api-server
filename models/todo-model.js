@@ -1,4 +1,4 @@
-const ERRORS = require('../constants/errors');
+const Error = require('../constants/errors');
 
 module.exports = (sequelize, DataTypes) => {
   const Todo = sequelize.define('Todo', {
@@ -57,11 +57,11 @@ module.exports = (sequelize, DataTypes) => {
           const requestFields = Object.keys(todoData);
           for (const field of requestFields) {
             if (validFields.indexOf(field) === -1) {
-              return reject(ERRORS.ERROR400);
+              return reject(Error(400, 'Invalid field in request data'));
             }
           }
           if (!user.isAbleToCreateTodo()) {
-            return reject(ERRORS.ERROR403);
+            return reject(Error(403, 'User does not have right to create new todo'));
           }
           todoData.ownerId = user.id;
           return resolve(this.create(todoData));
@@ -70,10 +70,10 @@ module.exports = (sequelize, DataTypes) => {
       _operateOn(todo, user) {
         return new Promise((resolve, reject) => {
           if (!todo) {
-            return reject(ERRORS.ERROR412);
+            return reject(Error(412, 'Requested todo does not exist'));
           }
           if (user.id !== todo.ownerId) {
-            return reject(ERRORS.ERROR403);
+            return reject(Error(403, 'User does not have right to operate on requested todo'));
           }
           return resolve(todo);
         });
@@ -84,13 +84,14 @@ module.exports = (sequelize, DataTypes) => {
           const requestFields = Object.keys(updates);
           for (const field of requestFields) {
             if (editableFields.indexOf(field) === -1) {
-              return reject(ERRORS.ERROR400);
+              return reject(Error(400, 'Invalid field in request data'));
             }
           }
           this.findById(id)
           .then(todo => {
             return this._operateOn(todo, user);
-          }).then((todo) => {
+          })
+          .then(todo => {
             return resolve(todo.update(updates));
           })
           .catch(error => {
@@ -102,12 +103,9 @@ module.exports = (sequelize, DataTypes) => {
         return new Promise((resolve, reject) => {
           this.findById(id)
           .then(todo => {
-            if (!todo) {
-              return reject(ERRORS.ERROR412);
-            }
-            if (user.id !== todo.ownerId) {
-              return reject(ERRORS.ERROR403);
-            }
+            return this._operateOn(todo, user);
+          })
+          .then(todo => {
             return resolve(todo.update({ completed: !todo.completed }));
           })
           .catch(error => {
@@ -119,12 +117,9 @@ module.exports = (sequelize, DataTypes) => {
         return new Promise((resolve, reject) => {
           this.findById(id)
           .then(todo => {
-            if (!todo) {
-              return reject(ERRORS.ERROR412);
-            }
-            if (user.id !== todo.ownerId) {
-              return reject(ERRORS.ERROR403);
-            }
+            return this._operateOn(todo, user);
+          })
+          .then(todo => {
             return resolve(todo.destroy());
           })
           .catch(error => {
@@ -136,12 +131,9 @@ module.exports = (sequelize, DataTypes) => {
         return new Promise((resolve, reject) => {
           this.findById(id)
           .then(todo => {
-            if (!todo) {
-              return reject(ERRORS.ERROR412);
-            }
-            if (user.id !== todo.ownerId) {
-              return reject(ERRORS.ERROR403);
-            }
+            return this._operateOn(todo, user);
+          })
+          .then(todo => {
             return resolve(todo.selfie());
           })
           .catch(error => {

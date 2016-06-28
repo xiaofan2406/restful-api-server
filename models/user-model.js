@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt-nodejs');
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = require('../config/jwt-config').JWT_SECRET;
 const { type } = require('../constants/user-constants.js');
+const Error = require('../constants/errors');
 /**
  * This is a sample Sequelize model
  */
@@ -117,28 +118,19 @@ module.exports = (sequelize, DataTypes) => {
         ];
       },
       activateAccount(email, hash) {
-        const err = new Error();
         return new Promise((resolve, reject) => {
-          this.findByEmail(email)
-          .then(user => {
+          this.findByEmail(email).then(user => {
             if (!user) {
-              err.message = 'Email not registered.';
-              err.status = 401;
-              return reject(err);
+              return reject(Error(401, 'Email is not registered'));
             }
             if (user.activated === true) {
-              err.message = 'Account was already activated.';
-              err.status = 409;
-              return reject(err);
+              return reject(Error(409, 'Account was already activated'));
             }
             if (email !== user.email || hash !== user.UUID) {
-              err.message = 'Email and hash did not match';
-              err.status = 401;
-              return reject(err);
+              return reject(Error(401, 'Email and hash does not match'));
             }
             return resolve(user.update({ activated: true }));
-          })
-          .catch(error => {
+          }).catch(error => {
             return reject(error);
           });
         });
