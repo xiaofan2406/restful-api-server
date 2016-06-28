@@ -3,14 +3,12 @@ const router = express.Router();
 const { User } = require('../models');
 const requireAuth = require('../helpers/passport-jwt');
 const requireSignin = require('../helpers/passport-local');
-const mailer = require('../helpers/mailer');
+const { sendVerificationEmail } = require('../helpers/mailer');
 const {
   isEmail,
   isPassword,
   isThere
 } = require('../helpers/validator.js');
-const { CLIENT_URL } = require('../config/app-config');
-
 const Error = require('../helpers/errors');
 const unprocessableEntityError = Error(422, 'Invalid request data');
 
@@ -41,31 +39,6 @@ function requireEmailHashInBody(req, res, next) {
   }
   next();
 }
-
-// TODO create a module to contain all emails
-function sendVerificationEmail(to, userHash) {
-  const content = `
-    <style>
-      p {
-        font-family: 'Source Sans Pro', 'Lucida Grande', sans-serif'
-      }
-    </style>
-    <p>Please click the following link to activate your account.</p>
-    <p>
-      <a href="${CLIENT_URL}/activateAccount?email=${to}&hash=${userHash}">
-        Click here to activate
-      </a>
-    </p>
-  `;
-  const mailOptions = {
-    from: '"Admin" <admin@restful.com>',
-    to,
-    subject: 'Activate your account',
-    html: content
-  };
-  return mailer(mailOptions);
-}
-
 
 /**
  * controllers for each routes,
