@@ -3,34 +3,10 @@ const router = express.Router();
 const { Todo } = require('../models');
 const requireAuth = require('../helpers/passport-jwt');
 const {
-  isThere,
-  isUUID,
-  isJSON
-} = require('../helpers/validator');
-const Error = require('../helpers/errors');
-const unprocessableEntityError = Error(422, 'Invalid request data');
-
-function requireTitleInBody(req, res, next) {
-  const { title } = req.body;
-  if (!isThere(title)) {
-    return next(unprocessableEntityError);
-  }
-  next();
-}
-
-function requireJsonBody(req, res, next) {
-  if (!isJSON(req.body)) {
-    return next(unprocessableEntityError);
-  }
-  next();
-}
-
-function requireUUIDParam(req, res, next) {
-  if (!isUUID(req.params.id)) {
-    return next(unprocessableEntityError);
-  }
-  next();
-}
+  requireTitleInBody,
+  requireUUIDParam,
+  requireJsonBody
+} = require('./todo-mdws');
 
 function createSingleTodo(req, res, next) {
   const todoData = req.body;
