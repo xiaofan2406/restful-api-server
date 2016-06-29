@@ -8,8 +8,13 @@ export default (sequelize, DataTypes) => {
       primaryKey: true
     },
     title: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(50),
       allowNull: false
+    },
+    content: {
+      type: DataTypes.STRING(200),
+      defaultValue: null,
+      allowNull: true
     },
     completed: {
       type: DataTypes.BOOLEAN,
@@ -39,6 +44,9 @@ export default (sequelize, DataTypes) => {
         return {
           id: this.id,
           title: this.title,
+          content: this.content,
+          scope: this.scope,
+          scopeDate: this.scopeDate,
           completed: this.completed
         };
       }
