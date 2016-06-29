@@ -45,6 +45,7 @@ export default (sequelize, DataTypes) => {
           id: this.id,
           title: this.title,
           content: this.content,
+          dueDate: this.dueDate,
           scope: this.scope,
           scopeDate: this.scopeDate,
           completed: this.completed
