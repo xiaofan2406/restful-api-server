@@ -21,7 +21,7 @@
 * sequelize database migrations
 * production setup
 * folder structure
-* webpack es6 babel
+* ~~webpack es6 babel~~
 
 # Conventions
 ### Nodejs Naming
