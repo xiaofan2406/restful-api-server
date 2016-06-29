@@ -1,16 +1,15 @@
-const passport = require('passport');
-const JwtStrategy = require('passport-jwt').Strategy;
-const ExtractJwt = require('passport-jwt').ExtractJwt;
+import passport from 'passport';
+import { Strategy, ExtractJwt } from 'passport-jwt';
+import { JWT_SECRET } from '../config/jwt-config';
 
-const JWT_SECRET = require('../config/jwt-config').JWT_SECRET;
-const User = require('../models').User;
+import { User } from '../models';
 
 const jwtOptions = {
   jwtFromRequest: ExtractJwt.fromHeader('token'),
   secretOrKey: JWT_SECRET
 };
 
-const jwtLogin = new JwtStrategy(jwtOptions, (payload, done) => {
+const jwtLogin = new Strategy(jwtOptions, (payload, done) => {
   User.findById(payload.sub).then((user) => {
     if (!user) {
       return done(null, false, { message: 'Invalid user token' });
@@ -23,7 +22,7 @@ const jwtLogin = new JwtStrategy(jwtOptions, (payload, done) => {
 
 passport.use(jwtLogin);
 
-const requireJwt = (req, res, next) => {
+export default (req, res, next) => {
   passport.authenticate('jwt', { session: false }, (err, user, info) => {
     if (err) { return next(err); }
     if (!user) {
@@ -35,5 +34,3 @@ const requireJwt = (req, res, next) => {
     return next();
   })(req, res, next);
 };
-
-module.exports = requireJwt;

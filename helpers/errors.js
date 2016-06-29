@@ -14,4 +14,6 @@ const newError = (status, msg) => {
   return err;
 };
 
-module.exports = newError;
+export const InvalidRequestDataError = newError(422, 'Invalid request data');
+
+export default newError;

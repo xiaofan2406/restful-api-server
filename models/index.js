@@ -1,16 +1,18 @@
-const fs = require('fs');
-const path = require('path');
-const Sequelize = require('sequelize');
+import fs from 'fs';
+import path from 'path';
+import Sequelize from 'sequelize';
+import dbConfig from '../config/db-config';
+
 const basename = path.basename(module.filename);
 const env = process.env.NODE_ENV || 'development';
-const dbConfig = require(`${__dirname}/../config/db-config`)[env];
 const db = {};
+const config = dbConfig[env];
 
 let sequelize;
-if (dbConfig.use_env_variable) {
-  sequelize = new Sequelize(process.env[dbConfig.use_env_variable]);
+if (config.use_env_variable) {
+  sequelize = new Sequelize(process.env[config.use_env_variable]);
 } else {
-  sequelize = new Sequelize(dbConfig.database, dbConfig.username, dbConfig.password, dbConfig);
+  sequelize = new Sequelize(config.database, config.username, config.password, config);
 }
 
 fs

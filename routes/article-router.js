@@ -1,25 +1,24 @@
-const express = require('express');
-const router = express.Router();
-const { Article } = require('../models');
-const requireAuth = require('../helpers/passport-jwt');
-const {
+import { Router } from 'express';
+import { Article } from '../models';
+import requireAuth from '../helpers/passport-jwt';
+import {
   isThere,
   isJSON
-} = require('../helpers/validator');
-const Error = require('../helpers/errors');
-const unprocessableEntityError = Error(422, 'Invalid request data');
+} from '../helpers/validator';
+import { InvalidRequestDataError } from '../helpers/errors';
+const router = Router();
 
 function requireTitleContentInBody(req, res, next) {
   const { title, content } = req.body;
   if (!isThere(title) || !isThere(content)) {
-    return next(unprocessableEntityError);
+    return next(InvalidRequestDataError);
   }
   next();
 }
 
 function requireJsonBody(req, res, next) {
   if (!isJSON(req.body)) {
-    return next(unprocessableEntityError);
+    return next(InvalidRequestDataError);
   }
   next();
 }
@@ -117,4 +116,4 @@ router.get('/:id(\\d+)', checkHeader, getSingleArticle);
 
 router.get('/', checkHeader, getAllArticles);
 
-module.exports = router;
+export default router;

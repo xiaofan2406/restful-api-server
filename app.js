@@ -1,13 +1,11 @@
-const express = require('express');
-// import express from 'express';
-const morgan = require('morgan');
-const cookieParser = require('cookie-parser');
-const bodyParser = require('body-parser');
-const cors = require('cors');
-const HTTPLogger = require('./helpers/logger').HTTPLogger;
-
-const appRouter = require('./routes/app-router');
-const apiRouter = require('./routes/api-router');
+import express from 'express';
+import morgan from 'morgan';
+import cookieParser from 'cookie-parser';
+import bodyParser from 'body-parser';
+import cors from 'cors';
+import { HTTPLogger } from './helpers/logger';
+import appRouter from './routes/app-router';
+import apiRouter from './routes/api-router';
 
 const app = express();
 app.use(morgan('dev', { stream: HTTPLogger.stream })); // morgan http logger
@@ -45,4 +43,4 @@ app.use((err, req, res, next) => {
 });
  /* eslint-enable no-unused-vars */
 
-module.exports = app;
+export default app;

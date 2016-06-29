@@ -1,12 +1,12 @@
 /* global describe, it, context, before, after */
 /* eslint-disable prefer-arrow-callback, func-names,
   space-before-function-paren, no-unused-expressions */
-const expect = require('chai').expect;
-const axios = require('axios');
-const { SERVER_URL } = require('../config/app-config');
+import { expect } from 'chai';
+import axios from 'axios';
+import { SERVER_URL } from '../config/app-config';
+import { User, Article } from '../models';
+import { sampleUsersData } from './helpers';
 const ARTICLE_API = `${SERVER_URL}/api/article`;
-const { User, Article } = require('../models');
-const { sampleUsersData } = require('./helpers');
 
 context('/api/article', function() {
   let sampleUsers;

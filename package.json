@@ -3,8 +3,9 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "nodemon ./bin/www -i tests/",
-    "test": "mocha tests",
+    "babel-node": "babel-node ./bin/www",
+    "start": "nodemon --exec npm run babel-node -i tests/",
+    "test": "mocha tests --compilers js:babel-register",
     "preversion": "npm test",
     "version": "",
     "postversion": "git push && git push --tags"
@@ -25,6 +26,7 @@
   },
   "devDependencies": {
     "axios": "",
+    "babel-cli": "",
     "babel-core": "",
     "babel-plugin-transform-object-rest-spread": "",
     "babel-preset-es2015": "",

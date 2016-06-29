@@ -1,6 +1,6 @@
-const SQLLogger = require('../helpers/logger').SQLLogger;
+import { SQLLogger } from '../helpers/logger';
 
-module.exports = {
+export default {
   development: {
     username: 'root',
     password: 'dbpassword',

@@ -1,14 +1,14 @@
-const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
+import passport from 'passport';
+import { Strategy } from 'passport-local';
 
-const User = require('../models').User;
+import { User } from '../models';
 
 const localOptions = {
   usernameField: 'email',
   passwordField: 'password'
 };
 
-const localLogin = new LocalStrategy(localOptions, (email, password, done) => {
+const localLogin = new Strategy(localOptions, (email, password, done) => {
   User.findByEmail(email).then(user => {
     if (!user) {
       return done(null, false, {
@@ -41,7 +41,7 @@ const localLogin = new LocalStrategy(localOptions, (email, password, done) => {
 
 passport.use(localLogin);
 
-const requireSignin = (req, res, next) => {
+export default (req, res, next) => {
   passport.authenticate('local', { session: false }, (err, user, info) => {
     if (err) { return next(err); }
     if (!user) {
@@ -53,5 +53,3 @@ const requireSignin = (req, res, next) => {
     return next();
   })(req, res, next);
 };
-
-module.exports = requireSignin;

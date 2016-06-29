@@ -1,16 +1,16 @@
-const express = require('express');
-const router = express.Router();
-const { User } = require('../models');
-const requireAuth = require('../helpers/passport-jwt');
-const requireSignin = require('../helpers/passport-local');
-const { sendVerificationEmail } = require('../helpers/mailer');
-const {
+import { Router } from 'express';
+import { User } from '../models';
+import requireAuth from '../helpers/passport-jwt';
+import requireSignin from '../helpers/passport-local';
+import { sendVerificationEmail } from '../helpers/mailer';
+import {
   isEmail,
   isPassword,
   isThere
-} = require('../helpers/validator.js');
-const Error = require('../helpers/errors');
-const unprocessableEntityError = Error(422, 'Invalid request data');
+} from '../helpers/validator.js';
+import { InvalidRequestDataError } from '../helpers/errors';
+
+const router = Router();
 
 /**
  * middlewares for validations
@@ -19,7 +19,7 @@ const unprocessableEntityError = Error(422, 'Invalid request data');
 function requireEmailPasswordInBody(req, res, next) {
   const { email, password } = req.body;
   if (!isPassword(password) || !isEmail(email)) {
-    return next(unprocessableEntityError);
+    return next(InvalidRequestDataError);
   }
   next();
 }
@@ -27,7 +27,7 @@ function requireEmailPasswordInBody(req, res, next) {
 function requireEmailInQuery(req, res, next) {
   const { email } = req.query;
   if (!isEmail(email)) {
-    return next(unprocessableEntityError);
+    return next(InvalidRequestDataError);
   }
   next();
 }
@@ -35,7 +35,7 @@ function requireEmailInQuery(req, res, next) {
 function requireEmailHashInBody(req, res, next) {
   const { email, hash } = req.body;
   if (!isEmail(email) || !isThere(hash)) {
-    return next(unprocessableEntityError);
+    return next(InvalidRequestDataError);
   }
   next();
 }
@@ -116,4 +116,4 @@ router.get('/', requireAuth, (req, res) => {
   res.status(200).json({ message: 'index page' });
 });
 
-module.exports = router;
+export default router;

@@ -1,8 +1,8 @@
-const winston = require('winston');
-const path = require('path');
-const DailyRotateFile = require('winston-daily-rotate-file');
+import winston from 'winston';
+import path from 'path';
+import DailyRotateFile from 'winston-daily-rotate-file';
 
-const SQLLogger = new (winston.Logger)({
+export const SQLLogger = new (winston.Logger)({
   transports: [
     new (DailyRotateFile)({
       filename: path.join(__dirname, '../logs/sql.log'),
@@ -18,7 +18,7 @@ const SQLLogger = new (winston.Logger)({
 });
 
 
-const HTTPLogger = new (winston.Logger)({
+export const HTTPLogger = new (winston.Logger)({
   transports: [
     new (DailyRotateFile)({
       filename: path.join(__dirname, '../logs/http.log'),
@@ -44,12 +44,4 @@ HTTPLogger.stream = {
   write(message) {
     HTTPLogger.info(message);
   }
-};
-
-
-// TODO create new application logger here and export it
-
-module.exports = {
-  SQLLogger,
-  HTTPLogger
 };

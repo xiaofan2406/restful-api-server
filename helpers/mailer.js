@@ -1,10 +1,22 @@
-const nodemailer = require('nodemailer');
-const mailConfig = require('../config/mail-config');
-const { CLIENT_URL } = require('../config/app-config');
+import nodemailer from 'nodemailer';
+import mailConfig from '../config/mail-config';
+import { CLIENT_URL } from '../config/app-config';
 
 // create reusable transporter object using the default SMTP transport
 const transporter = nodemailer.createTransport(mailConfig);
 
+/**
+ * mailOptions:
+ * from 'sender@server.com' or formatted '"Sender Name" <sender@server.com>'
+ * to - Comma separated list or an array of recipients e-mail addresses
+ * cc - Comma separated list or an array of recipients e-mail addresses
+ * bcc - Comma separated list or an array of recipients e-mail addresses
+ * subject - The subject of the e-mail
+ * text - The plaintext version of the message
+ * html - The HTML version of the message
+ * attachments - An array of attachment objects
+ * https://github.com/nodemailer/nodemailer for more details
+ */
 const mailer = mailOptions => {
   return new Promise((resolve, reject) => {
     // send mail with defined transport object
@@ -17,7 +29,7 @@ const mailer = mailOptions => {
   });
 };
 
-function sendVerificationEmail(to, userHash) {
+export function sendVerificationEmail(to, userHash) {
   const content = `
     <style>
       p {
@@ -40,20 +52,4 @@ function sendVerificationEmail(to, userHash) {
   return mailer(mailOptions);
 }
 
-
-/**
- * mailOptions:
- * from 'sender@server.com' or formatted '"Sender Name" <sender@server.com>'
- * to - Comma separated list or an array of recipients e-mail addresses
- * cc - Comma separated list or an array of recipients e-mail addresses
- * bcc - Comma separated list or an array of recipients e-mail addresses
- * subject - The subject of the e-mail
- * text - The plaintext version of the message
- * html - The HTML version of the message
- * attachments - An array of attachment objects
- * https://github.com/nodemailer/nodemailer for more details
- */
-module.exports = {
-  mailer,
-  sendVerificationEmail
-};
+export default mailer;

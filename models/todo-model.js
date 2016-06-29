@@ -1,6 +1,6 @@
-const Error = require('../helpers/errors');
+import Error from '../helpers/errors';
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   const Todo = sequelize.define('Todo', {
     id: {
       type: DataTypes.UUID,

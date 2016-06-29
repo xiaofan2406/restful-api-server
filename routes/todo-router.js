@@ -1,12 +1,12 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 const { Todo } = require('../models');
-const requireAuth = require('../helpers/passport-jwt');
-const {
+import requireAuth from '../helpers/passport-jwt';
+import {
   requireTitleInBody,
   requireUUIDParam,
   requireJsonBody
-} = require('./todo-mdws');
+} from './todo-mdws';
 
 function createSingleTodo(req, res, next) {
   const todoData = req.body;
@@ -112,4 +112,4 @@ router.get('/completed', requireAuth, getCompletedTodos);
 
 router.get('/:id', requireUUIDParam, requireAuth, getSingleTodo);
 
-module.exports = router;
+export default router;

@@ -1,11 +1,8 @@
-const bcrypt = require('bcrypt-nodejs');
-const jwt = require('jsonwebtoken');
-const JWT_SECRET = require('../config/jwt-config').JWT_SECRET;
-const { type } = require('../constants/user-constants.js');
-const Error = require('../helpers/errors');
-/**
- * This is a sample Sequelize model
- */
+import bcrypt from 'bcrypt-nodejs';
+import jwt from 'jsonwebtoken';
+import { JWT_SECRET } from '../config/jwt-config';
+import { type } from '../constants/user-constants.js';
+import Error from '../helpers/errors';
 
 const hashPassword = (user) => {
   user.password = bcrypt.hashSync(user.password, bcrypt.genSaltSync(10), null);
@@ -24,7 +21,7 @@ const hashPassword = (user) => {
   // });
 };
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   const User = sequelize.define('User', {
     email: {
       type: DataTypes.STRING,

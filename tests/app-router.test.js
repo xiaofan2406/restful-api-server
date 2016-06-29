@@ -1,11 +1,11 @@
 /* global describe, it, context, before, after */
 /* eslint-disable prefer-arrow-callback, func-names,
   space-before-function-paren, no-unused-expressions */
-const expect = require('chai').expect;
-const bcrypt = require('bcrypt-nodejs');
-const axios = require('axios');
-const { SERVER_URL } = require('../config/app-config');
-const { User } = require('../models');
+import { expect } from 'chai';
+import axios from 'axios';
+import { SERVER_URL } from '../config/app-config';
+import bcrypt from 'bcrypt-nodejs';
+import { User } from '../models';
 
 describe('/signUp', function () {
   const correctEmail = 'test@mail.com';

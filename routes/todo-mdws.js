@@ -1,13 +1,11 @@
-const {
+import {
   isThere,
   isUUID,
   isJSON
-} = require('../helpers/validator');
-const Error = require('../helpers/errors');
+} from '../helpers/validator';
+import { InvalidRequestDataError } from '../helpers/errors';
 
-const InvalidRequestDataError = Error(422, 'Invalid request data');
-
-function requireTitleInBody(req, res, next) {
+export function requireTitleInBody(req, res, next) {
   const { title } = req.body;
   if (!isThere(title)) {
     return next(InvalidRequestDataError);
@@ -15,22 +13,16 @@ function requireTitleInBody(req, res, next) {
   next();
 }
 
-function requireJsonBody(req, res, next) {
+export function requireJsonBody(req, res, next) {
   if (!isJSON(req.body)) {
     return next(InvalidRequestDataError);
   }
   next();
 }
 
-function requireUUIDParam(req, res, next) {
+export function requireUUIDParam(req, res, next) {
   if (!isUUID(req.params.id)) {
     return next(InvalidRequestDataError);
   }
   next();
 }
-
-module.exports = {
-  requireTitleInBody,
-  requireJsonBody,
-  requireUUIDParam
-};

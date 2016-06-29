@@ -1,14 +1,12 @@
-#!/usr/bin/env node
-require('babel-register');
 /**
  * Module dependencies.
  */
-const app = require('../app');
-const http = require('http');
-const APP_NAME = require('../config/app-config').APP_NAME;
-const debug = require('debug')(APP_NAME);
-const models = require('../models');
-
+import app from '../app';
+import http from 'http';
+import { APP_NAME } from '../config/app-config';
+import Debug from 'debug';
+import models from '../models';
+const debug = Debug(APP_NAME);
 
 /**
  * Normalize a port into a number, string, or false.
