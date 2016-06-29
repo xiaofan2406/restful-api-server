@@ -15,6 +15,21 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
       allowNull: false
+    },
+    dueDate: {
+      type: DataTypes.DATE,
+      defaultValue: null,
+      allowNull: true
+    },
+    scope: {
+      type: DataTypes.STRING,
+      defaultValue: 'default',
+      allowNull: false
+    },
+    scopeDate: {
+      type: DataTypes.DATE,
+      defaultValue: null,
+      allowNull: true
     }
   }, {
     freezeTableName: true, // stop Sequelize automatically name tables
@@ -42,13 +57,19 @@ export default (sequelize, DataTypes) => {
         return [
           'title',
           'completed',
-          'ownerId'
+          'ownerId',
+          'dueDate',
+          'scope',
+          'scopeDate'
         ];
       },
       editableFields() {
         return [
           'title',
-          'completed'
+          'completed',
+          'dueDate',
+          'scope',
+          'scopeDate'
         ];
       },
       createSingle(todoData, user) {
