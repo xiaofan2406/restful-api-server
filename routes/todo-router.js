@@ -29,16 +29,6 @@ function editSingleTodo(req, res, next) {
   });
 }
 
-function toggleSingleTodo(req, res, next) {
-  const user = req.user;
-  const todoId = req.params.id;
-  Todo.toggleSingle(todoId, user).then(updatedTodo => {
-    res.status(200).json(updatedTodo.selfie());
-  }).catch(error => {
-    next(error);
-  });
-}
-
 function deleteSingleTodo(req, res, next) {
   const user = req.user;
   const todoId = req.params.id;
@@ -99,8 +89,6 @@ function getCompletedTodos(req, res, next) {
 router.post('/', requireTitleInBody, requireAuth, createSingleTodo);
 
 router.patch('/:id', requireUUIDParam, requireJsonBody, requireAuth, editSingleTodo);
-
-router.patch('/:id/toggleCompletion', requireUUIDParam, requireAuth, toggleSingleTodo);
 
 router.delete('/:id', requireUUIDParam, requireAuth, deleteSingleTodo);
 

@@ -67,6 +67,7 @@ export default (sequelize, DataTypes) => {
           'title',
           'completed',
           'ownerId',
+          'content',
           'dueDate',
           'scope',
           'scopeDate'
@@ -76,6 +77,7 @@ export default (sequelize, DataTypes) => {
         return [
           'title',
           'completed',
+          'content',
           'dueDate',
           'scope',
           'scopeDate'
