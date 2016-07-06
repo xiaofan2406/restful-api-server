@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import mailConfig from '../config/mail-config';
 import { CLIENT_URL } from '../config/app-config';
+import { MailLogger } from './logger';
 
 // create reusable transporter object using the default SMTP transport
 const transporter = nodemailer.createTransport(mailConfig);
@@ -22,8 +23,10 @@ const mailer = mailOptions => {
     // send mail with defined transport object
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        reject(error);
+        MailLogger.error(error);
+        return reject(error);
       }
+      MailLogger.info(info);
       resolve(info);
     });
   });

@@ -1,11 +1,11 @@
 const commonErrors = {
-  400: 'Bad request',
+  400: 'Bad Request',
   401: 'Unauthorized',
   403: 'Forbidden',
-  409: 'Conflict request',
-  412: 'Precondition fail',
-  422: 'Invalid request data',
-  500: 'Internal server error'
+  409: 'Conflict Request',
+  412: 'Precondition Fail',
+  422: 'Unprocessable Entity',
+  500: 'Internal Server Error'
 };
 
 const newError = (status, msg) => {

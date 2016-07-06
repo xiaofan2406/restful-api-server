@@ -131,20 +131,6 @@ export default (sequelize, DataTypes) => {
           });
         });
       },
-      toggleSingle(id, user) {
-        return new Promise((resolve, reject) => {
-          this.findById(id)
-          .then(todo => {
-            return this._operateOn(todo, user);
-          })
-          .then(todo => {
-            return resolve(todo.update({ completed: !todo.completed }));
-          })
-          .catch(error => {
-            return reject(error);
-          });
-        });
-      },
       deleteSingle(id, user) {
         return new Promise((resolve, reject) => {
           this.findById(id)

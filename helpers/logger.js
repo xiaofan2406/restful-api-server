@@ -17,6 +17,26 @@ export const SQLLogger = new (winston.Logger)({
   ]
 });
 
+/**
+ * custom mail logger to work with nodemailer
+ */
+export const MailLogger = new (winston.Logger)({
+  transports: [
+    new (DailyRotateFile)({
+      filename: path.join(__dirname, '../logs/mail.log'),
+      json: false,
+      timestamp() {
+        return new Date();
+      },
+      formatter(options) {
+        if (options.level === 'error') {
+          return `[${options.timestamp()}] ERROR: ${options.meta.message}`;
+        }
+        return `[${options.timestamp()}] INFO: ${JSON.stringify(options.meta, ' ', 2)}`;
+      }
+    })
+  ]
+});
 
 export const HTTPLogger = new (winston.Logger)({
   transports: [

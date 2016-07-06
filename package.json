@@ -1,7 +1,8 @@
 {
   "name": "restful-api-server",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "private": true,
+  "description": "REST-ful api server on express.js",
   "scripts": {
     "babel-node": "babel-node ./bin/www",
     "start": "nodemon --exec npm run babel-node -i tests/",
@@ -10,6 +11,17 @@
     "version": "",
     "postversion": "git push && git push --tags"
   },
+  "engines": {
+    "node": ">6",
+    "npm": ">3.10"
+  },
+  "keywords": [
+    "express",
+    "postgres",
+    "REST-ful"
+  ],
+  "author": "Xiaofan Wu",
+  "license": "ISC",
   "dependencies": {
     "bcrypt-nodejs": "",
     "body-parser": "",
@@ -22,7 +34,11 @@
     "passport-jwt": "",
     "passport-local": "",
     "pg": "",
-    "sequelize": ""
+    "sequelize": "",
+    "winston": "",
+    "winston-daily-rotate-file": "",
+    "morgan": "",
+    "debug": ""
   },
   "devDependencies": {
     "axios": "",
@@ -32,16 +48,12 @@
     "babel-preset-es2015": "",
     "babel-register": "",
     "chai": "",
-    "debug": "",
     "eslint": "",
     "eslint-config-airbnb": "",
     "eslint-plugin-import": "",
     "eslint-plugin-jsx-a11y": "",
     "eslint-plugin-react": "",
     "mocha": "",
-    "morgan": "",
-    "nodemon": "",
-    "winston": "",
-    "winston-daily-rotate-file": ""
+    "nodemon": ""
   }
 }

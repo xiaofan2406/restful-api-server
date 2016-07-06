@@ -13,7 +13,7 @@
 * **HTTP status code**
 * **Documentation**
 * promisify callbacks
-* email log
+* ~~email log~~
 * testing
 * view engine setup
 * express middleware config
