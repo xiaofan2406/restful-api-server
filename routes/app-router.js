@@ -62,7 +62,9 @@ function signUp(req, res, next) {
   const userData = req.body;
   User.createSingle(userData)
   .then(user => {
-    sendVerificationEmail(user.email, user.UUID);
+    if (!user.activated) {
+      sendVerificationEmail(user.email, user.UUID);
+    }
     res.status(202).json({
       email: user.email
     });

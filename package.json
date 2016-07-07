@@ -5,6 +5,7 @@
   "description": "REST-ful api server on express.js",
   "scripts": {
     "babel-node": "babel-node ./bin/www",
+    "setup": "for f in config/*.EXAMPLE; do cp \"$f\" \"${f%.EXAMPLE}\" done",
     "start": "nodemon --exec npm run babel-node -i tests/",
     "test": "mocha tests --compilers js:babel-register",
     "preversion": "npm test",

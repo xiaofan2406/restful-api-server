@@ -35,9 +35,10 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false
     },
-    displayName: {
+    shortname: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
+      unique: true
     },
     UUID: {
       type: DataTypes.UUID,
@@ -80,7 +81,7 @@ export default (sequelize, DataTypes) => {
       selfie() { // all public information to return to user
         return {
           email: this.email,
-          displayName: this.displayName,
+          shortname: this.shortname,
           activated: this.activated,
           createdAt: this.createdAt.toISOString()
         };
@@ -88,51 +89,108 @@ export default (sequelize, DataTypes) => {
       isAdmin() {
         return this.type === type.ADMIN;
       },
-      publicSnapshot() {
+      publicInfo() {
         return {
-          displayName: this.displayName
+          shortname: this.shortname,
+          activated: this.activated
         };
       }
     },
     classMethods: {
-      validFields() {
+      _validFields() {
         return [
           'email',
           'password',
-          'displayName',
+          'shortname',
           'UUID',
           'activated',
-          'type'
+          'type',
+          'createdAt',
+          'updatedAt'
         ];
       },
-      editableFields() {
+      _adminableFields() {
         return [
           'email',
           'password',
-          'displayName',
-          'activated',
+          'shortname',
           'type'
         ];
       },
-      createSingle(userData) {
+      _updatableFields() {
+        return [
+          'password',
+          'shortname'
+        ];
+      },
+      createSingle(userData, httpUser = null) {
         // safe assumption: userData has email and password fields
         return new Promise((resolve, reject) => {
-          const editableFields = this.editableFields();
+          const _updatableFields = this._updatableFields();
           const requestFields = Object.keys(userData);
           for (const field of requestFields) {
-            if (editableFields.indexOf(field) === -1) {
+            if (_updatableFields.indexOf(field) === -1) {
               return reject(Error(400, 'Invalid field in request data'));
             }
           }
-          if (!userData.hasOwnProperty('displayName')) {
-            userData.displayName = userData.email;
+          if (!userData.hasOwnProperty('shortname')) {
+            userData.shortname = userData.email.replace('@', '.');
           }
           this.findByEmail(userData.email)
           .then(user => {
             if (user) {
               return reject(Error(409, 'Email has been registered already'));
             }
-            return resolve(User.create(userData));
+            if (httpUser && httpUser.isAdmin()) {
+              userData.activated = true;
+            }
+            return resolve(this.create(userData));
+          })
+          .catch(error => {
+            return reject(error);
+          });
+        });
+      },
+      _operateOn(user, httpUser) {
+        return new Promise((resolve, reject) => {
+          if (!user) {
+            return reject(Error(412, 'Requested user does not exist'));
+          }
+          if (!httpUser.isAdmin() && httpUser.email !== user.email) {
+            return reject(Error(403, 'User does not have right to operate on requested user'));
+          }
+          return resolve(user);
+        });
+      },
+      editSingle(email, updates, httpUser) {
+        return new Promise((resolve, reject) => {
+          const _updatableFields = this._updatableFields();
+          const requestFields = Object.keys(updates);
+          for (const field of requestFields) {
+            if (_updatableFields.indexOf(field) === -1) {
+              return reject(Error(400, 'Invalid field in request data'));
+            }
+          }
+          this.findByEmail(email)
+          .then(user => {
+            return this._operateOn(user, httpUser);
+          })
+          .then(user => {
+            return resolve(user.update(updates));
+          })
+          .catch(error => {
+            return reject(error);
+          });
+        });
+      },
+      deleteSingle(email, httpUser) {
+        return new Promise((resolve, reject) => {
+          this.findByEmail(email)
+          .then(user => {
+            return this._operateOn(user, httpUser);
+          })
+          .then(user => {
+            return resolve(user.destroy());
           })
           .catch(error => {
             return reject(error);
@@ -141,18 +199,50 @@ export default (sequelize, DataTypes) => {
       },
       activateAccount(email, hash) {
         return new Promise((resolve, reject) => {
-          this.findByEmail(email).then(user => {
-            if (!user) {
+          this.findByEmail(email).then(httpUser => {
+            if (!httpUser) {
               return reject(Error(401, 'Email is not registered'));
             }
-            if (user.activated === true) {
+            if (httpUser.activated) {
               return reject(Error(409, 'Account was already activated'));
             }
-            if (email !== user.email || hash !== user.UUID) {
+            if (email !== httpUser.email || hash !== httpUser.UUID) {
               return reject(Error(401, 'Email and hash does not match'));
             }
-            return resolve(user.update({ activated: true }));
+            return resolve(httpUser.update({ activated: true }));
           }).catch(error => {
+            return reject(error);
+          });
+        });
+      },
+      getSingle(email, httpUser) {
+        return new Promise((resolve, reject) => {
+          this.findByEmail(email)
+          .then(user => {
+            return this._operateOn(user, httpUser);
+          })
+          .then(user => {
+            return resolve(user.selfie());
+          })
+          .catch(error => {
+            return reject(error);
+          });
+        });
+      },
+      getAll(httpUser) {
+        return new Promise((resolve, reject) => {
+          if (!httpUser.activated) {
+            return reject(Error(401, 'You account is not verified'));
+          }
+          this.findAll()
+          .then(users => {
+            const usersData = [];
+            for (const user of users) {
+              usersData.push(user.publicInfo());
+            }
+            return resolve(usersData);
+          })
+          .catch(error => {
             return reject(error);
           });
         });

@@ -75,7 +75,7 @@ describe('/signUp', function () {
       User.findByEmail(correctEmail).then(user => {
         expect(user).to.exist;
         expect(user.email).to.equal(correctEmail);
-        expect(user.displayName).to.equal(correctEmail);
+        expect(user.shortname).to.equal(correctEmail);
         expect(user.UUID).to.exist;
         expect(user.activated).to.be.false;
         bcrypt.compare(correctPassword, user.password, (err, isMatch) => {
