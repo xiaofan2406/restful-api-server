@@ -82,7 +82,8 @@ context('/api/user', () => {
       it('should return error when token is in header but user is not activated');
       it('should return error when unaccessible fields are present w/ normal token user');
       it('should return error when unaccessible fields are present w/o token');
-      it('should return error when trying to create duplicate user');
+      it('should return error when trying to change email to an existing email');
+      it('should return error when trying to change username to an existing username');
     });
   });
 });
