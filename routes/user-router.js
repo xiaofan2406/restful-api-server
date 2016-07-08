@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { User } from '../models';
 import requireAuth from '../helpers/passport-jwt';
-import requireSignin from '../helpers/passport-local';
 import { sendVerificationEmail } from '../helpers/mailer';
 import {
   isEmail,
   isPassword,
-  isThere
+  isThere,
+  isJSON
 } from '../helpers/validator.js';
 import { InvalidRequestDataError } from '../helpers/errors';
 
@@ -24,7 +24,22 @@ function requireEmailPasswordInBody(req, res, next) {
   next();
 }
 
-function createSingleUser(req, res, next) {
+function requireEmailHashInBody(req, res, next) {
+  const { email, hash } = req.body;
+  if (!isEmail(email) || !isThere(hash)) {
+    return next(InvalidRequestDataError);
+  }
+  next();
+}
+
+function requireJsonBody(req, res, next) {
+  if (!isJSON(req.body)) {
+    return next(InvalidRequestDataError);
+  }
+  next();
+}
+
+function createUser(req, res, next) {
   const userData = req.body;
   const httpUser = req.user;
   User.createSingle(userData, httpUser)
@@ -39,9 +54,36 @@ function createSingleUser(req, res, next) {
   });
 }
 
-function editSingleUser(req, res, next) {
-
+function activateUser(req, res, next) {
+  const { email, hash } = req.body;
+  User.activateAccount(email, hash)
+  .then(updatedUser => {
+    res.status(200).json({
+      token: updatedUser.getToken(),
+      ...updatedUser.selfie()
+    });
+  })
+  .catch(error => {
+    next(error);
+  });
 }
+
+const updateUserBy = field => (req, res, next) => {
+  const httpUser = req.user;
+  const userId = req.params.id;
+  const edits = req.body;
+  let func = 'updateSingle';
+  if (field === 'username') {
+    func = 'updateSingleByUsername';
+  }
+  User[func](userId, edits, httpUser)
+  .then(updatedUser => {
+    res.status(200).json(updatedUser.selfie());
+  })
+  .catch(error => {
+    next(error);
+  });
+};
 
 function checkHeader(req, res, next) {
   if (req.get('token')) {
@@ -50,8 +92,14 @@ function checkHeader(req, res, next) {
   next();
 }
 
-router.post('/', requireEmailPasswordInBody, checkHeader, createSingleUser);
+router.post('/', requireEmailPasswordInBody, checkHeader, createUser);
 
-router.patch('/:username', requireAuth, editSingleUser);
+router.patch('/:id(\\d+)', requireAuth, updateUserBy('id'));
+
+router.patch('/activate', requireEmailHashInBody, activateUser);
+
+// TODO avoid username being 'activate' or other key words
+router.patch('/:username', requireJsonBody, requireAuth, updateUserBy('username'));
+
 
 export default router;

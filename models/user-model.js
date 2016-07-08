@@ -115,13 +115,18 @@ export default (sequelize, DataTypes) => {
       _adminableFields() {
         return [
           'email',
-          'password',
           'username',
           'activated',
           'type'
         ];
       },
       _updatableFields() {
+        return [
+          'email',
+          'username'
+        ];
+      },
+      _creationFields() {
         return [
           'email',
           'password',
@@ -140,7 +145,9 @@ export default (sequelize, DataTypes) => {
       createSingle(userData, httpUser = null) {
         // safe assumption: userData has email and password fields
         return new Promise((resolve, reject) => {
-          const fields = httpUser ? this._getAuthorizedFields(httpUser) : this._updatableFields();
+          const fields = httpUser && httpUser.isAdmin() ?
+                        this._adminableFields() :
+                        this._creationFields();
           const requestFields = Object.keys(userData);
           for (const field of requestFields) {
             if (fields.indexOf(field) === -1) {
@@ -176,7 +183,7 @@ export default (sequelize, DataTypes) => {
           return resolve(user);
         });
       },
-      editSingle(id, updates, httpUser) {
+      updateSingle(id, updates, httpUser) {
         return new Promise((resolve, reject) => {
           const fields = this._getAuthorizedFields(httpUser);
           const requestFields = Object.keys(updates);
@@ -197,7 +204,7 @@ export default (sequelize, DataTypes) => {
           });
         });
       },
-      editSingleByUsername(username, updates, httpUser) {
+      updateSingleByUsername(username, updates, httpUser) {
         return new Promise((resolve, reject) => {
           const fields = this._getAuthorizedFields(httpUser);
           const requestFields = Object.keys(updates);
