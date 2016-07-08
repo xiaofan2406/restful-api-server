@@ -116,6 +116,7 @@ export default (sequelize, DataTypes) => {
         return [
           'email',
           'username',
+          'password',
           'activated',
           'type'
         ];
@@ -123,6 +124,7 @@ export default (sequelize, DataTypes) => {
       _updatableFields() {
         return [
           'email',
+          'password',
           'username'
         ];
       },
@@ -327,6 +329,11 @@ export default (sequelize, DataTypes) => {
     hooks: {
       beforeCreate(user) {
         hashPassword(user);
+      },
+      beforeUpdate(user, opts) {
+        if (opts.fields.indexOf('password') > -1) {
+          hashPassword(user);
+        }
       }
     }
   });
