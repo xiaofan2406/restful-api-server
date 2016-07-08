@@ -39,6 +39,9 @@ function createSingleUser(req, res, next) {
   });
 }
 
+function editSingleUser(req, res, next) {
+
+}
 
 function checkHeader(req, res, next) {
   if (req.get('token')) {
@@ -49,5 +52,6 @@ function checkHeader(req, res, next) {
 
 router.post('/', requireEmailPasswordInBody, checkHeader, createSingleUser);
 
+router.patch('/:username', requireAuth, editSingleUser);
 
 export default router;

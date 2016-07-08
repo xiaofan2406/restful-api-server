@@ -35,7 +35,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false
     },
-    shortname: {
+    username: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true
@@ -72,6 +72,12 @@ export default (sequelize, DataTypes) => {
         const timestamp = new Date().getTime();
         return jwt.sign({ sub: this.id, iat: timestamp }, JWT_SECRET);
       },
+      isValid() {
+        return this.activated;
+      },
+      isAdmin() {
+        return this.isValid() && this.type === type.ADMIN;
+      },
       isAbleToCreateArticle() {
         return this.activated;
       },
@@ -81,17 +87,14 @@ export default (sequelize, DataTypes) => {
       selfie() { // all public information to return to user
         return {
           email: this.email,
-          shortname: this.shortname,
+          username: this.username,
           activated: this.activated,
           createdAt: this.createdAt.toISOString()
         };
       },
-      isAdmin() {
-        return this.type === type.ADMIN;
-      },
       publicInfo() {
         return {
-          shortname: this.shortname,
+          username: this.username,
           activated: this.activated
         };
       }
@@ -101,7 +104,7 @@ export default (sequelize, DataTypes) => {
         return [
           'email',
           'password',
-          'shortname',
+          'username',
           'UUID',
           'activated',
           'type',
@@ -113,28 +116,39 @@ export default (sequelize, DataTypes) => {
         return [
           'email',
           'password',
-          'shortname',
+          'username',
+          'activated',
           'type'
         ];
       },
       _updatableFields() {
         return [
+          'email',
           'password',
-          'shortname'
+          'username'
         ];
+      },
+      _getAuthorizedFields(user) { // TODO rewrite this when supports es6
+        if (user && user.isAdmin()) {
+          return this._adminableFields();
+        }
+        if (user && user.isValid()) {
+          return this._updatableFields();
+        }
+        return [];
       },
       createSingle(userData, httpUser = null) {
         // safe assumption: userData has email and password fields
         return new Promise((resolve, reject) => {
-          const _updatableFields = this._updatableFields();
+          const fields = httpUser ? this._getAuthorizedFields(httpUser) : this._updatableFields();
           const requestFields = Object.keys(userData);
           for (const field of requestFields) {
-            if (_updatableFields.indexOf(field) === -1) {
+            if (fields.indexOf(field) === -1) {
               return reject(Error(400, 'Invalid field in request data'));
             }
           }
-          if (!userData.hasOwnProperty('shortname')) {
-            userData.shortname = userData.email.replace('@', '.');
+          if (!userData.hasOwnProperty('username')) {
+            userData.username = userData.email;
           }
           this.findByEmail(userData.email)
           .then(user => {
@@ -162,16 +176,16 @@ export default (sequelize, DataTypes) => {
           return resolve(user);
         });
       },
-      editSingle(email, updates, httpUser) {
+      editSingle(id, updates, httpUser) {
         return new Promise((resolve, reject) => {
-          const _updatableFields = this._updatableFields();
+          const fields = this._getAuthorizedFields(httpUser);
           const requestFields = Object.keys(updates);
           for (const field of requestFields) {
-            if (_updatableFields.indexOf(field) === -1) {
+            if (fields.indexOf(field) === -1) {
               return reject(Error(400, 'Invalid field in request data'));
             }
           }
-          this.findByEmail(email)
+          this.findById(id)
           .then(user => {
             return this._operateOn(user, httpUser);
           })
@@ -183,9 +197,44 @@ export default (sequelize, DataTypes) => {
           });
         });
       },
-      deleteSingle(email, httpUser) {
+      editSingleByUsername(username, updates, httpUser) {
         return new Promise((resolve, reject) => {
-          this.findByEmail(email)
+          const fields = this._getAuthorizedFields(httpUser);
+          const requestFields = Object.keys(updates);
+          for (const field of requestFields) {
+            if (fields.indexOf(field) === -1) {
+              return reject(Error(400, 'Invalid field in request data'));
+            }
+          }
+          this.findByUsername(username)
+          .then(user => {
+            return this._operateOn(user, httpUser);
+          })
+          .then(user => {
+            return resolve(user.update(updates));
+          })
+          .catch(error => {
+            return reject(error);
+          });
+        });
+      },
+      deleteSingle(id, httpUser) {
+        return new Promise((resolve, reject) => {
+          this.findById(id)
+          .then(user => {
+            return this._operateOn(user, httpUser);
+          })
+          .then(user => {
+            return resolve(user.destroy());
+          })
+          .catch(error => {
+            return reject(error);
+          });
+        });
+      },
+      deleteSingleByUsername(username, httpUser) {
+        return new Promise((resolve, reject) => {
+          this.findByUsername(username)
           .then(user => {
             return this._operateOn(user, httpUser);
           })
@@ -215,9 +264,23 @@ export default (sequelize, DataTypes) => {
           });
         });
       },
-      getSingle(email, httpUser) {
+      getSingle(id, httpUser) {
         return new Promise((resolve, reject) => {
-          this.findByEmail(email)
+          this.findById(id)
+          .then(user => {
+            return this._operateOn(user, httpUser);
+          })
+          .then(user => {
+            return resolve(user.selfie());
+          })
+          .catch(error => {
+            return reject(error);
+          });
+        });
+      },
+      getSingleByUsername(username, httpUser) {
+        return new Promise((resolve, reject) => {
+          this.findByUsername(username)
           .then(user => {
             return this._operateOn(user, httpUser);
           })
@@ -231,7 +294,7 @@ export default (sequelize, DataTypes) => {
       },
       getAll(httpUser) {
         return new Promise((resolve, reject) => {
-          if (!httpUser.activated) {
+          if (!httpUser.isValid()) {
             return reject(Error(401, 'You account is not verified'));
           }
           this.findAll()
@@ -249,6 +312,9 @@ export default (sequelize, DataTypes) => {
       },
       findByEmail(email) {
         return this.findOne({ where: { email } });
+      },
+      findByUsername(username) {
+        return this.findOne({ where: { username } });
       }
     },
     hooks: {

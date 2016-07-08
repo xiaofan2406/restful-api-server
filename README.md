@@ -3,13 +3,15 @@
 [Node v6](https://nodejs.org/api/) + [Express](http://expressjs.com/) + [Sequelize](http://docs.sequelizejs.com/en/latest/) + [PostgreSQL](http://www.postgresql.org/docs/9.5/static/index.html)
 
 
-# Setup
-* `npm i`
-* modify config files under `config/` directory
+# Get Started
+* `npm run setup`
+* modify `-config.js` files under `config/` directory
 * define models
 * define routes
+* `npm test`
+* `npm start`
 
-# Roadmap
+# TODOs
 * **HTTP status code**
 * **Documentation**
 * promisify callbacks
