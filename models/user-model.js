@@ -100,17 +100,19 @@ export default (sequelize, DataTypes) => {
       }
     },
     classMethods: {
-      _validFields() {
-        return [
-          'email',
-          'password',
-          'username',
-          'UUID',
-          'activated',
-          'type',
-          'createdAt',
-          'updatedAt'
-        ];
+      /**
+       * return an object with key as the name of the field and the value as the validator function
+       * the fields returned should be editable through front-end
+       * the validator function is defined in `helpers/validator.js`
+       */
+      fieldsValidator() {
+        return {
+          email: 'isEmail',
+          password: 'validPassword',
+          username: 'validUsername',
+          activated: 'isBoolean',
+          type: 'validUserType'
+        };
       },
       _adminableFields() {
         return [
@@ -153,7 +155,7 @@ export default (sequelize, DataTypes) => {
           const requestFields = Object.keys(userData);
           for (const field of requestFields) {
             if (fields.indexOf(field) === -1) {
-              return reject(Error(400, 'Invalid field in request data'));
+              return reject(Error(422, 'Invalid field in request data'));
             }
           }
           if (!userData.hasOwnProperty('username')) {
@@ -185,7 +187,7 @@ export default (sequelize, DataTypes) => {
           return resolve(user);
         });
       },
-      updateSingle(id, updates, httpUser) {
+      updateSingle(name, value, updates, httpUser) {
         return new Promise((resolve, reject) => {
           const fields = this._getAuthorizedFields(httpUser);
           const requestFields = Object.keys(updates);
@@ -194,7 +196,8 @@ export default (sequelize, DataTypes) => {
               return reject(Error(400, 'Invalid field in request data'));
             }
           }
-          this.findById(id)
+          const func = this._getFuncName(name);
+          this[func](value)
           .then(user => {
             return this._operateOn(user, httpUser);
           })
@@ -206,44 +209,10 @@ export default (sequelize, DataTypes) => {
           });
         });
       },
-      updateSingleByUsername(username, updates, httpUser) {
+      deleteSingle(name, value, httpUser) {
         return new Promise((resolve, reject) => {
-          const fields = this._getAuthorizedFields(httpUser);
-          const requestFields = Object.keys(updates);
-          for (const field of requestFields) {
-            if (fields.indexOf(field) === -1) {
-              return reject(Error(400, 'Invalid field in request data'));
-            }
-          }
-          this.findByUsername(username)
-          .then(user => {
-            return this._operateOn(user, httpUser);
-          })
-          .then(user => {
-            return resolve(user.update(updates));
-          })
-          .catch(error => {
-            return reject(error);
-          });
-        });
-      },
-      deleteSingle(id, httpUser) {
-        return new Promise((resolve, reject) => {
-          this.findById(id)
-          .then(user => {
-            return this._operateOn(user, httpUser);
-          })
-          .then(user => {
-            return resolve(user.destroy());
-          })
-          .catch(error => {
-            return reject(error);
-          });
-        });
-      },
-      deleteSingleByUsername(username, httpUser) {
-        return new Promise((resolve, reject) => {
-          this.findByUsername(username)
+          const func = this._getFuncName(name);
+          this[func](value)
           .then(user => {
             return this._operateOn(user, httpUser);
           })
@@ -275,21 +244,8 @@ export default (sequelize, DataTypes) => {
       },
       getSingle(id, httpUser) {
         return new Promise((resolve, reject) => {
-          this.findById(id)
-          .then(user => {
-            return this._operateOn(user, httpUser);
-          })
-          .then(user => {
-            return resolve(user.selfie());
-          })
-          .catch(error => {
-            return reject(error);
-          });
-        });
-      },
-      getSingleByUsername(username, httpUser) {
-        return new Promise((resolve, reject) => {
-          this.findByUsername(username)
+          const func = this._getFuncName(name);
+          this[func](id)
           .then(user => {
             return this._operateOn(user, httpUser);
           })
@@ -324,6 +280,18 @@ export default (sequelize, DataTypes) => {
       },
       findByUsername(username) {
         return this.findOne({ where: { username } });
+      },
+      _getFuncName(name) {
+        switch (name) {
+          case 'id':
+            return 'findById';
+          case 'username':
+            return 'findByUsername';
+          case 'email':
+            return 'findByEmail';
+          default:
+            return 'findById';
+        }
       }
     },
     hooks: {

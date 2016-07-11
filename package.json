@@ -28,8 +28,10 @@
     "body-parser": "",
     "cookie-parser": "",
     "cors": "",
+    "debug": "",
     "express": "",
     "jsonwebtoken": "",
+    "morgan": "",
     "nodemailer": "",
     "passport": "",
     "passport-jwt": "",
@@ -37,9 +39,7 @@
     "pg": "",
     "sequelize": "",
     "winston": "",
-    "winston-daily-rotate-file": "",
-    "morgan": "",
-    "debug": ""
+    "winston-daily-rotate-file": ""
   },
   "devDependencies": {
     "axios": "",

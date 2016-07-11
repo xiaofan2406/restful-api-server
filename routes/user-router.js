@@ -70,13 +70,9 @@ function activateUser(req, res, next) {
 
 const updateUserBy = field => (req, res, next) => {
   const httpUser = req.user;
-  const userId = req.params.id;
   const edits = req.body;
-  let func = 'updateSingle';
-  if (field === 'username') {
-    func = 'updateSingleByUsername';
-  }
-  User[func](userId, edits, httpUser)
+  const value = req.params[field];
+  User.updateSingle(field, value, edits, httpUser)
   .then(updatedUser => {
     res.status(200).json(updatedUser.selfie());
   })
@@ -94,7 +90,7 @@ function checkHeader(req, res, next) {
 
 router.post('/', requireEmailPasswordInBody, checkHeader, createUser);
 
-router.patch('/:id(\\d+)', requireAuth, updateUserBy('id'));
+router.patch('/:id(\\d+)', requireJsonBody, requireAuth, updateUserBy('id'));
 
 router.patch('/activate', requireEmailHashInBody, activateUser);
 

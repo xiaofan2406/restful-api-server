@@ -1,11 +1,18 @@
 import util from 'util';
+import { type as userType } from '../constants/user-constants';
+// TODO use validator.js?
 
+/* common validators */
 export function isThere(target) {
   return target !== undefined && target !== null && target !== '';
 }
 
 export function isNumber(target) {
   return !isNaN(+target);
+}
+
+export function isBoolean(target) {
+  return target === true || target === false;
 }
 
 export function isEmptyObject(target) {
@@ -21,6 +28,15 @@ function _objectHasEmptyValue(target) {
   return false;
 }
 
+/* user model validators */
+export function validPassword(password) {
+  return isThere(password) && password.length > 8;
+}
+
+export function validUsername(username) {
+  return isThere(username) && username.length > 8;
+}
+
 export function isEmail(email) {
   if (!isThere(email)) {
     return false;
@@ -28,6 +44,16 @@ export function isEmail(email) {
   // TODO improve this logic???? duh
   const index = email.indexOf('@');
   return index > 0 && index !== email.length;
+}
+
+export function validUserType(target) {
+  const types = Object.keys(userType);
+  for (const type of types) {
+    if (userType[type] === target) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export function isPassword(password) {
