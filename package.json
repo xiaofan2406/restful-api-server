@@ -7,7 +7,7 @@
     "babel-node": "babel-node ./bin/www",
     "setup": "./setup.sh",
     "start": "nodemon --exec npm run babel-node -i tests/",
-    "test": "mocha tests --compilers js:babel-register",
+    "test": "mocha tests/user-router.test.js --compilers js:babel-register",
     "preversion": "npm test",
     "version": "",
     "postversion": "git push && git push --tags"
