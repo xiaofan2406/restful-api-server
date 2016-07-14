@@ -1,14 +1,17 @@
-import util from 'util';
 import { type as userType } from '../constants/user-constants';
 // TODO use validator.js?
 
 /* common validators */
 export function isThere(target) {
-  return target !== undefined && target !== null && target !== '';
+  return target !== undefined && target !== null;
 }
 
 export function isNumber(target) {
-  return !isNaN(+target);
+  return target !== undefined && target !== null &&
+    target !== '' && !/^\s+$/.test(target) &&
+    typeof target !== 'boolean' &&
+    !(Array.isArray(target)) &&
+    !isNaN(target);
 }
 
 export function isBoolean(target) {
@@ -16,7 +19,8 @@ export function isBoolean(target) {
 }
 
 export function isEmptyObject(target) {
-  return !util.isObject(target) || Object.keys(target).length === 0;
+  return target !== undefined && target !== null &&
+    target.constructor === {}.constructor && Object.keys(target).length === 0;
 }
 
 function _objectHasEmptyValue(target) {
@@ -30,11 +34,12 @@ function _objectHasEmptyValue(target) {
 
 /* user model validators */
 export function validPassword(password) {
-  return isThere(password) && password.length > 8;
+  return typeof password === 'string' &&
+    /^(?=.*[0-9])(?=.*[a-zA-Z])([a-zA-Z0-9]{6,28})$/.test(password);
 }
 
 export function validUsername(username) {
-  return isThere(username) && username.length > 8;
+  return isThere(username) && username.length > 5;
 }
 
 export function isEmail(email) {
@@ -66,6 +71,7 @@ export function isUUID(target) {
   return uuid.test(target);
 }
 
+// TODO rid of this
 export function isJSON(target) {
   return !isEmptyObject(target) && !_objectHasEmptyValue(target);
 }

@@ -40,7 +40,7 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       unique: true
     },
-    UUID: {
+    uniqueId: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       unique: true,
@@ -84,7 +84,7 @@ export default (sequelize, DataTypes) => {
       isAbleToCreateTodo() {
         return this.activated;
       },
-      selfie() { // all public information to return to user
+      selfie() {
         return {
           email: this.email,
           username: this.username,
@@ -224,7 +224,7 @@ export default (sequelize, DataTypes) => {
           });
         });
       },
-      activateAccount(email, hash) {
+      activateAccount(email, uniqueId) {
         return new Promise((resolve, reject) => {
           this.findByEmail(email).then(httpUser => {
             if (!httpUser) {
@@ -233,8 +233,8 @@ export default (sequelize, DataTypes) => {
             if (httpUser.activated) {
               return reject(Error(409, 'Account was already activated'));
             }
-            if (email !== httpUser.email || hash !== httpUser.UUID) {
-              return reject(Error(401, 'Email and hash does not match'));
+            if (email !== httpUser.email || uniqueId !== httpUser.uniqueId) {
+              return reject(Error(401, 'Email and unique Id does not match'));
             }
             return resolve(httpUser.update({ activated: true }));
           }).catch(error => {
@@ -242,15 +242,15 @@ export default (sequelize, DataTypes) => {
           });
         });
       },
-      getSingle(id, httpUser) {
+      getSingle(name, value, httpUser) {
         return new Promise((resolve, reject) => {
           const func = this._getFuncName(name);
-          this[func](id)
+          this[func](value)
           .then(user => {
             return this._operateOn(user, httpUser);
           })
           .then(user => {
-            return resolve(user.selfie());
+            return resolve(user);
           })
           .catch(error => {
             return reject(error);

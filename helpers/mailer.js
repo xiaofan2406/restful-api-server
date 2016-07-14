@@ -32,7 +32,7 @@ const mailer = mailOptions => {
   });
 };
 
-export function sendVerificationEmail(to, userHash) {
+export function sendVerificationEmail(to, uniqueId) {
   const content = `
     <style>
       p {
@@ -41,7 +41,7 @@ export function sendVerificationEmail(to, userHash) {
     </style>
     <p>Please click the following link to activate your account.</p>
     <p>
-      <a href="${CLIENT_URL}/activateAccount?email=${to}&hash=${userHash}">
+      <a href="${CLIENT_URL}/activateAccount?email=${to}&uniqueId=${uniqueId}">
         Click here to activate
       </a>
     </p>

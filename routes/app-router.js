@@ -33,8 +33,8 @@ function requireEmailInQuery(req, res, next) {
 }
 
 function requireEmailHashInBody(req, res, next) {
-  const { email, hash } = req.body;
-  if (!isEmail(email) || !isThere(hash)) {
+  const { email, uniqueId } = req.body;
+  if (!isEmail(email) || !isThere(uniqueId)) {
     return next(InvalidRequestDataError);
   }
   next();
@@ -63,7 +63,7 @@ function signUp(req, res, next) {
   User.createSingle(userData)
   .then(user => {
     if (!user.activated) {
-      sendVerificationEmail(user.email, user.UUID);
+      sendVerificationEmail(user.email, user.uniqueId);
     }
     res.status(202).json({
       email: user.email
@@ -75,8 +75,8 @@ function signUp(req, res, next) {
 }
 
 function activateAccount(req, res, next) {
-  const { email, hash } = req.body;
-  User.activateAccount(email, hash)
+  const { email, uniqueId } = req.body;
+  User.activateAccount(email, uniqueId)
   .then(updatedUser => {
     res.status(200).json({
       token: updatedUser.getToken(),

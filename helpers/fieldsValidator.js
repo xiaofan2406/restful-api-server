@@ -1,17 +1,24 @@
-import Models from '../models';
 import * as Validator from '../helpers/validator';
+import { InvalidRequestDataError } from '../helpers/errors';
 
-export default (target, model) => {
-  const validators = Models[model].fieldsValidator();
+export default (fromReq, model, required = []) => (req, res, next) => {
+  const validators = model.fieldsValidator();
   const validFields = Object.keys(validators);
+  const target = req[fromReq];
   const requestFields = Object.keys(target);
-  for (const field of requestFields) {
-    if (validFields.indexOf(field) === -1) {
-      return false;
-    }
-    const func = validators[field];
-    if (!Validator[func](field)) {
-      return false;
+  for (const requiredField of required) {
+    if (!target.hasOwnProperty(requiredField)) {
+      return next(InvalidRequestDataError);
     }
   }
+  for (const field of requestFields) {
+    if (validFields.indexOf(field) === -1) {
+      return next(InvalidRequestDataError);
+    }
+    const func = validators[field];
+    if (!Validator[func](target[field])) {
+      return next(InvalidRequestDataError);
+    }
+  }
+  next();
 };
