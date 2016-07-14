@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt-nodejs';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/jwt-config';
-import { type } from '../constants/user-constants.js';
+import { type, creation } from '../constants/user-constants.js';
 import Error from '../helpers/errors';
 
 const hashPassword = (user) => {
@@ -55,6 +55,11 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       defaultValue: 0,
       allowNull: false
+    },
+    creation: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: creation.REGISTERED
     }
   }, {
     freezeTableName: true, // stop Sequelize automatically name tables
@@ -89,6 +94,8 @@ export default (sequelize, DataTypes) => {
           email: this.email,
           username: this.username,
           activated: this.activated,
+          type: this.type,
+          updatedAt: this.updatedAt.toISOString(),
           createdAt: this.createdAt.toISOString()
         };
       },
@@ -150,13 +157,14 @@ export default (sequelize, DataTypes) => {
       createSingle(userData, httpUser = null) {
         // safe assumption: userData has email and password fields
         return new Promise((resolve, reject) => {
-          const fields = httpUser && httpUser.isAdmin() ?
+          const isCreation = httpUser && httpUser.isAdmin();
+          const fields = isCreation ?
                         this._adminableFields() :
                         this._creationFields();
           const requestFields = Object.keys(userData);
           for (const field of requestFields) {
             if (fields.indexOf(field) === -1) {
-              return reject(Error(422, 'Invalid field in request data'));
+              return reject(Error(403, 'No permission to speical fields'));
             }
           }
           if (!userData.hasOwnProperty('username')) {
@@ -167,8 +175,8 @@ export default (sequelize, DataTypes) => {
             if (user) {
               return reject(Error(409, 'Email has been registered already'));
             }
-            if (httpUser && httpUser.isAdmin()) {
-              userData.activated = true;
+            if (isCreation) {
+              userData.creation = creation.CREATED;
             }
             return resolve(this.create(userData));
           })
@@ -194,7 +202,7 @@ export default (sequelize, DataTypes) => {
           const requestFields = Object.keys(updates);
           for (const field of requestFields) {
             if (fields.indexOf(field) === -1) {
-              return reject(Error(400, 'Invalid field in request data'));
+              return reject(Error(403, 'Invalid field in request data'));
             }
           }
           const func = this._getFuncName(name);
@@ -203,9 +211,15 @@ export default (sequelize, DataTypes) => {
             return this._operateOn(user, httpUser);
           })
           .then(user => {
-            return resolve(user.update(updates));
+            return user.update(updates);
+          })
+          .then(user => {
+            return resolve(user);
           })
           .catch(error => {
+            if (error.name === 'SequelizeUniqueConstraintError') {
+              return reject(Error(409, 'Unique field violation'));
+            }
             return reject(error);
           });
         });
@@ -231,11 +245,11 @@ export default (sequelize, DataTypes) => {
             if (!httpUser) {
               return reject(Error(401, 'Email is not registered'));
             }
-            if (httpUser.activated) {
-              return reject(Error(409, 'Account was already activated'));
-            }
             if (email !== httpUser.email || uniqueId !== httpUser.uniqueId) {
               return reject(Error(401, 'Email and unique Id does not match'));
+            }
+            if (httpUser.activated) {
+              return reject(Error(409, 'Account was already activated'));
             }
             return resolve(httpUser.update({ activated: true }));
           }).catch(error => {

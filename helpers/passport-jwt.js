@@ -10,13 +10,16 @@ const jwtOptions = {
 };
 
 const jwtLogin = new Strategy(jwtOptions, (payload, done) => {
-  User.findById(payload.sub).then((user) => {
+  User.findById(payload.sub).then(user => {
     if (!user) {
       return done(null, false, { message: 'Invalid user token' });
     }
-    done(null, user);
+    if (!user.activated) {
+      return done(null, false, { message: 'User not activated' });
+    }
+    return done(null, user);
   }).catch((err) => {
-    done(err, false);
+    return done(err, false);
   });
 });
 

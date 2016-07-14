@@ -2,8 +2,11 @@ import * as Validator from '../helpers/validator';
 import { InvalidRequestDataError } from '../helpers/errors';
 
 export default validatorFuncs => (fromReq, required = []) => (req, res, next) => {
-  const validFields = Object.keys(validatorFuncs);
   const target = req[fromReq];
+  if (Validator.isEmptyObject(target)) {
+    return next(InvalidRequestDataError);
+  }
+  const validFields = Object.keys(validatorFuncs);
   const requestFields = Object.keys(target);
   for (const requiredField of required) {
     if (!target.hasOwnProperty(requiredField)) {

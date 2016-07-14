@@ -1,27 +1,33 @@
 import { type as userType } from '../constants/user-constants.js';
 
 export const sampleUsersData = [{
-  email: 'david@testmail.com',
-  shortname: 'david@testmail.com',
-  password: '123',
+  email: 'normal1@testmail.com',
+  username: 'normal1@testmail.com',
+  password: 'normal1password',
   activated: true,
   type: userType.NORMAL
 }, {
-  email: 'alex@testmail.com',
-  shortname: 'alex@testmail.com',
-  password: '123',
-  activated: true,
+  email: 'normal2@testmail.com',
+  username: 'normal2@testmail.com',
+  password: 'normal2password',
+  activated: false,
   type: userType.NORMAL
 }, {
-  email: 'tom@testmail.com',
-  shortname: 'tom@testmail.com',
-  password: '123',
+  email: 'notactivate@testmail.com',
+  username: 'notactivate@testmail.com',
+  password: 'notactivatepassword1',
   activated: false,
   type: userType.NORMAL
 }, {
   email: 'admin@testmail.com',
-  shortname: 'admin@testmail.com',
-  password: '123',
+  username: 'admin@testmail.com',
+  password: 'adminpassword1',
   activated: true,
   type: userType.ADMIN
 }];
+
+export const isDateEqual = (first, second) => {
+  const firstValue = first.getFullYear() + first.getMonth() + first.getDate();
+  const secondValue = second.getFullYear() + second.getMonth() + second.getDate();
+  return firstValue === secondValue;
+};

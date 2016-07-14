@@ -2,8 +2,9 @@ import { Router } from 'express';
 import { User } from '../models';
 import requireAuth from '../helpers/passport-jwt';
 import requireSignin from '../helpers/passport-local';
-import { sendVerificationEmail } from '../helpers/mailer';
 import Validator from '../helpers/validator-mdw';
+import { sendVerificationEmail } from '../helpers/mailer';
+import { creation } from '../constants/user-constants';
 
 const router = Router();
 const userFieldsValidator = Validator(User.fieldsValidator());
@@ -14,9 +15,16 @@ function createUser(req, res, next) {
   User.createSingle(userData, httpUser)
   .then(user => {
     if (!user.activated) {
+      res.status(202);
       sendVerificationEmail(user.email, user.uniqueId);
+    } else {
+      res.status(201);
     }
-    res.status(202).json(user.publicInfo());
+    if (user.creation === creation.CREATED) {
+      res.json(user.selfie());
+    } else {
+      res.json(user.publicInfo());
+    }
   })
   .catch(error => {
     return next(error);
@@ -72,7 +80,7 @@ function checkEmail(req, res, next) {
   });
 }
 
-function signIn(req, res) {
+function getToken(req, res) {
   res.status(200).json({
     token: req.user.getToken(),
     ...req.user.selfie()
@@ -93,24 +101,34 @@ function getUserBy(field) {
   };
 }
 
-// TODO avoid username being 'activate' or other key words
+// TODO avoid username being 'activateAccount' or other key words
 
-router.post('/', userFieldsValidator('body', ['email', 'password']), checkHeader, createUser);
+router.post('/', userFieldsValidator('body', ['email', 'password']),
+  checkHeader, createUser);
 
-router.post('/signIn', userFieldsValidator('body', ['email', 'password']), requireSignin, signIn);
+router.post('/getToken', userFieldsValidator('body', ['email', 'password']),
+  requireSignin, getToken);
 
-router.patch('/:id(\\d+)', userFieldsValidator('body'), requireAuth, updateUserBy('id'));
+router.patch('/activateAccount', userFieldsValidator('body', ['email', 'uniqueId']),
+  activateUser);
 
-router.patch('/activateAccount', userFieldsValidator('body', ['email', 'uniqueId']), activateUser);
+router.patch('/:id(\\d+)', userFieldsValidator('body'),
+  requireAuth, updateUserBy('id'));
 
-router.patch('/:username', userFieldsValidator('body'), requireAuth, updateUserBy('username'));
+router.patch('/:username', userFieldsValidator('body'),
+  requireAuth, updateUserBy('username'));
 
-router.get('/checkEmail', userFieldsValidator('query', ['email']), checkEmail);
+router.get('/checkEmail', userFieldsValidator('query', ['email']),
+  checkEmail);
 
-router.get('/refreshToken', requireAuth, signIn);
+router.get('/refreshToken',
+  requireAuth, getToken);
 
-router.get('/:id(\\d+)', requireAuth, getUserBy('id'));
+router.get('/:id(\\d+)',
+  requireAuth, getUserBy('id'));
 
-router.get('/:username', requireAuth, getUserBy('username'));
+router.get('/:username',
+  requireAuth, getUserBy('username'));
+
 
 export default router;
