@@ -101,7 +101,7 @@ router.post('/signIn', userFieldsValidator('body', ['email', 'password']), requi
 
 router.patch('/:id(\\d+)', userFieldsValidator('body'), requireAuth, updateUserBy('id'));
 
-router.patch('/activate', userFieldsValidator('body', ['email', 'uniqueId']), activateUser);
+router.patch('/activateAccount', userFieldsValidator('body', ['email', 'uniqueId']), activateUser);
 
 router.patch('/:username', userFieldsValidator('body'), requireAuth, updateUserBy('username'));
 

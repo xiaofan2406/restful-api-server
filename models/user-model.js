@@ -110,6 +110,7 @@ export default (sequelize, DataTypes) => {
           email: 'isEmail',
           password: 'validPassword',
           username: 'validUsername',
+          uniqueId: 'isUUID',
           activated: 'isBoolean',
           type: 'validUserType'
         };
