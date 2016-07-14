@@ -3,9 +3,10 @@ import { User } from '../models';
 import requireAuth from '../helpers/passport-jwt';
 import requireSignin from '../helpers/passport-local';
 import { sendVerificationEmail } from '../helpers/mailer';
-import fieldsValidator from '../helpers/fieldsValidator';
+import Validator from '../helpers/validator-mdw';
 
 const router = Router();
+const userFieldsValidator = Validator(User.fieldsValidator());
 
 function createUser(req, res, next) {
   const userData = req.body;
@@ -94,17 +95,17 @@ function getUserBy(field) {
 
 // TODO avoid username being 'activate' or other key words
 
-router.post('/', fieldsValidator('body', User, ['email', 'password']), checkHeader, createUser);
+router.post('/', userFieldsValidator('body', ['email', 'password']), checkHeader, createUser);
 
-router.patch('/:id(\\d+)', fieldsValidator('body', User), requireAuth, updateUserBy('id'));
+router.post('/signIn', userFieldsValidator('body', ['email', 'password']), requireSignin, signIn);
 
-router.patch('/activate', fieldsValidator('body', User, ['email', 'uniqueId']), activateUser);
+router.patch('/:id(\\d+)', userFieldsValidator('body'), requireAuth, updateUserBy('id'));
 
-router.patch('/:username', fieldsValidator('body', User), requireAuth, updateUserBy('username'));
+router.patch('/activate', userFieldsValidator('body', ['email', 'uniqueId']), activateUser);
 
-router.get('/checkEmail', fieldsValidator('query', User, ['email']), checkEmail);
+router.patch('/:username', userFieldsValidator('body'), requireAuth, updateUserBy('username'));
 
-router.post('/signIn', fieldsValidator('body', User, ['email', 'password']), requireSignin, signIn);
+router.get('/checkEmail', userFieldsValidator('query', ['email']), checkEmail);
 
 router.get('/refreshToken', requireAuth, signIn);
 
