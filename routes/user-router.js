@@ -106,8 +106,8 @@ function deleteUserBy(field) {
     const httpUser = req.user;
     const value = req.params[field];
     User.deleteSingle(field, value, httpUser)
-    .then(data => {
-      res.status(200).json(data);
+    .then(user => {
+      return res.status(200).json(user);
     })
     .catch(error => {
       next(error);

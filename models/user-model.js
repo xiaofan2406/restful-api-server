@@ -227,11 +227,12 @@ export default (sequelize, DataTypes) => {
       },
       deleteSingle(name, value, httpUser) {
         return new Promise((resolve, reject) => {
+          if (!httpUser.isAdmin()) {
+            return reject(Error(403,
+              'User does not have permission to performance this operation'));
+          }
           const func = this._getFuncName(name);
           this[func](value)
-          .then(user => {
-            return this._operateOn(user, httpUser);
-          })
           .then(user => {
             return resolve(user.destroy());
           })
@@ -298,7 +299,7 @@ export default (sequelize, DataTypes) => {
         });
       },
       findByEmail(email) {
-        return this.findOne({ where: { email } });
+        return this.findAll({ where: { email }, paranoid: false });
       },
       findByUsername(username) {
         return this.findOne({ where: { username } });

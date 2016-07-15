@@ -148,7 +148,6 @@ context('/api/user', () => {
     });
 
     context('with valid request data', () => {
-      // TODO how do i test registration email are sent
       describe('when no token is not present', () => {
         it('returns 202 and default username with user publicInfo', done => {
           axios.post(`${USER_API}/`, {
@@ -187,7 +186,8 @@ context('/api/user', () => {
           User.destroy({
             where: {
               email: 'valid@email.com'
-            }
+            },
+            force: true
           })
           .then(() => {
             done();
@@ -240,7 +240,8 @@ context('/api/user', () => {
           User.destroy({
             where: {
               email: 'valid@email.com'
-            }
+            },
+            force: true
           })
           .then(() => {
             done();
@@ -361,7 +362,8 @@ context('/api/user', () => {
           User.destroy({
             where: {
               email: 'valid@email.com'
-            }
+            },
+            force: true
           })
           .then(() => {
             done();
@@ -1443,13 +1445,250 @@ context('/api/user', () => {
     });
   });
 
+  describe('DELETE /:id', () => {
+    context('with semantically incorrect request data', () => {
+      it('returns 401 when token is not present', done => {
+        axios.delete(`${USER_API}/${normal1.id}`, {
+          headers: { }
+        })
+        .catch(err => {
+          expect(err.status).to.equal(401);
+          done();
+        });
+      });
+
+      it('returns 401 when token is not valid', done => {
+        axios.delete(`${USER_API}/${normal1.id}`, {
+          headers: { token: 'invalid token' }
+        })
+        .catch(err => {
+          expect(err.status).to.equal(401);
+          done();
+        });
+      });
+
+      it('returns 401 when token user is not activated', done => {
+        axios.delete(`${USER_API}/${notActivated.id}`, {
+          headers: { token: notActivated.getToken() }
+        })
+        .catch(err => {
+          expect(err.status).to.equal(401);
+          done();
+        });
+      });
+
+      it('returns 403 when token user is not requested user', done => {
+        axios.delete(`${USER_API}/${normal2.id}`, {
+          headers: { token: normal1.getToken() }
+        })
+        .catch(err => {
+          expect(err.status).to.equal(403);
+          done();
+        });
+      });
+
+      it('returns 403 when token user is normal', done => {
+        axios.delete(`${USER_API}/${normal1.id}`, {
+          headers: { token: normal1.getToken() }
+        })
+        .catch(err => {
+          expect(err.status).to.equal(403);
+          done();
+        });
+      });
+    });
+
+    context('with valid request data', () => {
+      it('returns 200 with user selfie when token user is admin', done => {
+        axios.delete(`${USER_API}/${normal1.id}`, {
+          headers: { token: admin.getToken() }
+        })
+        .then(res => {
+          expect(res.status).to.equal(200);
+          expect(res.data.email).to.equal(normal1.email);
+          expect(res.data.username).to.equal(normal1.username);
+          expect(res.data.type).to.equal(userType.NORMAL);
+          expect(res.data.activated).to.be.true;
+          const createdAt = new Date(res.data.createdAt);
+          const updatedAt = new Date(res.data.updatedAt);
+          const deletedAt = new Date(res.data.deletedAt);
+          expect(isDateEqual(new Date(), createdAt)).to.be.true;
+          expect(isDateEqual(new Date(), updatedAt)).to.be.true;
+          expect(isDateEqual(new Date(), deletedAt)).to.be.true;
+          done();
+        })
+        .catch(err => {
+          done(err);
+        });
+      });
+
+      it('makes the email available again', done => {
+        axios.get(`${USER_API}/checkEmail?email=${normal1.email}`)
+        .then(res => {
+          expect(res.status).to.equal(200);
+          expect(res.data.isRegistered).to.be.false;
+          done();
+        })
+        .catch(err => {
+          done(err);
+        });
+      });
+
+      it('disables the getToken for deleted user', done => {
+        axios.post(`${USER_API}/getToken`, {
+          email: normal1.email,
+          password: 'normal1password'
+        })
+        .catch(err => {
+          expect(err.status).to.equal(401);
+          done();
+        });
+      });
+
+      it('disables the refreshToken for deleted user', done => {
+        axios.get(`${USER_API}/refreshToken`, {
+          headers: { token: normal1.getToken() }
+        })
+        .catch(err => {
+          expect(err.status).to.equal(401);
+          done();
+        });
+      });
+    });
+
+    after('restore normal1', done => {
+      User.restore({
+        where: { id: normal1.id }
+      })
+      .then(() => {
+        done();
+      })
+      .catch(err => {
+        done(err);
+      });
+    });
+  });
+
+  describe('DELETE /:username', () => {
+    context('with semantically incorrect request data', () => {
+      it('returns 401 when token is not present', done => {
+        axios.delete(`${USER_API}/${normal1.username}`, {
+          headers: { }
+        })
+        .catch(err => {
+          expect(err.status).to.equal(401);
+          done();
+        });
+      });
+
+      it('returns 401 when token is not valid', done => {
+        axios.delete(`${USER_API}/${normal1.username}`, {
+          headers: { token: 'invalid token' }
+        })
+        .catch(err => {
+          expect(err.status).to.equal(401);
+          done();
+        });
+      });
+
+      it('returns 401 when token user is not activated', done => {
+        axios.delete(`${USER_API}/${notActivated.username}`, {
+          headers: { token: notActivated.getToken() }
+        })
+        .catch(err => {
+          expect(err.status).to.equal(401);
+          done();
+        });
+      });
+
+      it('returns 403 when token user is not requested user', done => {
+        axios.delete(`${USER_API}/${notActivated.username}`, {
+          headers: { token: normal1.getToken() }
+        })
+        .catch(err => {
+          expect(err.status).to.equal(403);
+          done();
+        });
+      });
+
+      it('returns 403 when token user is normal', done => {
+        axios.delete(`${USER_API}/${normal1.username}`, {
+          headers: { token: normal1.getToken() }
+        })
+        .catch(err => {
+          expect(err.status).to.equal(403);
+          done();
+        });
+      });
+    });
+
+    context('with valid request data', () => {
+      it('returns 200 with user selfie when token user is admin', done => {
+        axios.delete(`${USER_API}/${normal1.username}`, {
+          headers: { token: admin.getToken() }
+        })
+        .then(res => {
+          expect(res.status).to.equal(200);
+          expect(res.data.email).to.equal(normal1.email);
+          expect(res.data.username).to.equal(normal1.username);
+          expect(res.data.type).to.equal(userType.NORMAL);
+          expect(res.data.activated).to.be.true;
+          const createdAt = new Date(res.data.createdAt);
+          const updatedAt = new Date(res.data.updatedAt);
+          const deletedAt = new Date(res.data.deletedAt);
+          expect(isDateEqual(new Date(), createdAt)).to.be.true;
+          expect(isDateEqual(new Date(), updatedAt)).to.be.true;
+          expect(isDateEqual(new Date(), deletedAt)).to.be.true;
+          done();
+        })
+        .catch(err => {
+          done(err);
+        });
+      });
+
+      it('makes the email available again', done => {
+        axios.get(`${USER_API}/checkEmail?email=${normal1.email}`)
+        .then(res => {
+          expect(res.status).to.equal(200);
+          expect(res.data.isRegistered).to.be.false;
+          done();
+        })
+        .catch(err => {
+          done(err);
+        });
+      });
+
+      it('disables the getToken for deleted user', done => {
+        axios.post(`${USER_API}/getToken`, {
+          email: normal1.email,
+          password: 'normal1password'
+        })
+        .catch(err => {
+          expect(err.status).to.equal(401);
+          done();
+        });
+      });
+
+      it('disables the refreshToken for deleted user', done => {
+        axios.get(`${USER_API}/refreshToken`, {
+          headers: { token: normal1.getToken() }
+        })
+        .catch(err => {
+          expect(err.status).to.equal(401);
+          done();
+        });
+      });
+    });
+  });
+
   after('clean up sample users', done => {
     User.destroy({
       where: {
         email: {
           $like: '%@testmail.com%'
         }
-      }
+      },
+      force: true
     })
     .then(() => {
       done();
