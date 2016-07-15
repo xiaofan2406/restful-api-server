@@ -16,7 +16,7 @@ const localLogin = new Strategy(localOptions, (email, password, done) => {
         status: 401
       });
     }
-    if (!user.activated) {
+    if (!user.isValid()) {
       if (user.deletedAt) {
         userRestoreEmail(user.email, user.uniqueId);
       }

@@ -14,7 +14,7 @@ const jwtLogin = new Strategy(jwtOptions, (payload, done) => {
     if (!user) {
       return done(null, false, { message: 'Invalid user token' });
     }
-    if (!user.activated) {
+    if (!user.isValid()) {
       return done(null, false, { message: 'User not activated' });
     }
     return done(null, user);

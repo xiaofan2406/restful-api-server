@@ -112,6 +112,17 @@ function getUserBy(field) {
   };
 }
 
+function getUsers(req, res, next) {
+  const httpUser = req.user;
+  User.getAll(httpUser)
+  .then(data => {
+    res.status(200).json(data);
+  })
+  .catch(error => {
+    next(error);
+  });
+}
+
 function deleteUserBy(field) {
   return (req, res, next) => {
     const httpUser = req.user;
@@ -129,7 +140,6 @@ function deleteUserBy(field) {
   };
 }
 
-// TODO avoid username being 'activateAccount' or other key words
 
 router.post('/', userFieldsValidator('body', ['email', 'password']),
   checkHeader, createUser);
@@ -160,6 +170,8 @@ router.get('/:id(\\d+)',
 
 router.get('/:username',
   checkHeader, getUserBy('username'));
+
+router.get('/', checkHeader, getUsers);
 
 router.delete('/:id(\\d+)',
   requireAuth, deleteUserBy('id'));

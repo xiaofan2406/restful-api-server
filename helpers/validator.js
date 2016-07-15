@@ -39,6 +39,7 @@ export function validPassword(password) {
 }
 
 export function validUsername(username) {
+  // TODO avoid username being 'activateAccount' or other key words
   return isThere(username) && username.length > 5;
 }
 

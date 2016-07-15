@@ -306,14 +306,17 @@ export default (sequelize, DataTypes) => {
       },
       getAll(httpUser) {
         return new Promise((resolve, reject) => {
-          if (!httpUser.isValid()) {
-            return reject(Error(401, 'You account is not verified'));
-          }
           this.findAll()
           .then(users => {
             const usersData = [];
-            for (const user of users) {
-              usersData.push(user.publicInfo());
+            if (httpUser && httpUser.isAdmin()) {
+              for (const user of users) {
+                usersData.push(user.selfie());
+              }
+            } else {
+              for (const user of users) {
+                usersData.push(user.publicInfo());
+              }
             }
             return resolve(usersData);
           })

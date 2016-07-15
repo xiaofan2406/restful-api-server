@@ -286,7 +286,8 @@ context('user-model validators', () => {
 
     context('String', () => {
       it('returns true with no special word, not all digits, ' +
-        'not starting with special character, not all characters and length of [3, 28]');
+        'not starting with special character, ' +
+        'no whitespace, not all characters and length of [3, 28]');
       it('returns false with special word');
       it('returns false with special character starting');
       it('returns false with special character ending');
