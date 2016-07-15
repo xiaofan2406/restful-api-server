@@ -227,12 +227,11 @@ export default (sequelize, DataTypes) => {
       },
       deleteSingle(name, value, httpUser) {
         return new Promise((resolve, reject) => {
-          if (!httpUser.isAdmin()) {
-            return reject(Error(403,
-              'User does not have permission to performance this operation'));
-          }
           const func = this._getFuncName(name);
           this[func](value)
+          .then(user => {
+            return this._operateOn(user, httpUser);
+          })
           .then(user => {
             return resolve(user.destroy());
           })
@@ -243,7 +242,8 @@ export default (sequelize, DataTypes) => {
       },
       activateAccount(email, uniqueId) {
         return new Promise((resolve, reject) => {
-          this.findByEmail(email).then(httpUser => {
+          this.findByEmail(email)
+          .then(httpUser => {
             if (!httpUser) {
               return reject(Error(401, 'Email is not registered'));
             }
@@ -253,7 +253,31 @@ export default (sequelize, DataTypes) => {
             if (httpUser.activated) {
               return reject(Error(409, 'Account was already activated'));
             }
-            return resolve(httpUser.update({ activated: true }));
+            if (httpUser.deletedAt) {
+              httpUser.restore()
+              .then(() => {
+                return resolve(httpUser.update({ activated: true }));
+              });
+            } else {
+              return resolve(httpUser.update({ activated: true }));
+            }
+          })
+          .catch(error => {
+            return reject(error);
+          });
+        });
+      },
+      resetPassword(email, uniqueId, password) {
+        return new Promise((resolve, reject) => {
+          this.findByEmail(email)
+          .then(httpUser => {
+            if (!httpUser) {
+              return reject(Error(401, 'Email is not registered'));
+            }
+            if (email !== httpUser.email || uniqueId !== httpUser.uniqueId) {
+              return reject(Error(401, 'Email and unique Id does not match'));
+            }
+            return resolve(httpUser.update({ password }));
           }).catch(error => {
             return reject(error);
           });
@@ -299,7 +323,7 @@ export default (sequelize, DataTypes) => {
         });
       },
       findByEmail(email) {
-        return this.findAll({ where: { email }, paranoid: false });
+        return this.findOne({ where: { email }, paranoid: false });
       },
       findByUsername(username) {
         return this.findOne({ where: { username } });
@@ -325,6 +349,9 @@ export default (sequelize, DataTypes) => {
         if (opts.fields.indexOf('password') > -1) {
           hashPassword(user);
         }
+      },
+      beforeDestroy(user) {
+        return user.update({ activated: false });
       }
     }
   });

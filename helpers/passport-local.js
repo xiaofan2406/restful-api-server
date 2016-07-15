@@ -1,7 +1,7 @@
 import passport from 'passport';
 import { Strategy } from 'passport-local';
-
 import { User } from '../models';
+import { userRestoreEmail } from '../helpers/mailer';
 
 const localOptions = {
   usernameField: 'email',
@@ -9,7 +9,7 @@ const localOptions = {
 };
 
 const localLogin = new Strategy(localOptions, (email, password, done) => {
-  User.findByEmail(email).then(user => {
+  User.findOne({ where: { email } }).then(user => {
     if (!user) {
       return done(null, false, {
         message: 'The email is not registered',
@@ -17,6 +17,9 @@ const localLogin = new Strategy(localOptions, (email, password, done) => {
       });
     }
     if (!user.activated) {
+      if (user.deletedAt) {
+        userRestoreEmail(user.email, user.uniqueId);
+      }
       return done(null, false, {
         message: 'The user has not yet verify his email address',
         status: 401

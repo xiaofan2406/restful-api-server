@@ -32,7 +32,7 @@ const mailer = mailOptions => {
   });
 };
 
-export function sendVerificationEmail(to, uniqueId) {
+export function userVerificationEmail(to, uniqueId) {
   const content = `
     <style>
       p {
@@ -40,6 +40,29 @@ export function sendVerificationEmail(to, uniqueId) {
       }
     </style>
     <p>Please click the following link to activate your account.</p>
+    <p>
+      <a href="${CLIENT_URL}/activateAccount?email=${to}&uniqueId=${uniqueId}">
+        Click here to activate
+      </a>
+    </p>
+  `;
+  const mailOptions = {
+    from: '"Admin" <admin@restful.com>',
+    to,
+    subject: 'Activate your account',
+    html: content
+  };
+  return mailer(mailOptions);
+}
+
+export function userRestoreEmail(to, uniqueId) {
+  const content = `
+    <style>
+      p {
+        font-family: 'Source Sans Pro', 'Lucida Grande', sans-serif'
+      }
+    </style>
+    <p>Please click the following link to restore your account.</p>
     <p>
       <a href="${CLIENT_URL}/activateAccount?email=${to}&uniqueId=${uniqueId}">
         Click here to activate

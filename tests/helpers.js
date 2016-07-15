@@ -24,6 +24,12 @@ export const sampleUsersData = [{
   password: 'adminpassword1',
   activated: true,
   type: userType.ADMIN
+}, {
+  email: 'normal3@testmail.com',
+  username: 'normal3@testmail.com',
+  password: 'normal3password',
+  activated: true,
+  type: userType.NORMAL
 }];
 
 export const isDateEqual = (first, second) => {

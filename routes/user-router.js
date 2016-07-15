@@ -3,7 +3,7 @@ import { User } from '../models';
 import requireAuth from '../helpers/passport-jwt';
 import requireSignin from '../helpers/passport-local';
 import Validator from '../helpers/validator-mdw';
-import { sendVerificationEmail } from '../helpers/mailer';
+import { userVerificationEmail } from '../helpers/mailer';
 import { creation } from '../constants/user-constants';
 
 const router = Router();
@@ -16,7 +16,7 @@ function createUser(req, res, next) {
   .then(user => {
     if (!user.activated) {
       res.status(202);
-      sendVerificationEmail(user.email, user.uniqueId);
+      userVerificationEmail(user.email, user.uniqueId);
     } else {
       res.status(201);
     }
@@ -39,6 +39,17 @@ function activateUser(req, res, next) {
       token: updatedUser.getToken(),
       ...updatedUser.selfie()
     });
+  })
+  .catch(error => {
+    next(error);
+  });
+}
+
+function resetPassword(req, res, next) {
+  const { email, uniqueId, password } = req.body;
+  User.resetPassword(email, uniqueId, password)
+  .then(() => {
+    res.status(204).end();
   })
   .catch(error => {
     next(error);
@@ -106,8 +117,11 @@ function deleteUserBy(field) {
     const httpUser = req.user;
     const value = req.params[field];
     User.deleteSingle(field, value, httpUser)
-    .then(user => {
-      return res.status(200).json(user);
+    .then(data => {
+      if (httpUser.isAdmin()) {
+        return res.status(200).json(data);
+      }
+      res.status(204).end();
     })
     .catch(error => {
       next(error);
@@ -125,6 +139,9 @@ router.post('/getToken', userFieldsValidator('body', ['email', 'password']),
 
 router.patch('/activateAccount', userFieldsValidator('body', ['email', 'uniqueId']),
   activateUser);
+
+router.patch('/resetPassword', userFieldsValidator('body', ['email', 'uniqueId', 'password']),
+  resetPassword);
 
 router.patch('/:id(\\d+)', userFieldsValidator('body'),
   requireAuth, updateUserBy('id'));
