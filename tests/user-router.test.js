@@ -1065,7 +1065,383 @@ context('/api/user', () => {
     });
   });
 
-  // TODO GET routes testing
+  describe('GET /checkEmail', () => {
+    context('with mal-formed request data', () => {
+      it('returns 422 when req.query is not present', done => {
+        axios.get(`${USER_API}/checkEmail`)
+        .catch(err => {
+          expect(err.status).to.equal(422);
+          done();
+        });
+      });
+
+      it('returns 422 when email in req.query is invalid', done => {
+        axios.get(`${USER_API}/checkEmail?email=invalidemail`)
+        .catch(err => {
+          expect(err.status).to.equal(422);
+          done();
+        });
+      });
+    });
+
+    context('with valid request data', () => {
+      it('return 200 with isRegistered true when email is registered', done => {
+        axios.get(`${USER_API}/checkEmail?email=${normal1.email}`)
+        .then(res => {
+          expect(res.status).to.equal(200);
+          expect(res.data.isRegistered).to.be.true;
+          done();
+        })
+        .catch(err => {
+          done(err);
+        });
+      });
+
+      it('return 200 with isRegistered false when email is not registered', done => {
+        axios.get(`${USER_API}/checkEmail?email=notregistered@mail.com`)
+        .then(res => {
+          expect(res.status).to.equal(200);
+          expect(res.data.isRegistered).to.be.false;
+          done();
+        })
+        .catch(err => {
+          done(err);
+        });
+      });
+    });
+  });
+
+  describe('GET /refreshToken', () => {
+    context('with semantically incorrect request data', () => {
+      it('returns 401 when token is not present', done => {
+        axios.get(`${USER_API}/refreshToken`, {
+          headers: {}
+        })
+        .catch(err => {
+          expect(err.status).to.equal(401);
+          done();
+        });
+      });
+
+      it('returns 401 when token is invalid', done => {
+        axios.get(`${USER_API}/refreshToken`, {
+          headers: { token: 'invalid token' }
+        })
+        .catch(err => {
+          expect(err.status).to.equal(401);
+          done();
+        });
+      });
+
+      it('returns 401 when token user is not activated', done => {
+        axios.get(`${USER_API}/refreshToken`, {
+          headers: { token: notActivated.getToken() }
+        })
+        .catch(err => {
+          expect(err.status).to.equal(401);
+          done();
+        });
+      });
+    });
+
+    context('with valid request data', () => {
+      it('return 200 with user selfie and token', done => {
+        axios.get(`${USER_API}/refreshToken`, {
+          headers: { token: normal1.getToken() }
+        })
+        .then(res => {
+          expect(res.status).to.equal(200);
+          expect(res.data.email).to.equal(normal1.email);
+          expect(res.data.username).to.equal(normal1.username);
+          expect(res.data.type).to.equal(userType.NORMAL);
+          expect(res.data.activated).to.be.true;
+          const createdAt = new Date(res.data.createdAt);
+          const updatedAt = new Date(res.data.updatedAt);
+          expect(isDateEqual(new Date(), createdAt)).to.be.true;
+          expect(isDateEqual(new Date(), updatedAt)).to.be.true;
+          expect(res.data.token).to.exist;
+          done();
+        })
+        .catch(err => {
+          done(err);
+        });
+      });
+    });
+  });
+
+  describe('GET /:id', () => {
+    context('with semantically incorrect request data', () => {
+      it('returns 401 when token is invalid', done => {
+        axios.get(`${USER_API}/${normal1.id}`, {
+          headers: { token: 'invalid token' }
+        })
+        .catch(err => {
+          expect(err.status).to.equal(401);
+          done();
+        });
+      });
+
+      it('returns 401 when token user is not activated', done => {
+        axios.get(`${USER_API}/${normal1.id}`, {
+          headers: { token: notActivated.getToken() }
+        })
+        .catch(err => {
+          expect(err.status).to.equal(401);
+          done();
+        });
+      });
+
+      it('returns 412 when requested user does not exist', done => {
+        axios.get(`${USER_API}/99999999`, {
+          headers: { token: normal1.getToken() }
+        })
+        .catch(err => {
+          expect(err.status).to.equal(412);
+          done();
+        });
+      });
+    });
+
+    context('with valid request data', () => {
+      describe('with no token', () => {
+        it('returns 200 with user publicInfo', done => {
+          axios.get(`${USER_API}/${admin.id}`)
+          .then(res => {
+            expect(res.status).to.equal(200);
+            expect(res.data.email).to.not.exist;
+            expect(res.data.username).to.equal(admin.username);
+            expect(res.data.type).to.not.exist;
+            expect(res.data.activated).to.be.true;
+            done();
+          })
+          .catch(err => {
+            done(err);
+          });
+        });
+      });
+
+      describe('with normal token user', () => {
+        it('returns 200 with user selfie when token user is requested user', done => {
+          axios.get(`${USER_API}/${normal1.id}`, {
+            headers: { token: normal1.getToken() }
+          })
+          .then(res => {
+            expect(res.status).to.equal(200);
+            expect(res.data.email).to.equal(normal1.email);
+            expect(res.data.username).to.equal(normal1.username);
+            expect(res.data.type).to.equal(userType.NORMAL);
+            expect(res.data.activated).to.be.true;
+            const createdAt = new Date(res.data.createdAt);
+            const updatedAt = new Date(res.data.updatedAt);
+            expect(isDateEqual(new Date(), createdAt)).to.be.true;
+            expect(isDateEqual(new Date(), updatedAt)).to.be.true;
+            done();
+          })
+          .catch(err => {
+            done(err);
+          });
+        });
+
+        it('returns 200 with user publicInfo when token user is not requested user', done => {
+          axios.get(`${USER_API}/${admin.id}`, {
+            headers: { token: normal1.getToken() }
+          })
+          .then(res => {
+            expect(res.status).to.equal(200);
+            expect(res.data.email).to.not.exist;
+            expect(res.data.username).to.equal(admin.username);
+            expect(res.data.type).to.not.exist;
+            expect(res.data.activated).to.be.true;
+            done();
+          })
+          .catch(err => {
+            done(err);
+          });
+        });
+      });
+
+      describe('with admin token user', () => {
+        it('returns 200 with user selfie when token user is requested user', done => {
+          axios.get(`${USER_API}/${admin.id}`, {
+            headers: { token: admin.getToken() }
+          })
+          .then(res => {
+            expect(res.status).to.equal(200);
+            expect(res.data.email).to.equal(admin.email);
+            expect(res.data.username).to.equal(admin.username);
+            expect(res.data.type).to.equal(userType.ADMIN);
+            expect(res.data.activated).to.be.true;
+            const createdAt = new Date(res.data.createdAt);
+            const updatedAt = new Date(res.data.updatedAt);
+            expect(isDateEqual(new Date(), createdAt)).to.be.true;
+            expect(isDateEqual(new Date(), updatedAt)).to.be.true;
+            done();
+          })
+          .catch(err => {
+            done(err);
+          });
+        });
+
+        it('returns 200 with user selfie when token user is not requested user', done => {
+          axios.get(`${USER_API}/${normal1.id}`, {
+            headers: { token: admin.getToken() }
+          })
+          .then(res => {
+            expect(res.status).to.equal(200);
+            expect(res.data.email).to.equal(normal1.email);
+            expect(res.data.username).to.equal(normal1.username);
+            expect(res.data.type).to.equal(userType.NORMAL);
+            expect(res.data.activated).to.be.true;
+            const createdAt = new Date(res.data.createdAt);
+            const updatedAt = new Date(res.data.updatedAt);
+            expect(isDateEqual(new Date(), createdAt)).to.be.true;
+            expect(isDateEqual(new Date(), updatedAt)).to.be.true;
+            done();
+          })
+          .catch(err => {
+            done(err);
+          });
+        });
+      });
+    });
+  });
+
+  describe('GET /:username', () => {
+    context('with semantically incorrect request data', () => {
+      it('returns 401 when token is invalid', done => {
+        axios.get(`${USER_API}/${normal1.username}`, {
+          headers: { token: 'invalid token' }
+        })
+        .catch(err => {
+          expect(err.status).to.equal(401);
+          done();
+        });
+      });
+
+      it('returns 401 when token user is not activated', done => {
+        axios.get(`${USER_API}/${normal1.username}`, {
+          headers: { token: notActivated.getToken() }
+        })
+        .catch(err => {
+          expect(err.status).to.equal(401);
+          done();
+        });
+      });
+
+      it('returns 412 when requested user does not exist', done => {
+        axios.get(`${USER_API}/99999999`, {
+          headers: { token: normal1.getToken() }
+        })
+        .catch(err => {
+          expect(err.status).to.equal(412);
+          done();
+        });
+      });
+    });
+
+    context('with valid request data', () => {
+      describe('with no token', () => {
+        it('returns 200 with user publicInfo', done => {
+          axios.get(`${USER_API}/${admin.username}`)
+          .then(res => {
+            expect(res.status).to.equal(200);
+            expect(res.data.email).to.not.exist;
+            expect(res.data.username).to.equal(admin.username);
+            expect(res.data.type).to.not.exist;
+            expect(res.data.activated).to.be.true;
+            done();
+          })
+          .catch(err => {
+            done(err);
+          });
+        });
+      });
+
+      describe('with normal token user', () => {
+        it('returns 200 with user selfie when token user is requested user', done => {
+          axios.get(`${USER_API}/${normal1.username}`, {
+            headers: { token: normal1.getToken() }
+          })
+          .then(res => {
+            expect(res.status).to.equal(200);
+            expect(res.data.email).to.equal(normal1.email);
+            expect(res.data.username).to.equal(normal1.username);
+            expect(res.data.type).to.equal(userType.NORMAL);
+            expect(res.data.activated).to.be.true;
+            const createdAt = new Date(res.data.createdAt);
+            const updatedAt = new Date(res.data.updatedAt);
+            expect(isDateEqual(new Date(), createdAt)).to.be.true;
+            expect(isDateEqual(new Date(), updatedAt)).to.be.true;
+            done();
+          })
+          .catch(err => {
+            done(err);
+          });
+        });
+
+        it('returns 200 with user publicInfo when token user is not requested user', done => {
+          axios.get(`${USER_API}/${admin.username}`, {
+            headers: { token: normal1.getToken() }
+          })
+          .then(res => {
+            expect(res.status).to.equal(200);
+            expect(res.data.email).to.not.exist;
+            expect(res.data.username).to.equal(admin.username);
+            expect(res.data.type).to.not.exist;
+            expect(res.data.activated).to.be.true;
+            done();
+          })
+          .catch(err => {
+            done(err);
+          });
+        });
+      });
+
+      describe('with admin token user', () => {
+        it('returns 200 with user selfie when token user is requested user', done => {
+          axios.get(`${USER_API}/${admin.username}`, {
+            headers: { token: admin.getToken() }
+          })
+          .then(res => {
+            expect(res.status).to.equal(200);
+            expect(res.data.email).to.equal(admin.email);
+            expect(res.data.username).to.equal(admin.username);
+            expect(res.data.type).to.equal(userType.ADMIN);
+            expect(res.data.activated).to.be.true;
+            const createdAt = new Date(res.data.createdAt);
+            const updatedAt = new Date(res.data.updatedAt);
+            expect(isDateEqual(new Date(), createdAt)).to.be.true;
+            expect(isDateEqual(new Date(), updatedAt)).to.be.true;
+            done();
+          })
+          .catch(err => {
+            done(err);
+          });
+        });
+
+        it('returns 200 with user selfie when token user is not requested user', done => {
+          axios.get(`${USER_API}/${normal1.username}`, {
+            headers: { token: admin.getToken() }
+          })
+          .then(res => {
+            expect(res.status).to.equal(200);
+            expect(res.data.email).to.equal(normal1.email);
+            expect(res.data.username).to.equal(normal1.username);
+            expect(res.data.type).to.equal(userType.NORMAL);
+            expect(res.data.activated).to.be.true;
+            const createdAt = new Date(res.data.createdAt);
+            const updatedAt = new Date(res.data.updatedAt);
+            expect(isDateEqual(new Date(), createdAt)).to.be.true;
+            expect(isDateEqual(new Date(), updatedAt)).to.be.true;
+            done();
+          })
+          .catch(err => {
+            done(err);
+          });
+        });
+      });
+    });
+  });
 
   after('clean up sample users', done => {
     User.destroy({

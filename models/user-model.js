@@ -64,6 +64,7 @@ export default (sequelize, DataTypes) => {
   }, {
     freezeTableName: true, // stop Sequelize automatically name tables
     tableName: 'users',
+    paranoid: true,
     instanceMethods: {
       validPassword(password, cb) {
         bcrypt.compare(password, this.password, (err, isMatch) => {
@@ -190,7 +191,7 @@ export default (sequelize, DataTypes) => {
           if (!user) {
             return reject(Error(412, 'Requested user does not exist'));
           }
-          if (!httpUser.isAdmin() && httpUser.email !== user.email) {
+          if (!httpUser.isAdmin() && httpUser.id !== user.id) {
             return reject(Error(403, 'User does not have right to operate on requested user'));
           }
           return resolve(user);
@@ -262,10 +263,16 @@ export default (sequelize, DataTypes) => {
           const func = this._getFuncName(name);
           this[func](value)
           .then(user => {
-            return this._operateOn(user, httpUser);
-          })
-          .then(user => {
-            return resolve(user);
+            if (!user) {
+              return reject(Error(412, 'Requested user does not exist'));
+            }
+            if (httpUser && httpUser.isAdmin()) {
+              return resolve(user.selfie());
+            }
+            if (httpUser && httpUser.id === user.id) {
+              return resolve(user.selfie());
+            }
+            return resolve(user.publicInfo());
           })
           .catch(error => {
             return reject(error);

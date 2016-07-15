@@ -92,8 +92,22 @@ function getUserBy(field) {
     const httpUser = req.user;
     const value = req.params[field];
     User.getSingle(field, value, httpUser)
-    .then(user => {
-      res.status(200).json(user.selfie());
+    .then(data => {
+      res.status(200).json(data);
+    })
+    .catch(error => {
+      next(error);
+    });
+  };
+}
+
+function deleteUserBy(field) {
+  return (req, res, next) => {
+    const httpUser = req.user;
+    const value = req.params[field];
+    User.deleteSingle(field, value, httpUser)
+    .then(data => {
+      res.status(200).json(data);
     })
     .catch(error => {
       next(error);
@@ -125,10 +139,16 @@ router.get('/refreshToken',
   requireAuth, getToken);
 
 router.get('/:id(\\d+)',
-  requireAuth, getUserBy('id'));
+  checkHeader, getUserBy('id'));
 
 router.get('/:username',
-  requireAuth, getUserBy('username'));
+  checkHeader, getUserBy('username'));
+
+router.delete('/:id(\\d+)',
+  requireAuth, deleteUserBy('id'));
+
+router.delete('/:username',
+  requireAuth, deleteUserBy('username'));
 
 
 export default router;
