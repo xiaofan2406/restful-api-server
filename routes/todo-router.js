@@ -8,6 +8,8 @@ import {
   requireJsonBody
 } from './todo-mdws';
 
+const todoFieldsValidator = Validator(Todo.fieldsValidator());
+
 function createSingleTodo(req, res, next) {
   const todoData = req.body;
   const user = req.user;

@@ -53,6 +53,16 @@ export default (sequelize, DataTypes) => {
       }
     },
     classMethods: {
+      fieldsValidator() {
+        return {
+          title: 'validTodoTitle',
+          content: 'validTodoContent',
+          completed: 'isBoolean',
+          dueDate: 'validDueDate',
+          scope: 'validScope',
+          scopeDate: 'validScopeDate'
+        };
+      },
       associate(models) {
         Todo.belongsTo(models.User, {
           foreignKey: {
@@ -62,7 +72,7 @@ export default (sequelize, DataTypes) => {
           onDelete: 'cascade'
         });
       },
-      validFields() {
+      _creationFields() {
         return [
           'title',
           'completed',
@@ -73,7 +83,7 @@ export default (sequelize, DataTypes) => {
           'scopeDate'
         ];
       },
-      editableFields() {
+      _updatableFields() {
         return [
           'title',
           'completed',
@@ -85,10 +95,10 @@ export default (sequelize, DataTypes) => {
       },
       createSingle(todoData, user) {
         return new Promise((resolve, reject) => {
-          const validFields = this.validFields();
+          const fields = this._creationFields();
           const requestFields = Object.keys(todoData);
           for (const field of requestFields) {
-            if (validFields.indexOf(field) === -1) {
+            if (fields.indexOf(field) === -1) {
               return reject(Error(400, 'Invalid field in request data'));
             }
           }
@@ -112,10 +122,10 @@ export default (sequelize, DataTypes) => {
       },
       editSingle(id, updates, user) {
         return new Promise((resolve, reject) => {
-          const editableFields = this.editableFields();
+          const fields = this._updatableFields();
           const requestFields = Object.keys(updates);
           for (const field of requestFields) {
-            if (editableFields.indexOf(field) === -1) {
+            if (fields.indexOf(field) === -1) {
               return reject(Error(400, 'Invalid field in request data'));
             }
           }
