@@ -145,25 +145,25 @@ function deleteUserBy(field) {
 }
 
 
-router.post('/', userFieldsValidator('body', ['email', 'password']),
+router.post('/', userFieldsValidator({ body: ['email', 'password'] }),
   checkHeader, createUser);
 
-router.post('/getToken', userFieldsValidator('body', ['email', 'password']),
+router.post('/getToken', userFieldsValidator({ body: ['email', 'password'] }),
   requireSignin, getToken);
 
-router.patch('/activateAccount', userFieldsValidator('body', ['email', 'uniqueId']),
+router.patch('/activateAccount', userFieldsValidator({ body: ['email', 'uniqueId'] }),
   activateUser);
 
-router.patch('/resetPassword', userFieldsValidator('body', ['email', 'uniqueId', 'password']),
+router.patch('/resetPassword', userFieldsValidator({ body: ['email', 'password', 'uniqueId'] }),
   resetPassword);
 
-router.patch('/:id(\\d+)', userFieldsValidator('body'),
+router.patch('/:id(\\d+)', userFieldsValidator({ body: [] }),
   requireAuth, updateUserBy('id'));
 
-router.patch('/:username', userFieldsValidator('body'),
+router.patch('/:username', userFieldsValidator({ body: [] }),
   requireAuth, updateUserBy('username'));
 
-router.get('/checkEmail', userFieldsValidator('query', ['email']),
+router.get('/checkEmail', userFieldsValidator({ query: ['email'] }),
   checkEmail);
 
 router.get('/refreshToken',

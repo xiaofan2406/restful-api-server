@@ -1,6 +1,6 @@
 /* global describe, it, context, before, after */
 /* eslint-disable no-unused-expressions */
-import * as Validator from '../helpers/validator';
+import * as Validator from '../helpers/validator-funcs';
 import { expect } from 'chai';
 
 context('common validators', () => {

@@ -2,7 +2,6 @@ import {
   type as userType,
   resources as resType
 } from '../constants/user-constants';
-// TODO use validator.js?
 
 /* common validators */
 export function isThere(target) {
@@ -30,6 +29,10 @@ const uuid = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/i;
 
 export function isUUID(target) {
   return uuid.test(target);
+}
+
+function _afterDate(target, base) {
+  return parseInt(target.getTime() / 1440000, 10) >= parseInt(base.getTime() / 1440000, 10);
 }
 
 /* user model validators */
@@ -95,17 +98,16 @@ export function validTodoContent(target) {
 }
 
 export function validDueDate(target) {
-  return true;
+  return new Date(target) instanceof Date;
 }
 
 export function validScope(target) {
-  return target.length > 5;
+  return typeof target === 'string' && target.length < 255;
 }
 
 export function validScopeDate(target) {
-  return true;
+  return new Date(target) instanceof Date;
 }
-
 
 // TODO rid of this
 function _objectHasEmptyValue(target) {

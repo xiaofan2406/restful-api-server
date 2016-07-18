@@ -69,20 +69,20 @@ function getTodos(filter = null) {
 }
 
 
-router.post('/', todoFieldsValidator('body', ['title']),
+router.post('/', todoFieldsValidator({ body: ['title'] }),
   requireAuth, createTodo);
 
-router.patch('/:id', todoFieldsValidator('params', ['id']), todoFieldsValidator('body'),
+router.patch('/:id', todoFieldsValidator({ params: ['id'], body: [] }),
   requireAuth, editTodo);
 
-router.delete('/:id', todoFieldsValidator('params', ['id']),
+router.delete('/:id', todoFieldsValidator({ params: ['id'] }),
   requireAuth, deleteTodo);
 
 router.get('/active', requireAuth, getTodos({ completed: false }));
 
 router.get('/completed', requireAuth, getTodos({ completed: true }));
 
-router.get('/:id', todoFieldsValidator('params', ['id']),
+router.get('/:id', todoFieldsValidator({ params: ['id'] }),
   requireAuth, getTodo);
 
 router.get('/', requireAuth, getTodos());

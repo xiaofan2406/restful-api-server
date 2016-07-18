@@ -4,7 +4,7 @@ import requireAuth from '../helpers/passport-jwt';
 import {
   isThere,
   isJSON
-} from '../helpers/validator';
+} from '../helpers/validator-funcs';
 import { InvalidRequestDataError } from '../helpers/errors';
 const router = Router();
 
