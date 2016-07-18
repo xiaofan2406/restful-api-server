@@ -121,12 +121,12 @@ export default (sequelize, DataTypes) => {
       fieldsValidator() {
         return {
           email: 'isEmail',
-          password: 'validPassword',
-          username: 'validUsername',
+          password: 'isPassword',
+          username: 'isUsername',
           uniqueId: 'isUUID',
           activated: 'isBoolean',
-          type: 'validUserType',
-          resources: 'validResources'
+          type: 'isUserType',
+          resources: 'isResources'
         };
       },
       _adminableFields() {

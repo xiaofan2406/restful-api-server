@@ -3,7 +3,7 @@
 import * as Validator from '../helpers/validator-funcs';
 import { expect } from 'chai';
 
-context('common validators', () => {
+context('common isators', () => {
   describe('isThere', () => {
     const { isThere } = Validator;
     context('Array', () => {
@@ -47,7 +47,7 @@ context('common validators', () => {
     });
 
     context('Speical', () => {
-      it('return false with special values', () => {
+      it('returns false with special values', () => {
         expect(isThere()).to.be.false;
         expect(isThere(null)).to.be.false;
       });
@@ -98,7 +98,7 @@ context('common validators', () => {
     });
 
     context('Number', () => {
-      it('return true with any numbers', () => {
+      it('returns true with any numbers', () => {
         expect(isNumber(0)).to.be.true;
         expect(isNumber(1)).to.be.true;
         expect(isNumber(-1)).to.be.true;
@@ -107,7 +107,7 @@ context('common validators', () => {
     });
 
     context('Speical', () => {
-      it('return false with special values', () => {
+      it('returns false with special values', () => {
         expect(isNumber()).to.be.false;
         expect(isNumber(null)).to.be.false;
       });
@@ -141,8 +141,10 @@ context('common validators', () => {
     });
 
     context('Boolean', () => {
-      expect(isBoolean(true)).to.be.true;
-      expect(isBoolean(false)).to.be.true;
+      it('returns true with any boolean', () => {
+        expect(isBoolean(true)).to.be.true;
+        expect(isBoolean(false)).to.be.true;
+      });
     });
 
     context('Number', () => {
@@ -155,7 +157,7 @@ context('common validators', () => {
     });
 
     context('Speical', () => {
-      it('return false with special values', () => {
+      it('returns false with special values', () => {
         expect(isBoolean()).to.be.false;
         expect(isBoolean(null)).to.be.false;
       });
@@ -192,8 +194,10 @@ context('common validators', () => {
     });
 
     context('Boolean', () => {
-      expect(isEmptyObject(true)).to.be.false;
-      expect(isEmptyObject(false)).to.be.false;
+      it('returns false with any boolean', () => {
+        expect(isEmptyObject(true)).to.be.false;
+        expect(isEmptyObject(false)).to.be.false;
+      });
     });
 
     context('Number', () => {
@@ -206,7 +210,7 @@ context('common validators', () => {
     });
 
     context('Speical', () => {
-      it('return false with special values', () => {
+      it('returns false with special values', () => {
         expect(isEmptyObject()).to.be.false;
         expect(isEmptyObject(null)).to.be.false;
       });
@@ -215,82 +219,97 @@ context('common validators', () => {
 });
 
 context('user-model validators', () => {
-  describe('validPassword', () => {
-    const { validPassword } = Validator;
+  describe('isPassword', () => {
+    const { isPassword } = Validator;
     context('Array', () => {
       it('returns false with any array', () => {
-        expect(validPassword([])).to.be.false;
-        expect(validPassword([1, '2'])).to.be.false;
+        expect(isPassword([])).to.be.false;
+        expect(isPassword([1, '2'])).to.be.false;
       });
     });
 
     context('String', () => {
       it('returns true with at least a word character, a digit and length of [6, 28]', () => {
-        expect(validPassword('p12345')).to.be.true;
-        expect(validPassword('12345p')).to.be.true;
-        expect(validPassword('p12345abcdefghijklmnopqrstuv')).to.be.true;
+        expect(isPassword('p12345')).to.be.true;
+        expect(isPassword('12345p')).to.be.true;
+        expect(isPassword('p12345abcdefghijklmnopqrstuv')).to.be.true;
       });
-      it('return false with no word character', () => {
-        expect(validPassword('123456')).to.be.false;
-        expect(validPassword('123456789')).to.be.false;
+      it('returns false with no word character', () => {
+        expect(isPassword('123456')).to.be.false;
+        expect(isPassword('123456789')).to.be.false;
       });
-      it('return false with no digit character', () => {
-        expect(validPassword('abcdef')).to.be.false;
-        expect(validPassword('abcdefghijklmnopqrstuvwxyznn')).to.be.false;
+      it('returns false with no digit character', () => {
+        expect(isPassword('abcdef')).to.be.false;
+        expect(isPassword('abcdefghijklmnopqrstuvwxyznn')).to.be.false;
       });
-      it('return false with length under 6', () => {
-        expect(validPassword('p1234')).to.be.false;
+      it('returns false with length under 6', () => {
+        expect(isPassword('p1234')).to.be.false;
       });
-      it('return false with length over 28', () => {
-        expect(validPassword('p12345abcdefghijklmnopqrstuvw')).to.be.false;
+      it('returns false with length over 28', () => {
+        expect(isPassword('p12345abcdefghijklmnopqrstuvw')).to.be.false;
       });
     });
 
     context('Object', () => {
       it('returns false with any object', () => {
-        expect(validPassword({})).to.be.false;
-        expect(validPassword({ key: 'somevalue' })).to.be.false;
+        expect(isPassword({})).to.be.false;
+        expect(isPassword({ key: 'somevalue' })).to.be.false;
       });
     });
 
     context('Boolean', () => {
-      expect(validPassword(true)).to.be.false;
-      expect(validPassword(false)).to.be.false;
+      it('returns false with any boolean', () => {
+        expect(isPassword(true)).to.be.false;
+        expect(isPassword(false)).to.be.false;
+      });
     });
 
     context('Number', () => {
       it('returns false with any number', () => {
-        expect(validPassword(0)).to.be.false;
-        expect(validPassword(1)).to.be.false;
-        expect(validPassword(-1)).to.be.false;
-        expect(validPassword(2016)).to.be.false;
+        expect(isPassword(0)).to.be.false;
+        expect(isPassword(1)).to.be.false;
+        expect(isPassword(-1)).to.be.false;
+        expect(isPassword(2016)).to.be.false;
       });
     });
 
     context('Speical', () => {
-      it('return false with special values', () => {
-        expect(validPassword()).to.be.false;
-        expect(validPassword(null)).to.be.false;
+      it('returns false with special values', () => {
+        expect(isPassword()).to.be.false;
+        expect(isPassword(null)).to.be.false;
       });
     });
   });
 
-  describe('validUsername', () => {
-    const { validUsername } = Validator;
+  describe('isUsername', () => {
+    const { isUsername } = Validator;
     context('Array', () => {
       it('returns false with any array', () => {
-        expect(validUsername([])).to.be.false;
-        expect(validUsername([1, '2'])).to.be.false;
+        expect(isUsername([])).to.be.false;
+        expect(isUsername([1, '2'])).to.be.false;
       });
     });
 
     context('String', () => {
       it('returns true with no special word, not all digits, ' +
         'not starting with special character, ' +
-        'no whitespace, not all characters and length of [3, 28]');
+        'no whitespace, not all characters and length of [3, 28]', () => {
+        expect(isUsername('jon')).to.be.true;
+      });
       it('returns false with special word');
-      it('returns false with special character starting');
-      it('returns false with special character ending');
+      it('returns false with non-word character starting', () => {
+        expect(isUsername('_jon')).to.be.false;
+        expect(isUsername('@jon')).to.be.false;
+        expect(isUsername('-jon')).to.be.false;
+        expect(isUsername('.jon')).to.be.false;
+        expect(isUsername('2jon')).to.be.false;
+      });
+      it('returns false with special character ending', () => {
+        expect(isUsername('jon@')).to.be.false;
+        expect(isUsername('jon_')).to.be.false;
+        expect(isUsername('jon.')).to.be.false;
+        expect(isUsername('jon-')).to.be.false;
+      });
       it('returns false with not allowed special characters');
       it('returns false with all digits');
       it('returns false with all special characters');
@@ -300,36 +319,36 @@ context('user-model validators', () => {
 
     context('Object', () => {
       it('returns false with any object', () => {
-        expect(validUsername({})).to.be.false;
-        expect(validUsername({ key: 'somevalue' })).to.be.false;
+        expect(isUsername({})).to.be.false;
+        expect(isUsername({ key: 'somevalue' })).to.be.false;
       });
     });
 
     context('Boolean', () => {
       it('returns false with any boolean', () => {
-        expect(validUsername(true)).to.be.false;
-        expect(validUsername(false)).to.be.false;
+        expect(isUsername(true)).to.be.false;
+        expect(isUsername(false)).to.be.false;
       });
     });
 
     context('Number', () => {
       it('returns false with any number', () => {
-        expect(validUsername(0)).to.be.false;
-        expect(validUsername(1)).to.be.false;
-        expect(validUsername(-1)).to.be.false;
-        expect(validUsername(2016)).to.be.false;
+        expect(isUsername(0)).to.be.false;
+        expect(isUsername(1)).to.be.false;
+        expect(isUsername(-1)).to.be.false;
+        expect(isUsername(2016)).to.be.false;
       });
     });
 
     context('Speical', () => {
-      it('return false with special values', () => {
-        expect(validUsername()).to.be.false;
-        expect(validUsername(null)).to.be.false;
+      it('returns false with special values', () => {
+        expect(isUsername()).to.be.false;
+        expect(isUsername(null)).to.be.false;
       });
     });
   });
 
-  describe('validUserType', () => {
+  describe('isUserType', () => {
     context('Array', () => {
 
     });

@@ -66,12 +66,12 @@ export default (sequelize, DataTypes) => {
       fieldsValidator() {
         return {
           id: 'isUUID',
-          title: 'validTodoTitle',
-          content: 'validTodoContent',
+          title: 'isTodoTitle',
+          content: 'isTodoContent',
           completed: 'isBoolean',
-          dueDate: 'validDueDate',
-          scope: 'validScope',
-          scopeDate: 'validScopeDate'
+          dueDate: 'isDueDate',
+          scope: 'isTodoScope',
+          scopeDate: 'isTodoScopeDate'
         };
       },
       _getAuthorizedFields(httpUser) { // TODO rewrite this when supports es6

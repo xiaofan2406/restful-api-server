@@ -1,6 +1,6 @@
 import {
   type as userType,
-  resources as resType
+  resources as resourceType
 } from '../constants/user-constants';
 
 /* common validators */
@@ -31,19 +31,23 @@ export function isUUID(target) {
   return uuid.test(target);
 }
 
-function _afterDate(target, base) {
-  return parseInt(target.getTime() / 1440000, 10) >= parseInt(base.getTime() / 1440000, 10);
-}
 
-/* user model validators */
-export function validPassword(target) {
+/* user modle validators */
+export function isPassword(target) {
   return typeof target === 'string' &&
     /^(?=.*[0-9])(?=.*[a-zA-Z])([a-zA-Z0-9]{6,28})$/.test(target);
 }
 
-export function validUsername(target) {
+export function isUsername(target) {
+  if (typeof target !== 'string') {
+    return false;
+  }
+  /* eslint-disable max-len */
+  if (!/^([a-zA-Z])+((?=.*[a-zA-Z])([a-zA-Z0-9_.-@])){1,26}([a-zA-Z0-9])+$/.test(target)) {
+    return false;
+  }
   // TODO avoid username being 'activateAccount' or other key words
-  return isThere(target) && target.length > 5;
+  return true;
 }
 
 export function isEmail(target) {
@@ -55,7 +59,7 @@ export function isEmail(target) {
   return index > 0 && index !== target.length;
 }
 
-export function validUserType(target) {
+export function isUserType(target) {
   const types = Object.keys(userType);
   for (const type of types) {
     if (userType[type] === target) {
@@ -65,47 +69,44 @@ export function validUserType(target) {
   return false;
 }
 
-export function validResType(target) {
-  const types = Object.keys(resType);
+export function isResourceType(target) {
+  const types = Object.keys(resourceType);
   for (const type of types) {
-    if (resType[type] === target) {
+    if (resourceType[type] === target) {
       return true;
     }
   }
   return false;
 }
 
-export function validResources(target) {
+export function isResources(target) {
   for (const each of target) {
-    if (!validResType(each)) {
+    if (!isResourceType(each)) {
       return false;
     }
   }
   return true;
 }
 
-export function isPassword(target) {
-  return isThere(target);
-}
 
-/* todo model validators */
-export function validTodoTitle(target) {
+/* todo modle validators */
+export function isTodoTitle(target) {
   return typeof target === 'string' && target.length < 255;
 }
 
-export function validTodoContent(target) {
+export function isTodoContent(target) {
   return typeof target === 'string' && target.length < 255;
 }
 
-export function validDueDate(target) {
+export function isDueDate(target) {
   return new Date(target) instanceof Date;
 }
 
-export function validScope(target) {
+export function isTodoScope(target) {
   return typeof target === 'string' && target.length < 255;
 }
 
-export function validScopeDate(target) {
+export function isTodoScopeDate(target) {
   return new Date(target) instanceof Date;
 }
 
