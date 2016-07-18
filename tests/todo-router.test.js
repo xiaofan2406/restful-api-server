@@ -10,14 +10,11 @@ const TODO_API = `${SERVER_URL}/api/todo`;
 context('/api/todo', () => {
   let adminUser;
   let normalUser;
-  let inavtiveUser;
   let noTodoUser;
-  let sampleTodos;
   before('create sample users', done => {
     User.bulkCreate(sampleUsersData, { returning: true, individualHooks: true })
     .then(users => {
       normalUser = users[0];
-      inavtiveUser = users[1];
       adminUser = users[2];
       noTodoUser = users[3];
       const sampleTodosData = [{
@@ -62,7 +59,6 @@ context('/api/todo', () => {
     .then(result => {
       normalUser.todo = result.slice(0, 4);
       adminUser.todo = result.slice(4);
-      sampleTodos = result;
       done();
     })
     .catch(err => {
