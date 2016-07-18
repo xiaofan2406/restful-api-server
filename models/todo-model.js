@@ -28,8 +28,8 @@ export default (sequelize, DataTypes) => {
     },
     scope: {
       type: DataTypes.STRING,
-      defaultValue: 'default',
-      allowNull: false
+      defaultValue: null,
+      allowNull: true
     },
     scopeDate: {
       type: DataTypes.DATE,
@@ -48,21 +48,12 @@ export default (sequelize, DataTypes) => {
           dueDate: this.dueDate,
           scope: this.scope,
           scopeDate: this.scopeDate,
-          completed: this.completed
+          completed: this.completed,
+          ownerId: this.ownerId
         };
       }
     },
     classMethods: {
-      fieldsValidator() {
-        return {
-          title: 'validTodoTitle',
-          content: 'validTodoContent',
-          completed: 'isBoolean',
-          dueDate: 'validDueDate',
-          scope: 'validScope',
-          scopeDate: 'validScopeDate'
-        };
-      },
       associate(models) {
         Todo.belongsTo(models.User, {
           foreignKey: {
@@ -72,11 +63,27 @@ export default (sequelize, DataTypes) => {
           onDelete: 'cascade'
         });
       },
+      fieldsValidator() {
+        return {
+          id: 'isUUID',
+          title: 'validTodoTitle',
+          content: 'validTodoContent',
+          completed: 'isBoolean',
+          dueDate: 'validDueDate',
+          scope: 'validScope',
+          scopeDate: 'validScopeDate'
+        };
+      },
+      _getAuthorizedFields(httpUser) { // TODO rewrite this when supports es6
+        if (httpUser && httpUser.hasTodoPermission()) {
+          return this._updatableFields();
+        }
+        return [];
+      },
       _creationFields() {
         return [
           'title',
           'completed',
-          'ownerId',
           'content',
           'dueDate',
           'scope',
@@ -93,45 +100,48 @@ export default (sequelize, DataTypes) => {
           'scopeDate'
         ];
       },
-      createSingle(todoData, user) {
+      createSingle(todoData, httpUser) {
         return new Promise((resolve, reject) => {
           const fields = this._creationFields();
           const requestFields = Object.keys(todoData);
           for (const field of requestFields) {
             if (fields.indexOf(field) === -1) {
-              return reject(Error(400, 'Invalid field in request data'));
+              return reject(Error(403, 'No permission to speical fields'));
             }
           }
-          if (!user.isAbleToCreateTodo()) {
-            return reject(Error(403, 'User does not have right to create new todo'));
+          if (!httpUser.hasTodoPermission()) {
+            return reject(Error(403, 'User does not have permission to create new todo'));
           }
-          todoData.ownerId = user.id;
+          todoData.ownerId = httpUser.id;
           return resolve(this.create(todoData));
         });
       },
-      _operateOn(todo, user) {
+      _operateOn(todo, httpUser) {
         return new Promise((resolve, reject) => {
           if (!todo) {
             return reject(Error(412, 'Requested todo does not exist'));
           }
-          if (user.id !== todo.ownerId) {
-            return reject(Error(403, 'User does not have right to operate on requested todo'));
+          if (!httpUser.hasTodoPermission()) {
+            return reject(Error(403, 'User does not have permission for resource Todo'));
+          }
+          if (httpUser.id !== todo.ownerId) {
+            return reject(Error(403, 'User does not have permission to operate on requested todo'));
           }
           return resolve(todo);
         });
       },
-      editSingle(id, updates, user) {
+      editSingle(id, updates, httpUser) {
         return new Promise((resolve, reject) => {
-          const fields = this._updatableFields();
+          const fields = this._getAuthorizedFields(httpUser);
           const requestFields = Object.keys(updates);
           for (const field of requestFields) {
             if (fields.indexOf(field) === -1) {
-              return reject(Error(400, 'Invalid field in request data'));
+              return reject(Error(403, 'No permission to speical fields'));
             }
           }
           this.findById(id)
           .then(todo => {
-            return this._operateOn(todo, user);
+            return this._operateOn(todo, httpUser);
           })
           .then(todo => {
             return resolve(todo.update(updates));
@@ -141,11 +151,11 @@ export default (sequelize, DataTypes) => {
           });
         });
       },
-      deleteSingle(id, user) {
+      deleteSingle(id, httpUser) {
         return new Promise((resolve, reject) => {
           this.findById(id)
           .then(todo => {
-            return this._operateOn(todo, user);
+            return this._operateOn(todo, httpUser);
           })
           .then(todo => {
             return resolve(todo.destroy());
@@ -155,11 +165,11 @@ export default (sequelize, DataTypes) => {
           });
         });
       },
-      getSingle(id, user) {
+      getSingle(id, httpUser) {
         return new Promise((resolve, reject) => {
           this.findById(id)
           .then(todo => {
-            return this._operateOn(todo, user);
+            return this._operateOn(todo, httpUser);
           })
           .then(todo => {
             return resolve(todo.selfie());
@@ -169,44 +179,15 @@ export default (sequelize, DataTypes) => {
           });
         });
       },
-      getAll(user) {
+      getAll(filter, httpUser) {
         return new Promise((resolve, reject) => {
-          this.findAll({ where: { ownerId: user.id } })
+          const condition = {
+            ownerId: httpUser.id,
+            ...filter
+          };
+          this.findAll({ where: condition })
           .then(todos => {
-            const todosData = [];
-            for (const todo of todos) {
-              todosData.push(todo.selfie());
-            }
-            return resolve(todosData);
-          })
-          .catch(error => {
-            return reject(error);
-          });
-        });
-      },
-      getActive(user) {
-        return new Promise((resolve, reject) => {
-          this.findAll({ where: { ownerId: user.id, completed: false } })
-          .then(todos => {
-            const todosData = [];
-            for (const todo of todos) {
-              todosData.push(todo.selfie());
-            }
-            return resolve(todosData);
-          })
-          .catch(error => {
-            return reject(error);
-          });
-        });
-      },
-      getCompleted(user) {
-        return new Promise((resolve, reject) => {
-          this.findAll({ where: { ownerId: user.id, completed: true } })
-          .then(todos => {
-            const todosData = [];
-            for (const todo of todos) {
-              todosData.push(todo.selfie());
-            }
+            const todosData = todos.map(todo => todo.selfie());
             return resolve(todosData);
           })
           .catch(error => {

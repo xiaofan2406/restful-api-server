@@ -8,3 +8,10 @@ export const creation = {
   REGISTERED: 0,
   CREATED: 1
 };
+
+export const resources = {
+  TODO: 0,
+  ARTICLE: 1
+};
+
+export const defaultResources = [resources.TODO, resources.ARTICLE];

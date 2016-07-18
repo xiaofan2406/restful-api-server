@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt-nodejs';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/jwt-config';
-import { type, creation } from '../constants/user-constants.js';
+import { type, creation, resources, defaultResources } from '../constants/user-constants.js';
 import Error from '../helpers/errors';
 
 const hashPassword = (user) => {
@@ -60,6 +60,11 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: creation.REGISTERED
+    },
+    resources: {
+      type: DataTypes.ARRAY(DataTypes.INTEGER),
+      allowNull: false,
+      defaultValue: defaultResources
     }
   }, {
     freezeTableName: true, // stop Sequelize automatically name tables
@@ -84,11 +89,11 @@ export default (sequelize, DataTypes) => {
       isAdmin() {
         return this.isValid() && this.type === type.ADMIN;
       },
-      isAbleToCreateArticle() {
-        return this.activated;
+      hasAriclePermission() {
+        return this.resources.indexOf(resources.ARTICLE) > -1;
       },
-      isAbleToCreateTodo() {
-        return this.activated;
+      hasTodoPermission() {
+        return this.resources.indexOf(resources.TODO) > -1;
       },
       selfie() {
         return {
@@ -120,7 +125,8 @@ export default (sequelize, DataTypes) => {
           username: 'validUsername',
           uniqueId: 'isUUID',
           activated: 'isBoolean',
-          type: 'validUserType'
+          type: 'validUserType',
+          resources: 'validResources'
         };
       },
       _adminableFields() {
@@ -146,11 +152,11 @@ export default (sequelize, DataTypes) => {
           'username'
         ];
       },
-      _getAuthorizedFields(user) { // TODO rewrite this when supports es6
-        if (user && user.isAdmin()) {
+      _getAuthorizedFields(httpUser) { // TODO rewrite this when supports es6
+        if (httpUser && httpUser.isAdmin()) {
           return this._adminableFields();
         }
-        if (user && user.isValid()) {
+        if (httpUser && httpUser.isValid()) {
           return this._updatableFields();
         }
         return [];

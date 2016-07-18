@@ -1,35 +1,37 @@
-import { type as userType } from '../constants/user-constants.js';
+import { type, resources } from '../constants/user-constants.js';
 
 export const sampleUsersData = [{
-  email: 'normal1@testmail.com',
-  username: 'normal1@testmail.com',
-  password: 'normal1password',
+  email: 'normal@testmail.com',
+  username: 'normal@testmail.com',
+  password: 'normalpassword1',
   activated: true,
-  type: userType.NORMAL
-}, {
-  email: 'normal2@testmail.com',
-  username: 'normal2@testmail.com',
-  password: 'normal2password',
-  activated: false,
-  type: userType.NORMAL
+  type: type.NORMAL
 }, {
   email: 'notactivate@testmail.com',
   username: 'notactivate@testmail.com',
   password: 'notactivatepassword1',
   activated: false,
-  type: userType.NORMAL
+  type: type.NORMAL
 }, {
   email: 'admin@testmail.com',
   username: 'admin@testmail.com',
   password: 'adminpassword1',
   activated: true,
-  type: userType.ADMIN
+  type: type.ADMIN
 }, {
-  email: 'normal3@testmail.com',
-  username: 'normal3@testmail.com',
-  password: 'normal3password',
+  email: 'notodo@testmail.com',
+  username: 'notodo@testmail.com',
+  password: 'notodopassword1',
   activated: true,
-  type: userType.NORMAL
+  resources: [resources.ARTICLE],
+  type: type.NORMAL
+}, {
+  email: 'noarticle@testmail.com',
+  username: 'noarticle@testmail.com',
+  password: 'noarticlepassword1',
+  activated: true,
+  resources: [resources.TODO],
+  type: type.NORMAL
 }];
 
 export const isDateEqual = (first, second) => {

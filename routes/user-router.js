@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { User } from '../models';
 import requireAuth from '../helpers/passport-jwt';
 import requireSignin from '../helpers/passport-local';
 import Validator from '../helpers/validator-mdw';
 import { userVerificationEmail } from '../helpers/mailer';
+import { User } from '../models';
 import { creation } from '../constants/user-constants';
 
 const router = Router();
@@ -27,7 +27,7 @@ function createUser(req, res, next) {
     }
   })
   .catch(error => {
-    return next(error);
+    next(error);
   });
 }
 
@@ -129,10 +129,14 @@ function deleteUserBy(field) {
     const value = req.params[field];
     User.deleteSingle(field, value, httpUser)
     .then(data => {
+      res.status(200);
       if (httpUser.isAdmin()) {
-        return res.status(200).json(data);
+        res.json(data);
+      } else {
+        res.json({
+          activated: data.activated
+        });
       }
-      res.status(204).end();
     })
     .catch(error => {
       next(error);

@@ -1,105 +1,91 @@
 import express from 'express';
-const router = express.Router();
-const { Todo } = require('../models');
 import requireAuth from '../helpers/passport-jwt';
-import {
-  requireTitleInBody,
-  requireUUIDParam,
-  requireJsonBody
-} from './todo-mdws';
+import Validator from '../helpers/validator-mdw';
+import { Todo } from '../models';
 
+const router = express.Router();
 const todoFieldsValidator = Validator(Todo.fieldsValidator());
 
-function createSingleTodo(req, res, next) {
+function createTodo(req, res, next) {
   const todoData = req.body;
-  const user = req.user;
-  Todo.createSingle(todoData, user).then(todo => {
+  const httpUser = req.user;
+  Todo.createSingle(todoData, httpUser)
+  .then(todo => {
     res.status(201).json(todo.selfie());
-  }).catch(error => {
+  })
+  .catch(error => {
     next(error);
   });
 }
 
-function editSingleTodo(req, res, next) {
-  const user = req.user;
+function editTodo(req, res, next) {
+  const httpUser = req.user;
   const todoId = req.params.id;
   const updates = req.body;
-  Todo.editSingle(todoId, updates, user).then(updatedTodo => {
+  Todo.editSingle(todoId, updates, httpUser)
+  .then(updatedTodo => {
     res.status(200).json(updatedTodo.selfie());
-  }).catch(error => {
+  })
+  .catch(error => {
     next(error);
   });
 }
 
-function deleteSingleTodo(req, res, next) {
-  const user = req.user;
+function deleteTodo(req, res, next) {
+  const httpUser = req.user;
   const todoId = req.params.id;
-  Todo.deleteSingle(todoId, user)
+  Todo.deleteSingle(todoId, httpUser)
   .then(() => {
     res.status(204).end();
   })
   .catch(error => {
-    return next(error);
+    next(error);
   });
 }
 
-function getSingleTodo(req, res, next) {
-  const user = req.user;
+function getTodo(req, res, next) {
+  const httpUser = req.user;
   const todoId = req.params.id;
-  Todo.getSingle(todoId, user)
+  Todo.getSingle(todoId, httpUser)
   .then(todoData => {
     res.status(200).json(todoData);
   })
   .catch(error => {
-    return next(error);
+    next(error);
   });
 }
 
-function getAllTodos(req, res, next) {
-  const user = req.user;
-  Todo.getAll(user)
-  .then(todosData => {
-    res.status(200).json(todosData);
-  })
-  .catch(error => {
-    return next(error);
-  });
+function getTodos(filter = null) {
+  return (req, res, next) => {
+    const httpUser = req.user;
+    Todo.getAll(filter, httpUser)
+    .then(todosData => {
+      res.status(200).json(todosData);
+    })
+    .catch(error => {
+      next(error);
+    });
+  };
 }
 
-function getActiveTodos(req, res, next) {
-  const user = req.user;
-  Todo.getActive(user)
-  .then(todosData => {
-    res.status(200).json(todosData);
-  })
-  .catch(error => {
-    return next(error);
-  });
-}
 
-function getCompletedTodos(req, res, next) {
-  const user = req.user;
-  Todo.getCompleted(user)
-  .then(todosData => {
-    res.status(200).json(todosData);
-  })
-  .catch(error => {
-    return next(error);
-  });
-}
+router.post('/', todoFieldsValidator('body', ['title']),
+  requireAuth, createTodo);
 
-router.post('/', requireTitleInBody, requireAuth, createSingleTodo);
+router.patch('/:id', todoFieldsValidator('params', ['id']), todoFieldsValidator('body'),
+  requireAuth, editTodo);
 
-router.patch('/:id', requireUUIDParam, requireJsonBody, requireAuth, editSingleTodo);
+router.delete('/:id', todoFieldsValidator('params', ['id']),
+  requireAuth, deleteTodo);
 
-router.delete('/:id', requireUUIDParam, requireAuth, deleteSingleTodo);
+router.get('/active', requireAuth, getTodos({ completed: false }));
 
-router.get('/', requireAuth, getAllTodos);
+router.get('/completed', requireAuth, getTodos({ completed: true }));
 
-router.get('/active', requireAuth, getActiveTodos);
+router.get('/:id', todoFieldsValidator('params', ['id']),
+  requireAuth, getTodo);
 
-router.get('/completed', requireAuth, getCompletedTodos);
+router.get('/', requireAuth, getTodos());
 
-router.get('/:id', requireUUIDParam, requireAuth, getSingleTodo);
 
 export default router;

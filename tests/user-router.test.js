@@ -10,18 +10,14 @@ import { sampleUsersData, isDateEqual } from './helpers';
 
 context('/api/user', () => {
   let adminUser;
-  let normalUser1;
-  let normalUser2;
-  let normalUser3;
+  let normalUser;
   let inactiveUser;
   before('create sample users', done => {
     User.bulkCreate(sampleUsersData, { returning: true, individualHooks: true })
     .then(users => {
-      normalUser1 = users[0];
-      normalUser2 = users[1];
-      inactiveUser = users[2];
-      adminUser = users[3];
-      normalUser3 = users[4];
+      normalUser = users[0];
+      inactiveUser = users[1];
+      adminUser = users[2];
       done();
     })
     .catch(err => {
@@ -34,7 +30,7 @@ context('/api/user', () => {
       it('returns 422 when req.body is not presnet', done => {
         axios.post(`${USER_API}/`)
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
@@ -42,7 +38,7 @@ context('/api/user', () => {
       it('returns 422 when email is not present in req.body', done => {
         axios.post(`${USER_API}/`, { password: 'password1' })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
@@ -50,35 +46,35 @@ context('/api/user', () => {
       it('returns 422 when email is invalid', done => {
         axios.post(`${USER_API}/`, { email: 'invalidemail', password: 'password1' })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
 
       it('returns 422 when password is not present in req.body', done => {
-        axios.post(`${USER_API}/`, { email: 'valid@email.com' })
+        axios.post(`${USER_API}/`, { email: 'valid@testmail.com' })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
 
       it('returns 422 when password is invalid', done => {
-        axios.post(`${USER_API}/`, { email: 'valid@email.com', password: 'pass' })
+        axios.post(`${USER_API}/`, { email: 'valid@testmail.com', password: 'pass' })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
 
       it('returns 422 when unknown fields in req.body', done => {
         axios.post(`${USER_API}/`, {
-          email: 'valid@email.com',
+          email: 'valid@testmail.com',
           password: 'password1',
           unknown: 'fieldvalue'
         })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
@@ -87,63 +83,63 @@ context('/api/user', () => {
     context('with semantically incorrect request data', () => {
       it('returns 401 when token is in header but not valid', done => {
         axios.post(`${USER_API}/`, {
-          email: 'valid@email.com',
+          email: 'valid@testmail.com',
           password: 'password1'
         }, {
           headers: { token: 'invalid token' }
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
 
       it('returns 401 when token is in header but user is not activated', done => {
         axios.post(`${USER_API}/`, {
-          email: 'valid@email.com',
+          email: 'valid@testmail.com',
           password: 'password1'
         }, {
           headers: { token: inactiveUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
 
       it('returns 403 when unaccessible fields are present w. normal token user', done => {
         axios.post(`${USER_API}/`, {
-          email: 'valid@email.com',
+          email: 'valid@testmail.com',
           password: 'password1',
           type: userType.EDITOR
         }, {
-          headers: { token: normalUser1.getToken() }
+          headers: { token: normalUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(403);
+          expect(err.response.status).to.equal(403);
           done();
         });
       });
 
       it('returns 403 when unaccessible fields are present w.o token', done => {
         axios.post(`${USER_API}/`, {
-          email: 'valid@email.com',
+          email: 'valid@testmail.com',
           password: 'password1',
           activated: true
         })
         .catch(err => {
-          expect(err.status).to.equal(403);
+          expect(err.response.status).to.equal(403);
           done();
         });
       });
 
       it('returns 409 when trying to create duplicate user', done => {
         axios.post(`${USER_API}/`, {
-          email: normalUser1.email,
+          email: normalUser.email,
           password: 'password1'
         })
         .catch(err => {
-          expect(err.status).to.equal(409);
+          expect(err.response.status).to.equal(409);
           done();
         });
       });
@@ -153,12 +149,12 @@ context('/api/user', () => {
       describe('when no token is not present', () => {
         it('returns 202 and default username with user publicInfo', done => {
           axios.post(`${USER_API}/`, {
-            email: 'valid@email.com',
+            email: 'valid@testmail.com',
             password: 'password1'
           })
           .then(res => {
             expect(res.status).to.equal(202);
-            expect(res.data.username).to.equal('valid@email.com');
+            expect(res.data.username).to.equal('valid@testmail.com');
             expect(res.data.activated).to.be.false;
             done();
           })
@@ -169,7 +165,7 @@ context('/api/user', () => {
 
         it('returns 202 and given username with user publicInfo', done => {
           axios.post(`${USER_API}/`, {
-            email: 'valid@email.com',
+            email: 'valid@testmail.com',
             password: 'password1',
             username: 'my name'
           })
@@ -187,7 +183,7 @@ context('/api/user', () => {
         afterEach('remove created user', done => {
           User.destroy({
             where: {
-              email: 'valid@email.com'
+              email: 'valid@testmail.com'
             },
             force: true
           })
@@ -203,14 +199,14 @@ context('/api/user', () => {
       describe('when token user is normal', () => {
         it('returns 202 and default username with user publicInfo', done => {
           axios.post(`${USER_API}/`, {
-            email: 'valid@email.com',
+            email: 'valid@testmail.com',
             password: 'password1'
           }, {
-            headers: { token: normalUser1.getToken() }
+            headers: { token: normalUser.getToken() }
           })
           .then(res => {
             expect(res.status).to.equal(202);
-            expect(res.data.username).to.equal('valid@email.com');
+            expect(res.data.username).to.equal('valid@testmail.com');
             expect(res.data.activated).to.be.false;
             done();
           })
@@ -221,11 +217,11 @@ context('/api/user', () => {
 
         it('returns 202 and given username with user publicInfo', done => {
           axios.post(`${USER_API}/`, {
-            email: 'valid@email.com',
+            email: 'valid@testmail.com',
             password: 'password1',
             username: 'my name'
           }, {
-            headers: { token: normalUser1.getToken() }
+            headers: { token: normalUser.getToken() }
           })
           .then(res => {
             expect(res.status).to.equal(202);
@@ -241,7 +237,7 @@ context('/api/user', () => {
         afterEach('remove created user', done => {
           User.destroy({
             where: {
-              email: 'valid@email.com'
+              email: 'valid@testmail.com'
             },
             force: true
           })
@@ -257,7 +253,7 @@ context('/api/user', () => {
       describe('when token user is adminUser', () => {
         it('returns 201 with user selfie when activated is set to true', done => {
           axios.post(`${USER_API}/`, {
-            email: 'valid@email.com',
+            email: 'valid@testmail.com',
             password: 'password1',
             activated: true
           }, {
@@ -265,8 +261,8 @@ context('/api/user', () => {
           })
           .then(res => {
             expect(res.status).to.equal(201);
-            expect(res.data.email).to.equal('valid@email.com');
-            expect(res.data.username).to.equal('valid@email.com');
+            expect(res.data.email).to.equal('valid@testmail.com');
+            expect(res.data.username).to.equal('valid@testmail.com');
             expect(res.data.type).to.equal(userType.NORMAL);
             expect(res.data.activated).to.be.true;
             done();
@@ -278,15 +274,15 @@ context('/api/user', () => {
 
         it('returns 202 with user selfie when activated is not specified', done => {
           axios.post(`${USER_API}/`, {
-            email: 'valid@email.com',
+            email: 'valid@testmail.com',
             password: 'password1'
           }, {
             headers: { token: adminUser.getToken() }
           })
           .then(res => {
             expect(res.status).to.equal(202);
-            expect(res.data.email).to.equal('valid@email.com');
-            expect(res.data.username).to.equal('valid@email.com');
+            expect(res.data.email).to.equal('valid@testmail.com');
+            expect(res.data.username).to.equal('valid@testmail.com');
             expect(res.data.type).to.equal(userType.NORMAL);
             expect(res.data.activated).to.be.false;
             done();
@@ -298,7 +294,7 @@ context('/api/user', () => {
 
         it('sets the correct username when given', done => {
           axios.post(`${USER_API}/`, {
-            email: 'valid@email.com',
+            email: 'valid@testmail.com',
             password: 'password1',
             username: 'my name'
           }, {
@@ -306,7 +302,7 @@ context('/api/user', () => {
           })
           .then(res => {
             expect(res.status).to.equal(202);
-            expect(res.data.email).to.equal('valid@email.com');
+            expect(res.data.email).to.equal('valid@testmail.com');
             expect(res.data.username).to.equal('my name');
             expect(res.data.type).to.equal(userType.NORMAL);
             expect(res.data.activated).to.be.false;
@@ -319,7 +315,7 @@ context('/api/user', () => {
 
         it('sets the correct type when given', done => {
           axios.post(`${USER_API}/`, {
-            email: 'valid@email.com',
+            email: 'valid@testmail.com',
             password: 'password1',
             username: 'my name',
             type: userType.EDITOR
@@ -328,7 +324,7 @@ context('/api/user', () => {
           })
           .then(res => {
             expect(res.status).to.equal(202);
-            expect(res.data.email).to.equal('valid@email.com');
+            expect(res.data.email).to.equal('valid@testmail.com');
             expect(res.data.username).to.equal('my name');
             expect(res.data.type).to.equal(userType.EDITOR);
             expect(res.data.activated).to.be.false;
@@ -341,7 +337,7 @@ context('/api/user', () => {
 
         it('returns dates information', done => {
           axios.post(`${USER_API}/`, {
-            email: 'valid@email.com',
+            email: 'valid@testmail.com',
             password: 'password1',
             username: 'my name'
           }, {
@@ -363,7 +359,7 @@ context('/api/user', () => {
         afterEach('remove created user', done => {
           User.destroy({
             where: {
-              email: 'valid@email.com'
+              email: 'valid@testmail.com'
             },
             force: true
           })
@@ -383,7 +379,7 @@ context('/api/user', () => {
       it('returns 422 when req.body is not present', done => {
         axios.post(`${USER_API}/getToken`)
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
@@ -393,7 +389,7 @@ context('/api/user', () => {
           password: 'normal1password'
         })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
@@ -404,28 +400,28 @@ context('/api/user', () => {
           password: 'normal1password'
         })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
 
       it('returns 422 when password is not present in req.body', done => {
         axios.post(`${USER_API}/getToken`, {
-          email: normalUser1.email
+          email: normalUser.email
         })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
 
       it('returns 422 when password is invalid', done => {
         axios.post(`${USER_API}/getToken`, {
-          email: normalUser1.email,
+          email: normalUser.email,
           password: 'pass'
         })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
@@ -438,18 +434,18 @@ context('/api/user', () => {
           password: 'password1'
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
 
       it('returns 401 when email and password do not match', done => {
         axios.post(`${USER_API}/getToken`, {
-          email: normalUser1.email,
+          email: normalUser.email,
           password: 'notnormal1password'
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
@@ -460,7 +456,7 @@ context('/api/user', () => {
           password: 'notactivatepassword1'
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
@@ -469,13 +465,13 @@ context('/api/user', () => {
     context('with valid request data', () => {
       it('returns 200 with user selfie and token', done => {
         axios.post(`${USER_API}/getToken`, {
-          email: normalUser1.email,
-          password: 'normal1password'
+          email: normalUser.email,
+          password: 'normalpassword1'
         })
         .then(res => {
           expect(res.status).to.equal(200);
-          expect(res.data.email).to.equal(normalUser1.email);
-          expect(res.data.username).to.equal(normalUser1.username);
+          expect(res.data.email).to.equal(normalUser.email);
+          expect(res.data.username).to.equal(normalUser.username);
           expect(res.data.type).to.equal(userType.NORMAL);
           expect(res.data.activated).to.be.true;
           const createdAt = new Date(res.data.createdAt);
@@ -493,21 +489,38 @@ context('/api/user', () => {
   });
 
   describe('PATCH /activateAccount', () => {
+    let tempUser;
+    before('create temp user', done => {
+      User.create({
+        email: 'tempuser@testmail.com',
+        username: 'tempuser@testmail.com',
+        password: 'password1',
+        activated: false
+      })
+      .then(user => {
+        tempUser = user;
+        done();
+      })
+      .catch(err => {
+        done(err);
+      });
+    });
+
     context('with mal-formed request data', () => {
       it('returns 422 when req.body is not present', done => {
         axios.patch(`${USER_API}/activateAccount`)
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
 
       it('returns 422 when email is not present in req.body', done => {
         axios.patch(`${USER_API}/activateAccount`, {
-          uniqueId: normalUser2.uniqueId
+          uniqueId: tempUser.uniqueId
         })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
@@ -515,31 +528,31 @@ context('/api/user', () => {
       it('returns 422 when email is invalid', done => {
         axios.patch(`${USER_API}/activateAccount`, {
           email: 'invalidemail',
-          uniqueId: normalUser2.uniqueId
+          uniqueId: tempUser.uniqueId
         })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
 
       it('returns 422 when uniqueId is not present in req.body', done => {
         axios.patch(`${USER_API}/activateAccount`, {
-          email: normalUser2.email
+          email: tempUser.email
         })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
 
       it('returns 422 when uniqueId is invalid', done => {
         axios.patch(`${USER_API}/activateAccount`, {
-          email: normalUser2.email,
+          email: tempUser.email,
           uniqueId: 'not uuid format'
         })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
@@ -548,11 +561,11 @@ context('/api/user', () => {
     context('with semantically incorrect request data', () => {
       it('returns 401 when email and uniqueId do not match', done => {
         axios.patch(`${USER_API}/activateAccount`, {
-          email: normalUser2.email,
-          uniqueId: normalUser1.uniqueId
+          email: tempUser.email,
+          uniqueId: adminUser.uniqueId
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
@@ -560,21 +573,21 @@ context('/api/user', () => {
       it('returns 401 when email is not registered', done => {
         axios.patch(`${USER_API}/activateAccount`, {
           email: 'notregistered@mail.com',
-          uniqueId: normalUser2.uniqueId
+          uniqueId: tempUser.uniqueId
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
 
       it('returns 409 when email account was already activated', done => {
         axios.patch(`${USER_API}/activateAccount`, {
-          email: normalUser1.email,
-          uniqueId: normalUser1.uniqueId
+          email: normalUser.email,
+          uniqueId: normalUser.uniqueId
         })
         .catch(err => {
-          expect(err.status).to.equal(409);
+          expect(err.response.status).to.equal(409);
           done();
         });
       });
@@ -584,13 +597,13 @@ context('/api/user', () => {
       describe('when user was valid', () => {
         it('returns 200 with user selfie', done => {
           axios.patch(`${USER_API}/activateAccount`, {
-            email: normalUser2.email,
-            uniqueId: normalUser2.uniqueId
+            email: tempUser.email,
+            uniqueId: tempUser.uniqueId
           })
           .then(res => {
             expect(res.status).to.equal(200);
-            expect(res.data.email).to.equal(normalUser2.email);
-            expect(res.data.username).to.equal(normalUser2.username);
+            expect(res.data.email).to.equal(tempUser.email);
+            expect(res.data.username).to.equal(tempUser.username);
             expect(res.data.type).to.equal(userType.NORMAL);
             expect(res.data.activated).to.be.true;
             const createdAt = new Date(res.data.createdAt);
@@ -608,7 +621,10 @@ context('/api/user', () => {
 
       describe('when user was deleted', () => {
         before('remove user', done => {
-          normalUser3.destroy()
+          User.destroy({
+            where: { id: tempUser.id },
+            individualHooks: true
+          })
           .then(() => {
             done();
           })
@@ -619,13 +635,13 @@ context('/api/user', () => {
 
         it('returns 200 with user selfie and sets user valid', done => {
           axios.patch(`${USER_API}/activateAccount`, {
-            email: normalUser3.email,
-            uniqueId: normalUser3.uniqueId
+            email: tempUser.email,
+            uniqueId: tempUser.uniqueId
           })
           .then(res => {
             expect(res.status).to.equal(200);
-            expect(res.data.email).to.equal(normalUser3.email);
-            expect(res.data.username).to.equal(normalUser3.username);
+            expect(res.data.email).to.equal(tempUser.email);
+            expect(res.data.username).to.equal(tempUser.username);
             expect(res.data.type).to.equal(userType.NORMAL);
             expect(res.data.activated).to.be.true;
             const createdAt = new Date(res.data.createdAt);
@@ -641,6 +657,19 @@ context('/api/user', () => {
         });
       });
     });
+
+    after('remove temp user', done => {
+      User.destroy({
+        where: { id: tempUser.id },
+        force: true
+      })
+      .then(() => {
+        done();
+      })
+      .catch(err => {
+        done(err);
+      });
+    });
   });
 
   describe('PATCH /resetPassword', () => {
@@ -648,7 +677,7 @@ context('/api/user', () => {
       it('returns 422 when req.body is not present', done => {
         axios.patch(`${USER_API}/resetPassword`)
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
@@ -656,10 +685,10 @@ context('/api/user', () => {
       it('returns 422 when email is not present in req.body', done => {
         axios.patch(`${USER_API}/resetPassword`, {
           password: 'newpassword2016',
-          uniqueId: normalUser2.uniqueId
+          uniqueId: normalUser.uniqueId
         })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
@@ -668,56 +697,56 @@ context('/api/user', () => {
         axios.patch(`${USER_API}/resetPassword`, {
           email: 'invalidemail',
           password: 'newpassword2016',
-          uniqueId: normalUser2.uniqueId
+          uniqueId: normalUser.uniqueId
         })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
 
       it('returns 422 when uniqueId is not present in req.body', done => {
         axios.patch(`${USER_API}/resetPassword`, {
-          email: normalUser2.email,
+          email: normalUser.email,
           password: 'newpassword2016'
         })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
 
       it('returns 422 when uniqueId is invalid', done => {
         axios.patch(`${USER_API}/resetPassword`, {
-          email: normalUser2.email,
+          email: normalUser.email,
           password: 'newpassword2016',
           uniqueId: 'not uuid format'
         })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
 
       it('returns 422 when password is not present in req.body', done => {
         axios.patch(`${USER_API}/resetPassword`, {
-          email: normalUser2.email,
-          uniqueId: normalUser2.uniqueId
+          email: normalUser.email,
+          uniqueId: normalUser.uniqueId
         })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
 
       it('returns 422 when password is invalid', done => {
         axios.patch(`${USER_API}/resetPassword`, {
-          email: normalUser2.email,
-          uniqueId: normalUser2.uniqueId,
+          email: normalUser.email,
+          uniqueId: normalUser.uniqueId,
           password: 'pass'
         })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
@@ -726,12 +755,12 @@ context('/api/user', () => {
     context('with semantically incorrect request data', () => {
       it('returns 401 when email and uniqueId do not match', done => {
         axios.patch(`${USER_API}/resetPassword`, {
-          email: normalUser2.email,
-          uniqueId: normalUser1.uniqueId,
+          email: normalUser.email,
+          uniqueId: adminUser.uniqueId,
           password: 'newpassword2016'
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
@@ -739,11 +768,11 @@ context('/api/user', () => {
       it('returns 401 when email is not registered', done => {
         axios.patch(`${USER_API}/resetPassword`, {
           email: 'notregistered@mail.com',
-          uniqueId: normalUser2.uniqueId,
+          uniqueId: normalUser.uniqueId,
           password: 'newpassword2016'
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
@@ -752,8 +781,8 @@ context('/api/user', () => {
     context('with valid request data', () => {
       it('returns 204 with no data', done => {
         axios.patch(`${USER_API}/resetPassword`, {
-          email: normalUser2.email,
-          uniqueId: normalUser2.uniqueId,
+          email: normalUser.email,
+          uniqueId: normalUser.uniqueId,
           password: 'newpassword2016'
         })
         .then(res => {
@@ -769,59 +798,76 @@ context('/api/user', () => {
   });
 
   describe('PATCH /:id', () => {
+    let tempUser;
+    before('create temp user', done => {
+      User.create({
+        email: 'tempuser@testmail.com',
+        username: 'tempuser@testmail.com',
+        password: 'password1',
+        activated: true
+      })
+      .then(user => {
+        tempUser = user;
+        done();
+      })
+      .catch(err => {
+        done(err);
+      });
+    });
+
     context('with mal-formed request data', () => {
       it('returns 422 when req.body is not present', done => {
-        axios.patch(`${USER_API}/${normalUser2.id}`)
+        axios.patch(`${USER_API}/${tempUser.id}`)
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
 
       it('returns 422 when body contains unknown fields', done => {
-        axios.patch(`${USER_API}/${normalUser2.id}`, {
+        axios.patch(`${USER_API}/${tempUser.id}`, {
           unknown: 'fieldvalue'
         }, {
-          headers: { token: normalUser2.getToken() }
+          headers: { token: tempUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
 
       it('returns 422 when email in req.body is invalid', done => {
-        axios.patch(`${USER_API}/${normalUser2.id}`, {
+        axios.patch(`${USER_API}/${tempUser.id}`, {
           email: 'invalidemail'
         }, {
-          headers: { token: normalUser2.getToken() }
+          headers: { token: tempUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
 
       it('returns 422 when password in req.body is invalid', done => {
-        axios.patch(`${USER_API}/${normalUser2.id}`, {
+        axios.patch(`${USER_API}/${tempUser.id}`, {
           password: 'pass'
         }, {
-          headers: { token: normalUser2.getToken() }
+          headers: { token: tempUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
 
       it('returns 422 when username in req.body is invalid', done => {
-        axios.patch(`${USER_API}/${normalUser2.id}`, {
+        axios.patch(`${USER_API}/${tempUser.id}`, {
           username: 'na'
         }, {
-          headers: { token: normalUser2.getToken() }
+          headers: { token: tempUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
@@ -829,23 +875,23 @@ context('/api/user', () => {
 
     context('with semantically incorrect request data', () => {
       it('returns 401 when token is not present', done => {
-        axios.patch(`${USER_API}/${normalUser2.id}`, {
+        axios.patch(`${USER_API}/${tempUser.id}`, {
           email: 'newemail@testmail.com'
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
 
       it('returns 401 when token is in header but not valid', done => {
-        axios.patch(`${USER_API}/${normalUser2.id}`, {
+        axios.patch(`${USER_API}/${tempUser.id}`, {
           email: 'newemail@testmail.com'
         }, {
           headers: { token: 'invalid token' }
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
@@ -857,44 +903,44 @@ context('/api/user', () => {
           headers: { token: inactiveUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
 
       it('returns 403 when unaccessible fields are present w. normal token user', done => {
-        axios.patch(`${USER_API}/${normalUser2.id}`, {
+        axios.patch(`${USER_API}/${tempUser.id}`, {
           email: 'newemail@testmail.com',
           type: userType.EDITOR
         }, {
-          headers: { token: normalUser2.getToken() }
+          headers: { token: tempUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(403);
+          expect(err.response.status).to.equal(403);
           done();
         });
       });
 
       it('returns 409 when trying to change email to an existing email', done => {
-        axios.patch(`${USER_API}/${normalUser2.id}`, {
-          email: normalUser1.email
+        axios.patch(`${USER_API}/${tempUser.id}`, {
+          email: adminUser.email
         }, {
-          headers: { token: normalUser2.getToken() }
+          headers: { token: tempUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(409);
+          expect(err.response.status).to.equal(409);
           done();
         });
       });
 
       it('returns 409 when trying to change username to an existing username', done => {
-        axios.patch(`${USER_API}/${normalUser2.id}`, {
-          username: normalUser1.email
+        axios.patch(`${USER_API}/${tempUser.id}`, {
+          username: adminUser.username
         }, {
-          headers: { token: normalUser2.getToken() }
+          headers: { token: tempUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(409);
+          expect(err.response.status).to.equal(409);
           done();
         });
       });
@@ -902,16 +948,16 @@ context('/api/user', () => {
 
     context('with valid request data', () => {
       describe('when token user is normal', () => {
-        it('returns 200 with user selfie and update correct fields', done => {
-          axios.patch(`${USER_API}/${normalUser2.id}`, {
-            username: 'NormalUser2'
+        it('returns 200 with user selfie and updates correct fields', done => {
+          axios.patch(`${USER_API}/${tempUser.id}`, {
+            username: 'NormalUser'
           }, {
-            headers: { token: normalUser2.getToken() }
+            headers: { token: tempUser.getToken() }
           })
           .then(res => {
             expect(res.status).to.equal(200);
-            expect(res.data.username).to.equal('NormalUser2');
-            expect(res.data.email).to.equal(normalUser2.email);
+            expect(res.data.username).to.equal('NormalUser');
+            expect(res.data.email).to.equal(tempUser.email);
             expect(res.data.type).to.equal(userType.NORMAL);
             expect(res.data.activated).to.be.true;
             const createdAt = new Date(res.data.createdAt);
@@ -928,15 +974,15 @@ context('/api/user', () => {
 
       describe('when token user is adminUser', () => {
         it('returns 200 with user selfie and update correct fields', done => {
-          axios.patch(`${USER_API}/${normalUser2.id}`, {
-            username: 'NormalUser2Name'
+          axios.patch(`${USER_API}/${tempUser.id}`, {
+            username: 'NormalUserName'
           }, {
             headers: { token: adminUser.getToken() }
           })
           .then(res => {
             expect(res.status).to.equal(200);
-            expect(res.data.username).to.equal('NormalUser2Name');
-            expect(res.data.email).to.equal(normalUser2.email);
+            expect(res.data.username).to.equal('NormalUserName');
+            expect(res.data.email).to.equal(tempUser.email);
             expect(res.data.type).to.equal(userType.NORMAL);
             expect(res.data.activated).to.be.true;
             const createdAt = new Date(res.data.createdAt);
@@ -951,7 +997,7 @@ context('/api/user', () => {
         });
 
         it('returns 200 with user selfie and update adminUser fields', done => {
-          axios.patch(`${USER_API}/${normalUser2.id}`, {
+          axios.patch(`${USER_API}/${tempUser.id}`, {
             email: 'normal2newemail@testmail.com',
             type: userType.EDITOR,
             activated: false
@@ -960,7 +1006,7 @@ context('/api/user', () => {
           })
           .then(res => {
             expect(res.status).to.equal(200);
-            expect(res.data.username).to.equal('NormalUser2Name');
+            expect(res.data.username).to.equal('NormalUserName');
             expect(res.data.email).to.equal('normal2newemail@testmail.com');
             expect(res.data.type).to.equal(userType.EDITOR);
             expect(res.data.activated).to.be.false;
@@ -975,35 +1021,33 @@ context('/api/user', () => {
           });
         });
       });
+    });
 
-      after('reset normalUser2', done => {
-        User.update({
-          username: normalUser2.username,
-          type: normalUser2.type,
-          activated: normalUser2.activated,
-          email: normalUser2.email
-        }, { where: { id: normalUser2.id } })
-        .then(() => {
-          done();
-        })
-        .catch(err => {
-          done(err);
-        });
+    after('remove temp user', done => {
+      User.destroy({
+        where: { id: tempUser.id },
+        force: true
+      })
+      .then(() => {
+        done();
+      })
+      .catch(err => {
+        done(err);
       });
     });
   });
 
   describe('PATCH /:username', () => {
-    let newUser;
-    before('create a new user', done => {
+    let tempUser;
+    before('create temp user', done => {
       User.create({
-        username: 'newuser',
-        email: 'newuser@testmail.com',
+        email: 'tempuser@testmail.com',
+        username: 'tempuser@testmail.com',
         password: 'password1',
         activated: true
       })
       .then(user => {
-        newUser = user;
+        tempUser = user;
         done();
       })
       .catch(err => {
@@ -1013,57 +1057,57 @@ context('/api/user', () => {
 
     context('with mal-formed request data', () => {
       it('returns 422 when req.body is not present', done => {
-        axios.patch(`${USER_API}/${newUser.username}`)
+        axios.patch(`${USER_API}/${tempUser.username}`)
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
 
       it('returns 422 when body contains unknown fields', done => {
-        axios.patch(`${USER_API}/${newUser.username}`, {
+        axios.patch(`${USER_API}/${tempUser.username}`, {
           unknown: 'fieldvalue'
         }, {
-          headers: { token: newUser.getToken() }
+          headers: { token: tempUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
 
       it('returns 422 when email in req.body is invalid', done => {
-        axios.patch(`${USER_API}/${newUser.username}`, {
+        axios.patch(`${USER_API}/${tempUser.username}`, {
           email: 'invalidemail'
         }, {
-          headers: { token: newUser.getToken() }
+          headers: { token: tempUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
 
       it('returns 422 when password in req.body is invalid', done => {
-        axios.patch(`${USER_API}/${newUser.username}`, {
+        axios.patch(`${USER_API}/${tempUser.username}`, {
           password: 'pass'
         }, {
-          headers: { token: newUser.getToken() }
+          headers: { token: tempUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
 
       it('returns 422 when username in req.body is invalid', done => {
-        axios.patch(`${USER_API}/${newUser.username}`, {
+        axios.patch(`${USER_API}/${tempUser.username}`, {
           username: 'na'
         }, {
-          headers: { token: newUser.getToken() }
+          headers: { token: tempUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
@@ -1071,23 +1115,23 @@ context('/api/user', () => {
 
     context('with semantically incorrect request data', () => {
       it('returns 401 when token is not present', done => {
-        axios.patch(`${USER_API}/${newUser.username}`, {
+        axios.patch(`${USER_API}/${tempUser.username}`, {
           email: 'newemai2@testmail.com'
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
 
       it('returns 401 when token is in header but not valid', done => {
-        axios.patch(`${USER_API}/${newUser.username}`, {
+        axios.patch(`${USER_API}/${tempUser.username}`, {
           email: 'newemail2@testmail.com'
         }, {
           headers: { token: 'invalid token' }
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
@@ -1099,44 +1143,44 @@ context('/api/user', () => {
           headers: { token: inactiveUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
 
       it('returns 403 when unaccessible fields are present w. normal token user', done => {
-        axios.patch(`${USER_API}/${newUser.username}`, {
+        axios.patch(`${USER_API}/${tempUser.username}`, {
           email: 'newemail2@testmail.com',
           type: userType.EDITOR
         }, {
-          headers: { token: newUser.getToken() }
+          headers: { token: tempUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(403);
+          expect(err.response.status).to.equal(403);
           done();
         });
       });
 
       it('returns 409 when trying to change email to an existing email', done => {
-        axios.patch(`${USER_API}/${newUser.username}`, {
-          email: normalUser1.email
+        axios.patch(`${USER_API}/${tempUser.username}`, {
+          email: adminUser.email
         }, {
-          headers: { token: newUser.getToken() }
+          headers: { token: tempUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(409);
+          expect(err.response.status).to.equal(409);
           done();
         });
       });
 
       it('returns 409 when trying to change username to an existing username', done => {
-        axios.patch(`${USER_API}/${newUser.username}`, {
-          username: normalUser1.email
+        axios.patch(`${USER_API}/${tempUser.username}`, {
+          username: adminUser.username
         }, {
-          headers: { token: newUser.getToken() }
+          headers: { token: tempUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(409);
+          expect(err.response.status).to.equal(409);
           done();
         });
       });
@@ -1145,15 +1189,15 @@ context('/api/user', () => {
     context('with valid request data', () => {
       describe('when token user is normal', () => {
         it('returns 200 with user selfie and update correct fields', done => {
-          axios.patch(`${USER_API}/${newUser.username}`, {
-            username: 'NewUserNameNewUser'
+          axios.patch(`${USER_API}/${tempUser.username}`, {
+            username: 'Username'
           }, {
-            headers: { token: newUser.getToken() }
+            headers: { token: tempUser.getToken() }
           })
           .then(res => {
             expect(res.status).to.equal(200);
-            expect(res.data.username).to.equal('NewUserNameNewUser');
-            expect(res.data.email).to.equal(newUser.email);
+            expect(res.data.username).to.equal('Username');
+            expect(res.data.email).to.equal(tempUser.email);
             expect(res.data.type).to.equal(userType.NORMAL);
             expect(res.data.activated).to.be.true;
             const createdAt = new Date(res.data.createdAt);
@@ -1170,7 +1214,7 @@ context('/api/user', () => {
 
       describe('when token user is adminUser', () => {
         beforeEach('reset username', done => {
-          User.update({ username: newUser.username }, { where: { id: newUser.id } })
+          User.update({ username: tempUser.username }, { where: { id: tempUser.id } })
           .then(() => {
             done();
           })
@@ -1180,15 +1224,15 @@ context('/api/user', () => {
         });
 
         it('returns 200 with user selfie and update correct fields', done => {
-          axios.patch(`${USER_API}/${newUser.username}`, {
-            username: 'NewUserNameUser'
+          axios.patch(`${USER_API}/${tempUser.username}`, {
+            username: 'NormalUsername'
           }, {
             headers: { token: adminUser.getToken() }
           })
           .then(res => {
             expect(res.status).to.equal(200);
-            expect(res.data.username).to.equal('NewUserNameUser');
-            expect(res.data.email).to.equal(newUser.email);
+            expect(res.data.username).to.equal('NormalUsername');
+            expect(res.data.email).to.equal(tempUser.email);
             expect(res.data.type).to.equal(userType.NORMAL);
             expect(res.data.activated).to.be.true;
             const createdAt = new Date(res.data.createdAt);
@@ -1203,9 +1247,9 @@ context('/api/user', () => {
         });
 
         it('returns 200 with user selfie and update adminUser fields', done => {
-          axios.patch(`${USER_API}/${normalUser2.username}`, {
-            username: 'NewUserNameNewUser',
-            email: 'newuserhere@testmail.com',
+          axios.patch(`${USER_API}/${tempUser.username}`, {
+            username: 'NormalUserName',
+            email: 'newnormalemail@testmail.com',
             type: userType.EDITOR,
             activated: false
           }, {
@@ -1213,8 +1257,8 @@ context('/api/user', () => {
           })
           .then(res => {
             expect(res.status).to.equal(200);
-            expect(res.data.username).to.equal('NewUserNameNewUser');
-            expect(res.data.email).to.equal('newuserhere@testmail.com');
+            expect(res.data.username).to.equal('NormalUserName');
+            expect(res.data.email).to.equal('newnormalemail@testmail.com');
             expect(res.data.type).to.equal(userType.EDITOR);
             expect(res.data.activated).to.be.false;
             const createdAt = new Date(res.data.createdAt);
@@ -1229,6 +1273,19 @@ context('/api/user', () => {
         });
       });
     });
+
+    after('remove temp user', done => {
+      User.destroy({
+        where: { id: tempUser.id },
+        force: true
+      })
+      .then(() => {
+        done();
+      })
+      .catch(err => {
+        done(err);
+      });
+    });
   });
 
   describe('GET /checkEmail', () => {
@@ -1236,7 +1293,7 @@ context('/api/user', () => {
       it('returns 422 when req.query is not present', done => {
         axios.get(`${USER_API}/checkEmail`)
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
@@ -1244,7 +1301,7 @@ context('/api/user', () => {
       it('returns 422 when email in req.query is invalid', done => {
         axios.get(`${USER_API}/checkEmail?email=invalidemail`)
         .catch(err => {
-          expect(err.status).to.equal(422);
+          expect(err.response.status).to.equal(422);
           done();
         });
       });
@@ -1252,7 +1309,7 @@ context('/api/user', () => {
 
     context('with valid request data', () => {
       it('return 200 with isRegistered true when email is registered', done => {
-        axios.get(`${USER_API}/checkEmail?email=${normalUser1.email}`)
+        axios.get(`${USER_API}/checkEmail?email=${normalUser.email}`)
         .then(res => {
           expect(res.status).to.equal(200);
           expect(res.data.isRegistered).to.be.true;
@@ -1284,7 +1341,7 @@ context('/api/user', () => {
           headers: {}
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
@@ -1294,7 +1351,7 @@ context('/api/user', () => {
           headers: { token: 'invalid token' }
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
@@ -1304,7 +1361,7 @@ context('/api/user', () => {
           headers: { token: inactiveUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
@@ -1313,12 +1370,12 @@ context('/api/user', () => {
     context('with valid request data', () => {
       it('return 200 with user selfie and token', done => {
         axios.get(`${USER_API}/refreshToken`, {
-          headers: { token: normalUser1.getToken() }
+          headers: { token: normalUser.getToken() }
         })
         .then(res => {
           expect(res.status).to.equal(200);
-          expect(res.data.email).to.equal(normalUser1.email);
-          expect(res.data.username).to.equal(normalUser1.username);
+          expect(res.data.email).to.equal(normalUser.email);
+          expect(res.data.username).to.equal(normalUser.username);
           expect(res.data.type).to.equal(userType.NORMAL);
           expect(res.data.activated).to.be.true;
           const createdAt = new Date(res.data.createdAt);
@@ -1338,31 +1395,31 @@ context('/api/user', () => {
   describe('GET /:id', () => {
     context('with semantically incorrect request data', () => {
       it('returns 401 when token is invalid', done => {
-        axios.get(`${USER_API}/${normalUser1.id}`, {
+        axios.get(`${USER_API}/${normalUser.id}`, {
           headers: { token: 'invalid token' }
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
 
       it('returns 401 when token user is not activated', done => {
-        axios.get(`${USER_API}/${normalUser1.id}`, {
+        axios.get(`${USER_API}/${normalUser.id}`, {
           headers: { token: inactiveUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
 
       it('returns 412 when requested user does not exist', done => {
         axios.get(`${USER_API}/99999999`, {
-          headers: { token: normalUser1.getToken() }
+          headers: { token: normalUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(412);
+          expect(err.response.status).to.equal(412);
           done();
         });
       });
@@ -1388,13 +1445,13 @@ context('/api/user', () => {
 
       describe('with normal token user', () => {
         it('returns 200 with user selfie when token user is requested user', done => {
-          axios.get(`${USER_API}/${normalUser1.id}`, {
-            headers: { token: normalUser1.getToken() }
+          axios.get(`${USER_API}/${normalUser.id}`, {
+            headers: { token: normalUser.getToken() }
           })
           .then(res => {
             expect(res.status).to.equal(200);
-            expect(res.data.email).to.equal(normalUser1.email);
-            expect(res.data.username).to.equal(normalUser1.username);
+            expect(res.data.email).to.equal(normalUser.email);
+            expect(res.data.username).to.equal(normalUser.username);
             expect(res.data.type).to.equal(userType.NORMAL);
             expect(res.data.activated).to.be.true;
             const createdAt = new Date(res.data.createdAt);
@@ -1410,7 +1467,7 @@ context('/api/user', () => {
 
         it('returns 200 with user publicInfo when token user is not requested user', done => {
           axios.get(`${USER_API}/${adminUser.id}`, {
-            headers: { token: normalUser1.getToken() }
+            headers: { token: normalUser.getToken() }
           })
           .then(res => {
             expect(res.status).to.equal(200);
@@ -1449,13 +1506,13 @@ context('/api/user', () => {
         });
 
         it('returns 200 with user selfie when token user is not requested user', done => {
-          axios.get(`${USER_API}/${normalUser1.id}`, {
+          axios.get(`${USER_API}/${normalUser.id}`, {
             headers: { token: adminUser.getToken() }
           })
           .then(res => {
             expect(res.status).to.equal(200);
-            expect(res.data.email).to.equal(normalUser1.email);
-            expect(res.data.username).to.equal(normalUser1.username);
+            expect(res.data.email).to.equal(normalUser.email);
+            expect(res.data.username).to.equal(normalUser.username);
             expect(res.data.type).to.equal(userType.NORMAL);
             expect(res.data.activated).to.be.true;
             const createdAt = new Date(res.data.createdAt);
@@ -1475,31 +1532,31 @@ context('/api/user', () => {
   describe('GET /:username', () => {
     context('with semantically incorrect request data', () => {
       it('returns 401 when token is invalid', done => {
-        axios.get(`${USER_API}/${normalUser1.username}`, {
+        axios.get(`${USER_API}/${normalUser.username}`, {
           headers: { token: 'invalid token' }
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
 
       it('returns 401 when token user is not activated', done => {
-        axios.get(`${USER_API}/${normalUser1.username}`, {
+        axios.get(`${USER_API}/${normalUser.username}`, {
           headers: { token: inactiveUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
 
       it('returns 412 when requested user does not exist', done => {
         axios.get(`${USER_API}/99999999`, {
-          headers: { token: normalUser1.getToken() }
+          headers: { token: normalUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(412);
+          expect(err.response.status).to.equal(412);
           done();
         });
       });
@@ -1525,13 +1582,13 @@ context('/api/user', () => {
 
       describe('with normal token user', () => {
         it('returns 200 with user selfie when token user is requested user', done => {
-          axios.get(`${USER_API}/${normalUser1.username}`, {
-            headers: { token: normalUser1.getToken() }
+          axios.get(`${USER_API}/${normalUser.username}`, {
+            headers: { token: normalUser.getToken() }
           })
           .then(res => {
             expect(res.status).to.equal(200);
-            expect(res.data.email).to.equal(normalUser1.email);
-            expect(res.data.username).to.equal(normalUser1.username);
+            expect(res.data.email).to.equal(normalUser.email);
+            expect(res.data.username).to.equal(normalUser.username);
             expect(res.data.type).to.equal(userType.NORMAL);
             expect(res.data.activated).to.be.true;
             const createdAt = new Date(res.data.createdAt);
@@ -1547,7 +1604,7 @@ context('/api/user', () => {
 
         it('returns 200 with user publicInfo when token user is not requested user', done => {
           axios.get(`${USER_API}/${adminUser.username}`, {
-            headers: { token: normalUser1.getToken() }
+            headers: { token: normalUser.getToken() }
           })
           .then(res => {
             expect(res.status).to.equal(200);
@@ -1586,13 +1643,13 @@ context('/api/user', () => {
         });
 
         it('returns 200 with user selfie when token user is not requested user', done => {
-          axios.get(`${USER_API}/${normalUser1.username}`, {
+          axios.get(`${USER_API}/${normalUser.username}`, {
             headers: { token: adminUser.getToken() }
           })
           .then(res => {
             expect(res.status).to.equal(200);
-            expect(res.data.email).to.equal(normalUser1.email);
-            expect(res.data.username).to.equal(normalUser1.username);
+            expect(res.data.email).to.equal(normalUser.email);
+            expect(res.data.username).to.equal(normalUser.username);
             expect(res.data.type).to.equal(userType.NORMAL);
             expect(res.data.activated).to.be.true;
             const createdAt = new Date(res.data.createdAt);
@@ -1616,7 +1673,7 @@ context('/api/user', () => {
           headers: { token: 'invalid token' }
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
@@ -1626,7 +1683,7 @@ context('/api/user', () => {
           headers: { token: inactiveUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
@@ -1655,7 +1712,7 @@ context('/api/user', () => {
 
       it('returns 200 with users publicInfos when token user is normal', done => {
         axios.get(`${USER_API}/`, {
-          headers: { token: normalUser1.getToken() }
+          headers: { token: normalUser.getToken() }
         })
         .then(res => {
           expect(res.status).to.equal(200);
@@ -1700,23 +1757,40 @@ context('/api/user', () => {
   });
 
   describe('DELETE /:id', () => {
+    let tempUser;
+    before('create temp user', done => {
+      User.create({
+        email: 'tempuser@testmail.com',
+        username: 'tempuser@testmail.com',
+        password: 'password1',
+        activated: true
+      })
+      .then(user => {
+        tempUser = user;
+        done();
+      })
+      .catch(err => {
+        done(err);
+      });
+    });
+
     context('with semantically incorrect request data', () => {
       it('returns 401 when token is not present', done => {
-        axios.delete(`${USER_API}/${normalUser1.id}`, {
+        axios.delete(`${USER_API}/${normalUser.id}`, {
           headers: { }
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
 
       it('returns 401 when token is not valid', done => {
-        axios.delete(`${USER_API}/${normalUser1.id}`, {
+        axios.delete(`${USER_API}/${normalUser.id}`, {
           headers: { token: 'invalid token' }
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
@@ -1726,30 +1800,30 @@ context('/api/user', () => {
           headers: { token: inactiveUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
 
       it('returns 403 when token user is not requested user', done => {
-        axios.delete(`${USER_API}/${normalUser2.id}`, {
-          headers: { token: normalUser1.getToken() }
+        axios.delete(`${USER_API}/${inactiveUser.id}`, {
+          headers: { token: normalUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(403);
+          expect(err.response.status).to.equal(403);
           done();
         });
       });
     });
 
     context('with valid request data', () => {
-      it('returns 204 when token user is normal', done => {
-        axios.delete(`${USER_API}/${normalUser1.id}`, {
-          headers: { token: normalUser1.getToken() }
+      it('returns 200 with activated status when token user is normal', done => {
+        axios.delete(`${USER_API}/${normalUser.id}`, {
+          headers: { token: normalUser.getToken() }
         })
         .then(res => {
-          expect(res.status).to.equal(204);
-          expect(res.data).to.be.empty;
+          expect(res.status).to.equal(200);
+          expect(res.data.activated).to.be.false;
           done();
         })
         .catch(err => {
@@ -1781,7 +1855,7 @@ context('/api/user', () => {
       });
 
       it('makes the email remains registered', done => {
-        axios.get(`${USER_API}/checkEmail?email=${normalUser1.email}`)
+        axios.get(`${USER_API}/checkEmail?email=${normalUser.email}`)
         .then(res => {
           expect(res.status).to.equal(200);
           expect(res.data.isRegistered).to.be.true;
@@ -1794,21 +1868,21 @@ context('/api/user', () => {
 
       it('disables the getToken for deleted user', done => {
         axios.post(`${USER_API}/getToken`, {
-          email: normalUser1.email,
+          email: normalUser.email,
           password: 'normal1password'
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
 
       it('disables the refreshToken for deleted user', done => {
         axios.get(`${USER_API}/refreshToken`, {
-          headers: { token: normalUser1.getToken() }
+          headers: { token: normalUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
@@ -1816,7 +1890,7 @@ context('/api/user', () => {
 
     after('restore users', done => {
       User.restore({
-        where: { id: normalUser1.id }
+        where: { id: normalUser.id }
       })
       .then(() => {
         return User.restore({
@@ -1824,7 +1898,7 @@ context('/api/user', () => {
         });
       })
       .then(() => {
-        return User.update({ activated: true }, { where: { id: normalUser1.id } });
+        return User.update({ activated: true }, { where: { id: normalUser.id } });
       })
       .then(() => {
         done();
@@ -1838,21 +1912,21 @@ context('/api/user', () => {
   describe('DELETE /:username', () => {
     context('with semantically incorrect request data', () => {
       it('returns 401 when token is not present', done => {
-        axios.delete(`${USER_API}/${normalUser1.username}`, {
+        axios.delete(`${USER_API}/${normalUser.username}`, {
           headers: { }
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
 
       it('returns 401 when token is not valid', done => {
-        axios.delete(`${USER_API}/${normalUser1.username}`, {
+        axios.delete(`${USER_API}/${normalUser.username}`, {
           headers: { token: 'invalid token' }
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
@@ -1862,30 +1936,30 @@ context('/api/user', () => {
           headers: { token: inactiveUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
 
       it('returns 403 when token user is not requested user', done => {
         axios.delete(`${USER_API}/${inactiveUser.username}`, {
-          headers: { token: normalUser1.getToken() }
+          headers: { token: normalUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(403);
+          expect(err.response.status).to.equal(403);
           done();
         });
       });
     });
 
     context('with valid request data', () => {
-      it('returns 204 when token user is normal', done => {
-        axios.delete(`${USER_API}/${normalUser1.username}`, {
-          headers: { token: normalUser1.getToken() }
+      it('returns 200 with activated status when token user is normal', done => {
+        axios.delete(`${USER_API}/${normalUser.username}`, {
+          headers: { token: normalUser.getToken() }
         })
         .then(res => {
-          expect(res.status).to.equal(204);
-          expect(res.data).to.be.empty;
+          expect(res.status).to.equal(200);
+          expect(res.data.activated).to.be.false;
           done();
         })
         .catch(err => {
@@ -1917,7 +1991,7 @@ context('/api/user', () => {
       });
 
       it('makes the email remails registered', done => {
-        axios.get(`${USER_API}/checkEmail?email=${normalUser1.email}`)
+        axios.get(`${USER_API}/checkEmail?email=${normalUser.email}`)
         .then(res => {
           expect(res.status).to.equal(200);
           expect(res.data.isRegistered).to.be.true;
@@ -1930,21 +2004,21 @@ context('/api/user', () => {
 
       it('disables the getToken for deleted user', done => {
         axios.post(`${USER_API}/getToken`, {
-          email: normalUser1.email,
+          email: normalUser.email,
           password: 'normal1password'
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
 
       it('disables the refreshToken for deleted user', done => {
         axios.get(`${USER_API}/refreshToken`, {
-          headers: { token: normalUser1.getToken() }
+          headers: { token: normalUser.getToken() }
         })
         .catch(err => {
-          expect(err.status).to.equal(401);
+          expect(err.response.status).to.equal(401);
           done();
         });
       });
