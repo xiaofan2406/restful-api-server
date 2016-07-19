@@ -293,10 +293,20 @@ context('user-model validators', () => {
     context('String', () => {
       it('returns true with no special word, not all digits, ' +
         'not starting with special character, ' +
+        'at least two word characters with one starting' +
         'no whitespace, not all characters and length of [3, 28]', () => {
         expect(isUsername('jon')).to.be.true;
+        expect(isUsername('jon-_@.onjonjonjonjonjonjon1')).to.be.true;
+        expect(isUsername('J1on')).to.be.true;
+        expect(isUsername('j-i1o')).to.be.true;
+        expect(isUsername('ji@-_.1')).to.be.true;
       });
-      it('returns false with special word');
+      it('returns false with special word', () => {
+        expect(isUsername('admin')).to.be.false;
+        expect(isUsername('root')).to.be.false;
+        expect(isUsername('activateaccount')).to.be.false;
+        expect(isUsername('resetpassword')).to.be.false;
+      });
       it('returns false with non-word character starting', () => {
         expect(isUsername('_jon')).to.be.false;
         expect(isUsername('@jon')).to.be.false;
@@ -310,11 +320,48 @@ context('user-model validators', () => {
         expect(isUsername('jon.')).to.be.false;
         expect(isUsername('jon-')).to.be.false;
       });
-      it('returns false with not allowed special characters');
-      it('returns false with all digits');
-      it('returns false with all special characters');
-      it('returns false with length over 28');
-      it('returns false with length under 3');
+      it('returns false with not allowed special characters', () => {
+        expect(isUsername('jo!n')).to.be.false;
+        expect(isUsername('jo#n')).to.be.false;
+        expect(isUsername('jo$n')).to.be.false;
+        expect(isUsername('jo%n')).to.be.false;
+        expect(isUsername('jo^n')).to.be.false;
+        expect(isUsername('jo&n')).to.be.false;
+        expect(isUsername('jo*n')).to.be.false;
+        expect(isUsername('jo(n')).to.be.false;
+        expect(isUsername('jo)n')).to.be.false;
+        expect(isUsername('jo=n')).to.be.false;
+        expect(isUsername('jo+n')).to.be.false;
+        expect(isUsername('jo~n')).to.be.false;
+        expect(isUsername('jo{n')).to.be.false;
+        expect(isUsername('jo}n')).to.be.false;
+        expect(isUsername('jo,n')).to.be.false;
+        expect(isUsername('jo/n')).to.be.false;
+        expect(isUsername('jo n')).to.be.false;
+        expect(isUsername('jo\'n')).to.be.false;
+        expect(isUsername('jo"n')).to.be.false;
+        expect(isUsername('jo;n')).to.be.false;
+        expect(isUsername('jo:n')).to.be.false;
+        expect(isUsername('jo[n')).to.be.false;
+        expect(isUsername('jo]n')).to.be.false;
+        expect(isUsername('jo\\m')).to.be.false;
+        expect(isUsername('jo|n')).to.be.false;
+      });
+      it('returns false with only one word character', () => {
+        expect(isUsername('j@-_.1')).to.be.false;
+      });
+      it('returns false with all digits', () => {
+        expect(isUsername('1234')).to.be.false;
+      });
+      it('returns false with all special characters', () => {
+        expect(isUsername('.-_@')).to.be.false;
+      });
+      it('returns false with length over 28', () => {
+        expect(isUsername('jonjonjonjonjonjonjonjonjonjon')).to.be.false;
+      });
+      it('returns false with length under 3', () => {
+        expect(isUsername('ji')).to.be.false;
+      });
     });
 
     context('Object', () => {

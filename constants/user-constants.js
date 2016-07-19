@@ -14,4 +14,6 @@ export const resources = {
   ARTICLE: 1
 };
 
+export const reserved = ['activateaccount', 'resetpassword', 'admin', 'root'];
+
 export const defaultResources = [resources.TODO, resources.ARTICLE];

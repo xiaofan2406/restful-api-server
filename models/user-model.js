@@ -177,14 +177,14 @@ export default (sequelize, DataTypes) => {
           if (!userData.hasOwnProperty('username')) {
             userData.username = userData.email;
           }
-          this.findByEmail(userData.email)
-          .then(user => {
-            if (user) {
-              return reject(Error(409, 'Email has been registered already'));
-            }
-            if (isCreation) {
-              userData.creation = creation.CREATED;
-            }
+          if (isCreation) {
+            userData.creation = creation.CREATED;
+          }
+          this._uniqueEmail(userData)
+          .then(() => {
+            return this._uniqueUsername(userData);
+          })
+          .then(() => {
             return resolve(this.create(userData));
           })
           .catch(error => {
@@ -199,6 +199,50 @@ export default (sequelize, DataTypes) => {
           }
           if (!httpUser.isAdmin() && httpUser.id !== user.id) {
             return reject(Error(403, 'User does not have right to operate on requested user'));
+          }
+          return resolve(user);
+        });
+      },
+      _uniqueUsername(data, user = null) {
+        return new Promise((resolve, reject) => {
+          if (data.hasOwnProperty('username')) {
+            return this.findByUsername(data.username)
+              .then(found => {
+                if (found) {
+                  if (user && found.id !== user.id) {
+                    return reject(Error(409, 'Unique field violation'));
+                  }
+                  if (!user) {
+                    return reject(Error(409, 'Unique field violation'));
+                  }
+                }
+                return resolve(user);
+              })
+              .catch(err => {
+                return reject(err);
+              });
+          }
+          return resolve(user);
+        });
+      },
+      _uniqueEmail(data, user = null) {
+        return new Promise((resolve, reject) => {
+          if (data.hasOwnProperty('email')) {
+            return this.findByEmail(data.email)
+              .then(found => {
+                if (found) {
+                  if (user && found.id !== user.id) {
+                    return reject(Error(409, 'Unique field violation'));
+                  }
+                  if (!user) {
+                    return reject(Error(409, 'Unique field violation'));
+                  }
+                }
+                return resolve(user);
+              })
+              .catch(err => {
+                return reject(err);
+              });
           }
           return resolve(user);
         });
@@ -218,15 +262,15 @@ export default (sequelize, DataTypes) => {
             return this._operateOn(user, httpUser);
           })
           .then(user => {
-            return user.update(updates);
+            return this._uniqueUsername(updates, user);
           })
           .then(user => {
-            return resolve(user);
+            return this._uniqueEmail(updates, user);
+          })
+          .then(user => {
+            return resolve(user.update(updates));
           })
           .catch(error => {
-            if (error.name === 'SequelizeUniqueConstraintError') {
-              return reject(Error(409, 'Unique field violation'));
-            }
             return reject(error);
           });
         });
@@ -331,11 +375,11 @@ export default (sequelize, DataTypes) => {
           });
         });
       },
-      findByEmail(email) {
-        return this.findOne({ where: { email }, paranoid: false });
+      findByEmail(email, paranoid = false) {
+        return this.findOne({ where: { email: { $ilike: email } }, paranoid });
       },
       findByUsername(username) {
-        return this.findOne({ where: { username } });
+        return this.findOne({ where: { username: { $ilike: username } } });
       },
       _getFuncName(name) {
         switch (name) {
@@ -360,7 +404,7 @@ export default (sequelize, DataTypes) => {
         }
       },
       beforeDestroy(user) {
-        return user.update({ activated: false });
+        return user.update({ activated: false, username: user.email });
       }
     }
   });

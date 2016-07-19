@@ -133,9 +133,32 @@ context('/api/user', () => {
         });
       });
 
-      it('returns 409 when trying to create duplicate user', done => {
+      it('returns 409 when creating duplicate user email', done => {
         axios.post(`${USER_API}/`, {
           email: normalUser.email,
+          password: 'password1'
+        })
+        .catch(err => {
+          expect(err.response.status).to.equal(409);
+          done();
+        });
+      });
+
+      it('returns 409 when creating duplicate user email case insensitive', done => {
+        axios.post(`${USER_API}/`, {
+          email: normalUser.email.toUpperCase(),
+          password: 'password1'
+        })
+        .catch(err => {
+          expect(err.response.status).to.equal(409);
+          done();
+        });
+      });
+
+      it('returns 409 when creating duplicate username case insensitive', done => {
+        axios.post(`${USER_API}/`, {
+          email: 'valid@testmail.com',
+          username: normalUser.username.toUpperCase(),
           password: 'password1'
         })
         .catch(err => {
@@ -167,11 +190,11 @@ context('/api/user', () => {
           axios.post(`${USER_API}/`, {
             email: 'valid@testmail.com',
             password: 'password1',
-            username: 'my name'
+            username: 'myname'
           })
           .then(res => {
             expect(res.status).to.equal(202);
-            expect(res.data.username).to.equal('my name');
+            expect(res.data.username).to.equal('myname');
             expect(res.data.activated).to.be.false;
             done();
           })
@@ -219,13 +242,13 @@ context('/api/user', () => {
           axios.post(`${USER_API}/`, {
             email: 'valid@testmail.com',
             password: 'password1',
-            username: 'my name'
+            username: 'myname'
           }, {
             headers: { token: normalUser.getToken() }
           })
           .then(res => {
             expect(res.status).to.equal(202);
-            expect(res.data.username).to.equal('my name');
+            expect(res.data.username).to.equal('myname');
             expect(res.data.activated).to.be.false;
             done();
           })
@@ -296,14 +319,14 @@ context('/api/user', () => {
           axios.post(`${USER_API}/`, {
             email: 'valid@testmail.com',
             password: 'password1',
-            username: 'my name'
+            username: 'myname'
           }, {
             headers: { token: adminUser.getToken() }
           })
           .then(res => {
             expect(res.status).to.equal(202);
             expect(res.data.email).to.equal('valid@testmail.com');
-            expect(res.data.username).to.equal('my name');
+            expect(res.data.username).to.equal('myname');
             expect(res.data.type).to.equal(userType.NORMAL);
             expect(res.data.activated).to.be.false;
             done();
@@ -317,7 +340,7 @@ context('/api/user', () => {
           axios.post(`${USER_API}/`, {
             email: 'valid@testmail.com',
             password: 'password1',
-            username: 'my name',
+            username: 'myname',
             type: userType.EDITOR
           }, {
             headers: { token: adminUser.getToken() }
@@ -325,7 +348,7 @@ context('/api/user', () => {
           .then(res => {
             expect(res.status).to.equal(202);
             expect(res.data.email).to.equal('valid@testmail.com');
-            expect(res.data.username).to.equal('my name');
+            expect(res.data.username).to.equal('myname');
             expect(res.data.type).to.equal(userType.EDITOR);
             expect(res.data.activated).to.be.false;
             done();
@@ -339,7 +362,7 @@ context('/api/user', () => {
           axios.post(`${USER_API}/`, {
             email: 'valid@testmail.com',
             password: 'password1',
-            username: 'my name'
+            username: 'myname'
           }, {
             headers: { token: adminUser.getToken() }
           })
@@ -921,7 +944,7 @@ context('/api/user', () => {
         });
       });
 
-      it('returns 409 when trying to change email to an existing email', done => {
+      it('returns 409 when changing email to an existing email', done => {
         axios.patch(`${USER_API}/${tempUser.id}`, {
           email: adminUser.email
         }, {
@@ -933,9 +956,33 @@ context('/api/user', () => {
         });
       });
 
-      it('returns 409 when trying to change username to an existing username', done => {
+      it('returns 409 when changing email to an existing email case insensitive', done => {
+        axios.patch(`${USER_API}/${tempUser.id}`, {
+          email: adminUser.email.toUpperCase()
+        }, {
+          headers: { token: tempUser.getToken() }
+        })
+        .catch(err => {
+          expect(err.response.status).to.equal(409);
+          done();
+        });
+      });
+
+      it('returns 409 when changing username to an existing username', done => {
         axios.patch(`${USER_API}/${tempUser.id}`, {
           username: adminUser.username
+        }, {
+          headers: { token: tempUser.getToken() }
+        })
+        .catch(err => {
+          expect(err.response.status).to.equal(409);
+          done();
+        });
+      });
+
+      it('returns 409 when changing username to an existing username case insensitive', done => {
+        axios.patch(`${USER_API}/${tempUser.id}`, {
+          username: adminUser.username.toUpperCase()
         }, {
           headers: { token: tempUser.getToken() }
         })
@@ -950,13 +997,13 @@ context('/api/user', () => {
       describe('when token user is normal', () => {
         it('returns 200 with user selfie and updates correct fields', done => {
           axios.patch(`${USER_API}/${tempUser.id}`, {
-            username: 'NormalUser'
+            username: 'somename'
           }, {
             headers: { token: tempUser.getToken() }
           })
           .then(res => {
             expect(res.status).to.equal(200);
-            expect(res.data.username).to.equal('NormalUser');
+            expect(res.data.username).to.equal('somename');
             expect(res.data.email).to.equal(tempUser.email);
             expect(res.data.type).to.equal(userType.NORMAL);
             expect(res.data.activated).to.be.true;
@@ -975,13 +1022,13 @@ context('/api/user', () => {
       describe('when token user is adminUser', () => {
         it('returns 200 with user selfie and update correct fields', done => {
           axios.patch(`${USER_API}/${tempUser.id}`, {
-            username: 'NormalUserName'
+            username: 'someothername'
           }, {
             headers: { token: adminUser.getToken() }
           })
           .then(res => {
             expect(res.status).to.equal(200);
-            expect(res.data.username).to.equal('NormalUserName');
+            expect(res.data.username).to.equal('someothername');
             expect(res.data.email).to.equal(tempUser.email);
             expect(res.data.type).to.equal(userType.NORMAL);
             expect(res.data.activated).to.be.true;
@@ -1006,7 +1053,7 @@ context('/api/user', () => {
           })
           .then(res => {
             expect(res.status).to.equal(200);
-            expect(res.data.username).to.equal('NormalUserName');
+            expect(res.data.username).to.equal('someothername');
             expect(res.data.email).to.equal('normal2newemail@testmail.com');
             expect(res.data.type).to.equal(userType.EDITOR);
             expect(res.data.activated).to.be.false;
@@ -1161,7 +1208,7 @@ context('/api/user', () => {
         });
       });
 
-      it('returns 409 when trying to change email to an existing email', done => {
+      it('returns 409 when changing email to an existing email', done => {
         axios.patch(`${USER_API}/${tempUser.username}`, {
           email: adminUser.email
         }, {
@@ -1173,9 +1220,33 @@ context('/api/user', () => {
         });
       });
 
-      it('returns 409 when trying to change username to an existing username', done => {
+      it('returns 409 when changing email to an existing email case insensitive', done => {
+        axios.patch(`${USER_API}/${tempUser.username}`, {
+          email: adminUser.email.toUpperCase()
+        }, {
+          headers: { token: tempUser.getToken() }
+        })
+        .catch(err => {
+          expect(err.response.status).to.equal(409);
+          done();
+        });
+      });
+
+      it('returns 409 when changing username to an existing username', done => {
         axios.patch(`${USER_API}/${tempUser.username}`, {
           username: adminUser.username
+        }, {
+          headers: { token: tempUser.getToken() }
+        })
+        .catch(err => {
+          expect(err.response.status).to.equal(409);
+          done();
+        });
+      });
+
+      it('returns 409 when changing username to an existing username case insensitive', done => {
+        axios.patch(`${USER_API}/${tempUser.username}`, {
+          username: adminUser.username.toUpperCase()
         }, {
           headers: { token: tempUser.getToken() }
         })
@@ -1190,13 +1261,13 @@ context('/api/user', () => {
       describe('when token user is normal', () => {
         it('returns 200 with user selfie and update correct fields', done => {
           axios.patch(`${USER_API}/${tempUser.username}`, {
-            username: 'Username'
+            username: 'anewname'
           }, {
             headers: { token: tempUser.getToken() }
           })
           .then(res => {
             expect(res.status).to.equal(200);
-            expect(res.data.username).to.equal('Username');
+            expect(res.data.username).to.equal('anewname');
             expect(res.data.email).to.equal(tempUser.email);
             expect(res.data.type).to.equal(userType.NORMAL);
             expect(res.data.activated).to.be.true;
@@ -1225,13 +1296,13 @@ context('/api/user', () => {
 
         it('returns 200 with user selfie and update correct fields', done => {
           axios.patch(`${USER_API}/${tempUser.username}`, {
-            username: 'NormalUsername'
+            username: 'Normalname'
           }, {
             headers: { token: adminUser.getToken() }
           })
           .then(res => {
             expect(res.status).to.equal(200);
-            expect(res.data.username).to.equal('NormalUsername');
+            expect(res.data.username).to.equal('Normalname');
             expect(res.data.email).to.equal(tempUser.email);
             expect(res.data.type).to.equal(userType.NORMAL);
             expect(res.data.activated).to.be.true;
@@ -1248,7 +1319,7 @@ context('/api/user', () => {
 
         it('returns 200 with user selfie and update adminUser fields', done => {
           axios.patch(`${USER_API}/${tempUser.username}`, {
-            username: 'NormalUserName',
+            username: 'NormalnewName',
             email: 'newnormalemail@testmail.com',
             type: userType.EDITOR,
             activated: false
@@ -1257,7 +1328,7 @@ context('/api/user', () => {
           })
           .then(res => {
             expect(res.status).to.equal(200);
-            expect(res.data.username).to.equal('NormalUserName');
+            expect(res.data.username).to.equal('NormalnewName');
             expect(res.data.email).to.equal('newnormalemail@testmail.com');
             expect(res.data.type).to.equal(userType.EDITOR);
             expect(res.data.activated).to.be.false;
@@ -1757,23 +1828,6 @@ context('/api/user', () => {
   });
 
   describe('DELETE /:id', () => {
-    let tempUser;
-    before('create temp user', done => {
-      User.create({
-        email: 'tempuser@testmail.com',
-        username: 'tempuser@testmail.com',
-        password: 'password1',
-        activated: true
-      })
-      .then(user => {
-        tempUser = user;
-        done();
-      })
-      .catch(err => {
-        done(err);
-      });
-    });
-
     context('with semantically incorrect request data', () => {
       it('returns 401 when token is not present', done => {
         axios.delete(`${USER_API}/${normalUser.id}`, {

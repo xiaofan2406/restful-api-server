@@ -9,7 +9,7 @@ const localOptions = {
 };
 
 const localLogin = new Strategy(localOptions, (email, password, done) => {
-  User.findOne({ where: { email } }).then(user => {
+  User.findByEmail(email, true).then(user => {
     if (!user) {
       return done(null, false, {
         message: 'The email is not registered',

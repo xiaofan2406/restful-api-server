@@ -13,9 +13,9 @@ export const sampleUsersData = [{
   activated: false,
   type: type.NORMAL
 }, {
-  email: 'admin@testmail.com',
-  username: 'admin@testmail.com',
-  password: 'adminpassword1',
+  email: 'super@testmail.com',
+  username: 'super@testmail.com',
+  password: 'superpassword1',
   activated: true,
   type: type.ADMIN
 }, {

@@ -1,6 +1,7 @@
 import {
   type as userType,
-  resources as resourceType
+  resources as resourceType,
+  reserved
 } from '../constants/user-constants';
 
 /* common validators */
@@ -42,11 +43,18 @@ export function isUsername(target) {
   if (typeof target !== 'string') {
     return false;
   }
+
   /* eslint-disable max-len */
-  if (!/^([a-zA-Z])+((?=.*[a-zA-Z])([a-zA-Z0-9_.-@])){1,26}([a-zA-Z0-9])+$/.test(target)) {
+  if (!/^([a-zA-Z]){1}((?=.*[a-zA-Z])[a-zA-Z0-9@_\.\-]{1,26})([a-zA-Z0-9]){1}$/.test(target)) {
     return false;
   }
-  // TODO avoid username being 'activateAccount' or other key words
+
+  for (const word of reserved) {
+    if (target.indexOf(word) > -1) {
+      return false;
+    }
+  }
+
   return true;
 }
 
