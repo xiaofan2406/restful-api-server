@@ -69,9 +69,9 @@ export default (sequelize, DataTypes) => {
           title: 'isTodoTitle',
           content: 'isTodoContent',
           completed: 'isBoolean',
-          dueDate: 'isDueDate',
+          dueDate: 'isISODateString',
           scope: 'isTodoScope',
-          scopeDate: 'isTodoScopeDate'
+          scopeDate: 'isISODateString'
         };
       },
       _getAuthorizedFields(httpUser) { // TODO rewrite this when supports es6

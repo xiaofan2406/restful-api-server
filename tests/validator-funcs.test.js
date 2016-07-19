@@ -1,7 +1,11 @@
 /* global describe, it, context, before, after */
 /* eslint-disable no-unused-expressions */
-import * as Validator from '../helpers/validator-funcs';
 import { expect } from 'chai';
+import * as Validator from '../helpers/validator-funcs';
+import {
+  type as userType,
+  resource as resourceType
+} from '../constants/user-constants';
 
 context('common isators', () => {
   describe('isThere', () => {
@@ -216,6 +220,60 @@ context('common isators', () => {
       });
     });
   });
+
+  describe('isISODateString', () => {
+    const { isISODateString } = Validator;
+    context('Array', () => {
+      it('returns false with any array', () => {
+        expect(isISODateString([])).to.be.false;
+        expect(isISODateString([1, '2'])).to.be.false;
+      });
+    });
+
+    context('String', () => {
+      it('returns true with iso date string', () => {
+        expect(isISODateString(new Date().toISOString())).to.be.true;
+      });
+
+      it('returns false with non-iso date string', () => {
+        expect(isISODateString('')).to.be.false;
+        expect(isISODateString('0')).to.be.false;
+        expect(isISODateString('1')).to.be.false;
+        expect(isISODateString(' ')).to.be.false;
+        expect(isISODateString('some string')).to.be.false;
+      });
+    });
+
+    context('Object', () => {
+      it('returns false with any object', () => {
+        expect(isISODateString({})).to.be.false;
+        expect(isISODateString({ key: 'somevalue' })).to.be.false;
+      });
+    });
+
+    context('Boolean', () => {
+      it('returns false with any boolean', () => {
+        expect(isISODateString(true)).to.be.false;
+        expect(isISODateString(false)).to.be.false;
+      });
+    });
+
+    context('Number', () => {
+      it('returns false with any number', () => {
+        expect(isISODateString(0)).to.be.false;
+        expect(isISODateString(1)).to.be.false;
+        expect(isISODateString(-1)).to.be.false;
+        expect(isISODateString(2016)).to.be.false;
+      });
+    });
+
+    context('Speical', () => {
+      it('returns false with special values', () => {
+        expect(isISODateString()).to.be.false;
+        expect(isISODateString(null)).to.be.false;
+      });
+    });
+  });
 });
 
 context('user-model validators', () => {
@@ -281,6 +339,95 @@ context('user-model validators', () => {
     });
   });
 
+  describe('isEmail', () => {
+    const { isEmail } = Validator;
+    context('Array', () => {
+      it('returns false with any array', () => {
+        expect(isEmail([])).to.be.false;
+        expect(isEmail([1, '2'])).to.be.false;
+      });
+    });
+
+    context('String', () => {
+      it('returns true with string contains @ in the middle', () => {
+        expect(isEmail('what@that')).to.be.true;
+        expect(isEmail('what@that.com')).to.be.true;
+        expect(isEmail('what-is@that')).to.be.true;
+        expect(isEmail('what.this@that')).to.be.true;
+        expect(isEmail('what_okay@that.com')).to.be.true;
+      });
+
+      it('returns false with non-word character staring', () => {
+        expect(isEmail('@mail.com')).to.be.false;
+        expect(isEmail('-mail.com')).to.be.false;
+        expect(isEmail('_mail.com')).to.be.false;
+        expect(isEmail('.mail.com')).to.be.false;
+        expect(isEmail('1mail.com')).to.be.false;
+      });
+
+      it('returns false with non-word character ending', () => {
+        expect(isEmail('mail.com@')).to.be.false;
+        expect(isEmail('mail.com-')).to.be.false;
+        expect(isEmail('mail.com.')).to.be.false;
+        expect(isEmail('mail.com_')).to.be.false;
+        expect(isEmail('mail.com1')).to.be.false;
+      });
+
+      it('returns false with not allowed characters', () => {
+        expect(isEmail('mail!@email.com')).to.be.false;
+        expect(isEmail('ma il!@email.com')).to.be.false;
+      });
+
+      it('returns false with length under 3', () => {
+        expect(isEmail('j@')).to.be.false;
+        expect(isEmail('@j')).to.be.false;
+      });
+
+      it('returns false with lenght over 254', () => {
+        const str = 'abc@e'.repeat(51);
+        expect(isEmail(str)).to.be.false;
+      });
+
+      it('returns false with string has no @', () => {
+        expect(isEmail('')).to.be.false;
+        expect(isEmail('0')).to.be.false;
+        expect(isEmail('1')).to.be.false;
+        expect(isEmail(' ')).to.be.false;
+        expect(isEmail('somestring')).to.be.false;
+      });
+    });
+
+    context('Object', () => {
+      it('returns false with any object', () => {
+        expect(isEmail({})).to.be.false;
+        expect(isEmail({ key: 'somevalue' })).to.be.false;
+      });
+    });
+
+    context('Boolean', () => {
+      it('returns false with any boolean', () => {
+        expect(isEmail(true)).to.be.false;
+        expect(isEmail(false)).to.be.false;
+      });
+    });
+
+    context('Number', () => {
+      it('returns false with any number', () => {
+        expect(isEmail(0)).to.be.false;
+        expect(isEmail(1)).to.be.false;
+        expect(isEmail(-1)).to.be.false;
+        expect(isEmail(2016)).to.be.false;
+      });
+    });
+
+    context('Speical', () => {
+      it('returns false with special values', () => {
+        expect(isEmail()).to.be.false;
+        expect(isEmail(null)).to.be.false;
+      });
+    });
+  });
+
   describe('isUsername', () => {
     const { isUsername } = Validator;
     context('Array', () => {
@@ -294,7 +441,7 @@ context('user-model validators', () => {
       it('returns true with no special word, not all digits, ' +
         'not starting with special character, ' +
         'at least two word characters with one starting' +
-        'no whitespace, not all characters and length of [3, 28]', () => {
+        'no whitespace, not all characters and length of [3, 254]', () => {
         expect(isUsername('jon')).to.be.true;
         expect(isUsername('jon-_@.onjonjonjonjonjonjon1')).to.be.true;
         expect(isUsername('J1on')).to.be.true;
@@ -356,8 +503,9 @@ context('user-model validators', () => {
       it('returns false with all special characters', () => {
         expect(isUsername('.-_@')).to.be.false;
       });
-      it('returns false with length over 28', () => {
-        expect(isUsername('jonjonjonjonjonjonjonjonjonjon')).to.be.false;
+      it('returns false with length over 254', () => {
+        const str = 'abcde'.repeat(51);
+        expect(isUsername(str)).to.be.false;
       });
       it('returns false with length under 3', () => {
         expect(isUsername('ji')).to.be.false;
@@ -396,58 +544,415 @@ context('user-model validators', () => {
   });
 
   describe('isUserType', () => {
+    const { isUserType } = Validator;
     context('Array', () => {
-
+      it('returns false with any array', () => {
+        expect(isUserType([])).to.be.false;
+        expect(isUserType([1, '2'])).to.be.false;
+      });
     });
 
     context('String', () => {
-
+      it('returns false with any string', () => {
+        expect(isUserType('')).to.be.false;
+        expect(isUserType('0')).to.be.false;
+        expect(isUserType('1')).to.be.false;
+        expect(isUserType(' ')).to.be.false;
+        expect(isUserType('some string')).to.be.false;
+      });
     });
 
     context('Object', () => {
-
+      it('returns false with any object', () => {
+        expect(isUserType({})).to.be.false;
+        expect(isUserType({ key: 'somevalue' })).to.be.false;
+      });
     });
 
     context('Boolean', () => {
-
+      it('returns false with any boolean', () => {
+        expect(isUserType(true)).to.be.false;
+        expect(isUserType(false)).to.be.false;
+      });
     });
 
     context('Number', () => {
-
+      it('returns true with correct usertype number', () => {
+        expect(isUserType(userType.NORMAL)).to.be.true;
+        expect(isUserType(userType.ADMIN)).to.be.true;
+        expect(isUserType(userType.EDITOR)).to.be.true;
+      });
+      it('returns false with any other number', () => {
+        expect(isUserType(-1)).to.be.false;
+        expect(isUserType(2016)).to.be.false;
+      });
     });
 
     context('Speical', () => {
+      it('returns false with special values', () => {
+        expect(isUserType()).to.be.false;
+        expect(isUserType(null)).to.be.false;
+      });
+    });
+  });
 
+  describe('isResourceType', () => {
+    const { isResourceType } = Validator;
+    context('Array', () => {
+      it('returns false with any array', () => {
+        expect(isResourceType([])).to.be.false;
+        expect(isResourceType([1, '2'])).to.be.false;
+      });
+    });
+
+    context('String', () => {
+      it('returns false with any string', () => {
+        expect(isResourceType('')).to.be.false;
+        expect(isResourceType('0')).to.be.false;
+        expect(isResourceType('1')).to.be.false;
+        expect(isResourceType(' ')).to.be.false;
+        expect(isResourceType('some string')).to.be.false;
+      });
+    });
+
+    context('Object', () => {
+      it('returns false with any object', () => {
+        expect(isResourceType({})).to.be.false;
+        expect(isResourceType({ key: 'somevalue' })).to.be.false;
+      });
+    });
+
+    context('Boolean', () => {
+      it('returns false with any boolean', () => {
+        expect(isResourceType(true)).to.be.false;
+        expect(isResourceType(false)).to.be.false;
+      });
+    });
+
+    context('Number', () => {
+      it('returns true with correct usertype number', () => {
+        expect(isResourceType(resourceType.ARTICLE)).to.be.true;
+        expect(isResourceType(resourceType.TODO)).to.be.true;
+      });
+      it('returns false with any other number', () => {
+        expect(isResourceType(-1)).to.be.false;
+        expect(isResourceType(2016)).to.be.false;
+      });
+    });
+
+    context('Speical', () => {
+      it('returns false with special values', () => {
+        expect(isResourceType()).to.be.false;
+        expect(isResourceType(null)).to.be.false;
+      });
+    });
+  });
+
+  describe('isResources', () => {
+    const { isResources } = Validator;
+    context('Array', () => {
+      it('returns true when array is empty', () => {
+        expect(isResources([])).to.be.true;
+      });
+      it('returns true when array contains only correct resourceType', () => {
+        expect(isResources([resourceType.TODO, resourceType.ARTICLE])).to.be.true;
+        expect(isResources([resourceType.ARTICLE])).to.be.true;
+      });
+      it('returns false when array contains element that is not resourceType', () => {
+        expect(isResources([resourceType.TODO, '2'])).to.be.false;
+      });
+    });
+
+    context('String', () => {
+      it('returns false with any string', () => {
+        expect(isResources('')).to.be.false;
+        expect(isResources('0')).to.be.false;
+        expect(isResources('1')).to.be.false;
+        expect(isResources(' ')).to.be.false;
+        expect(isResources('some string')).to.be.false;
+      });
+    });
+
+    context('Object', () => {
+      it('returns false with any object', () => {
+        expect(isResources({})).to.be.false;
+        expect(isResources({ key: 'somevalue' })).to.be.false;
+      });
+    });
+
+    context('Boolean', () => {
+      it('returns false with any boolean', () => {
+        expect(isResources(true)).to.be.false;
+        expect(isResources(false)).to.be.false;
+      });
+    });
+
+    context('Number', () => {
+      it('returns false with any number', () => {
+        expect(isResources(0)).to.be.false;
+        expect(isResources(1)).to.be.false;
+        expect(isResources(-1)).to.be.false;
+        expect(isResources(2016)).to.be.false;
+      });
+    });
+
+    context('Speical', () => {
+      it('returns false with special values', () => {
+        expect(isResources()).to.be.false;
+        expect(isResources(null)).to.be.false;
+      });
     });
   });
 });
 
 context('todo-model validators', () => {
-  context('Array', () => {
+  describe('isTodoTitle', () => {
+    const { isTodoTitle } = Validator;
+    context('Array', () => {
+      it('returns false with any array', () => {
+        expect(isTodoTitle([])).to.be.false;
+        expect(isTodoTitle([1, '2'])).to.be.false;
+      });
+    });
 
+    context('String', () => {
+      it('returns false with only whitespace', () => {
+        expect(isTodoTitle(' ')).to.be.false;
+        expect(isTodoTitle('       ')).to.be.false;
+        expect(isTodoTitle('  \n ')).to.be.false;
+      });
+
+      it('returns false with length under 1', () => {
+        expect(isTodoTitle('')).to.be.false;
+      });
+
+      it('returns falsw with length over 254', () => {
+        const str = 'abcde'.repeat(51);
+        expect(isTodoTitle(str)).to.be.false;
+      });
+
+      it('returns true with non-empty string with range [1, 254]', () => {
+        expect(isTodoTitle('0')).to.be.true;
+        expect(isTodoTitle('1')).to.be.true;
+        expect(isTodoTitle('some string')).to.be.true;
+        const str = 'ab'.repeat(127);
+        expect(isTodoTitle(str)).to.be.true;
+      });
+    });
+
+    context('Object', () => {
+      it('returns false with any object', () => {
+        expect(isTodoTitle({})).to.be.false;
+        expect(isTodoTitle({ key: 'somevalue' })).to.be.false;
+      });
+    });
+
+    context('Boolean', () => {
+      it('returns false with any boolean', () => {
+        expect(isTodoTitle(true)).to.be.false;
+        expect(isTodoTitle(false)).to.be.false;
+      });
+    });
+
+    context('Number', () => {
+      it('returns false with any number', () => {
+        expect(isTodoTitle(0)).to.be.false;
+        expect(isTodoTitle(1)).to.be.false;
+        expect(isTodoTitle(-1)).to.be.false;
+        expect(isTodoTitle(2016)).to.be.false;
+      });
+    });
+
+    context('Speical', () => {
+      it('returns false with special values', () => {
+        expect(isTodoTitle()).to.be.false;
+        expect(isTodoTitle(null)).to.be.false;
+      });
+    });
   });
 
-  context('String', () => {
+  describe('isTodoContent', () => {
+    const { isTodoContent } = Validator;
+    context('Array', () => {
+      it('returns false with any array', () => {
+        expect(isTodoContent([])).to.be.false;
+        expect(isTodoContent([1, '2'])).to.be.false;
+      });
+    });
 
+    context('String', () => {
+      it('returns false with only whitespace', () => {
+        expect(isTodoContent(' ')).to.be.false;
+        expect(isTodoContent('       ')).to.be.false;
+        expect(isTodoContent('  \n ')).to.be.false;
+      });
+
+      it('returns false with length under 1', () => {
+        expect(isTodoContent('')).to.be.false;
+      });
+
+      it('returns falsw with length over 254', () => {
+        const str = 'abcde'.repeat(51);
+        expect(isTodoContent(str)).to.be.false;
+      });
+
+      it('returns true with non-empty string with range [1, 254]', () => {
+        expect(isTodoContent('0')).to.be.true;
+        expect(isTodoContent('1')).to.be.true;
+        expect(isTodoContent('some string')).to.be.true;
+        const str = 'ab'.repeat(127);
+        expect(isTodoContent(str)).to.be.true;
+      });
+    });
+
+    context('Object', () => {
+      it('returns false with any object', () => {
+        expect(isTodoContent({})).to.be.false;
+        expect(isTodoContent({ key: 'somevalue' })).to.be.false;
+      });
+    });
+
+    context('Boolean', () => {
+      it('returns false with any boolean', () => {
+        expect(isTodoContent(true)).to.be.false;
+        expect(isTodoContent(false)).to.be.false;
+      });
+    });
+
+    context('Number', () => {
+      it('returns false with any number', () => {
+        expect(isTodoContent(0)).to.be.false;
+        expect(isTodoContent(1)).to.be.false;
+        expect(isTodoContent(-1)).to.be.false;
+        expect(isTodoContent(2016)).to.be.false;
+      });
+    });
+
+    context('Speical', () => {
+      it('returns false with special values', () => {
+        expect(isTodoContent()).to.be.false;
+        expect(isTodoContent(null)).to.be.false;
+      });
+    });
   });
 
-  context('Object', () => {
+  describe('isTodoScope', () => {
+    const { isTodoScope } = Validator;
+    context('Array', () => {
+      it('returns false with any array', () => {
+        expect(isTodoScope([])).to.be.false;
+        expect(isTodoScope([1, '2'])).to.be.false;
+      });
+    });
 
-  });
+    context('String', () => {
+      it('returns false with only whitespace', () => {
+        expect(isTodoScope(' ')).to.be.false;
+        expect(isTodoScope('       ')).to.be.false;
+        expect(isTodoScope('  \n ')).to.be.false;
+      });
 
-  context('Boolean', () => {
+      it('returns false with length under 1', () => {
+        expect(isTodoScope('')).to.be.false;
+      });
 
-  });
+      it('returns falsw with length over 254', () => {
+        const str = 'abcde'.repeat(51);
+        expect(isTodoScope(str)).to.be.false;
+      });
 
-  context('Number', () => {
+      it('returns true with non-empty string with range [1, 254]', () => {
+        expect(isTodoScope('0')).to.be.true;
+        expect(isTodoScope('1')).to.be.true;
+        expect(isTodoScope('some string')).to.be.true;
+        const str = 'ab'.repeat(127);
+        expect(isTodoScope(str)).to.be.true;
+      });
+    });
 
-  });
+    context('Object', () => {
+      it('returns false with any object', () => {
+        expect(isTodoScope({})).to.be.false;
+        expect(isTodoScope({ key: 'somevalue' })).to.be.false;
+      });
+    });
 
-  context('Speical', () => {
+    context('Boolean', () => {
+      it('returns false with any boolean', () => {
+        expect(isTodoScope(true)).to.be.false;
+        expect(isTodoScope(false)).to.be.false;
+      });
+    });
 
+    context('Number', () => {
+      it('returns false with any number', () => {
+        expect(isTodoScope(0)).to.be.false;
+        expect(isTodoScope(1)).to.be.false;
+        expect(isTodoScope(-1)).to.be.false;
+        expect(isTodoScope(2016)).to.be.false;
+      });
+    });
+
+    context('Speical', () => {
+      it('returns false with special values', () => {
+        expect(isTodoScope()).to.be.false;
+        expect(isTodoScope(null)).to.be.false;
+      });
+    });
   });
 });
 
 context('article-model validators', () => {
 
 });
+
+// skelonton
+// describe('isUserType', () => {
+//   const { isUserType } = Validator;
+//   context('Array', () => {
+//     it('returns false with any array', () => {
+//       expect(isUserType([])).to.be.false;
+//       expect(isUserType([1, '2'])).to.be.false;
+//     });
+//   });
+//
+//   context('String', () => {
+//     it('returns false with any string', () => {
+//       expect(isUserType('')).to.be.false;
+//       expect(isUserType('0')).to.be.false;
+//       expect(isUserType('1')).to.be.false;
+//       expect(isUserType(' ')).to.be.false;
+//       expect(isUserType('some string')).to.be.false;
+//     });
+//   });
+//
+//   context('Object', () => {
+//     it('returns false with any object', () => {
+//       expect(isUserType({})).to.be.false;
+//       expect(isUserType({ key: 'somevalue' })).to.be.false;
+//     });
+//   });
+//
+//   context('Boolean', () => {
+//     it('returns false with any boolean', () => {
+//       expect(isUserType(true)).to.be.false;
+//       expect(isUserType(false)).to.be.false;
+//     });
+//   });
+//
+//   context('Number', () => {
+//     it('returns false with any number', () => {
+//       expect(isUserType(0)).to.be.false;
+//       expect(isUserType(1)).to.be.false;
+//       expect(isUserType(-1)).to.be.false;
+//       expect(isUserType(2016)).to.be.false;
+//     });
+//   });
+//
+//   context('Speical', () => {
+//     it('returns false with special values', () => {
+//       expect(isUserType()).to.be.false;
+//       expect(isUserType(null)).to.be.false;
+//     });
+//   });
+// });

@@ -9,11 +9,11 @@ export const creation = {
   CREATED: 1
 };
 
-export const resources = {
+export const resource = {
   TODO: 0,
   ARTICLE: 1
 };
 
 export const reserved = ['activateaccount', 'resetpassword', 'admin', 'root'];
 
-export const defaultResources = [resources.TODO, resources.ARTICLE];
+export const defaultResources = [resource.TODO, resource.ARTICLE];

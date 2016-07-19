@@ -1,4 +1,4 @@
-import { type, resources } from '../constants/user-constants.js';
+import { type, resource } from '../constants/user-constants.js';
 
 export const sampleUsersData = [{
   email: 'normal@testmail.com',
@@ -23,14 +23,14 @@ export const sampleUsersData = [{
   username: 'notodo@testmail.com',
   password: 'notodopassword1',
   activated: true,
-  resources: [resources.ARTICLE],
+  resources: [resource.ARTICLE],
   type: type.NORMAL
 }, {
   email: 'noarticle@testmail.com',
   username: 'noarticle@testmail.com',
   password: 'noarticlepassword1',
   activated: true,
-  resources: [resources.TODO],
+  resources: [resource.TODO],
   type: type.NORMAL
 }];
 

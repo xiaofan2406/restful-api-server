@@ -1,6 +1,6 @@
 import {
   type as userType,
-  resources as resourceType,
+  resource as resourceType,
   reserved
 } from '../constants/user-constants';
 
@@ -32,8 +32,12 @@ export function isUUID(target) {
   return uuid.test(target);
 }
 
+export function isISODateString(target) {
+  return typeof target === 'string' &&
+    /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z)/.test(target);
+}
 
-/* user modle validators */
+/* user model validators */
 export function isPassword(target) {
   return typeof target === 'string' &&
     /^(?=.*[0-9])(?=.*[a-zA-Z])([a-zA-Z0-9]{6,28})$/.test(target);
@@ -45,7 +49,7 @@ export function isUsername(target) {
   }
 
   /* eslint-disable max-len */
-  if (!/^([a-zA-Z]){1}((?=.*[a-zA-Z])[a-zA-Z0-9@_\.\-]{1,26})([a-zA-Z0-9]){1}$/.test(target)) {
+  if (!/^([a-zA-Z]){1}((?=.*[a-zA-Z])[a-zA-Z0-9@_\.\-]{1,252})([a-zA-Z0-9]){1}$/.test(target)) {
     return false;
   }
 
@@ -59,12 +63,17 @@ export function isUsername(target) {
 }
 
 export function isEmail(target) {
+  if (typeof target !== 'string') {
+    return false;
+  }
   if (!isThere(target)) {
     return false;
   }
-  // TODO improve this logic???? duh
-  const index = target.indexOf('@');
-  return index > 0 && index !== target.length;
+  /* eslint-disable max-len */
+  if (!/^([a-zA-Z]){1}((?=.*[a-zA-Z])(?=.*[@])[a-zA-Z0-9@_\.\-]{1,252})([a-zA-Z]){1}$/.test(target)) {
+    return false;
+  }
+  return true;
 }
 
 export function isUserType(target) {
@@ -88,6 +97,9 @@ export function isResourceType(target) {
 }
 
 export function isResources(target) {
+  if (!Array.isArray(target)) {
+    return false;
+  }
   for (const each of target) {
     if (!isResourceType(each)) {
       return false;
@@ -97,26 +109,19 @@ export function isResources(target) {
 }
 
 
-/* todo modle validators */
+/* todo model validators */
 export function isTodoTitle(target) {
-  return typeof target === 'string' && target.length < 255;
+  return typeof target === 'string' && target.trim().length > 0 && target.trim().length < 255;
 }
 
 export function isTodoContent(target) {
-  return typeof target === 'string' && target.length < 255;
-}
-
-export function isDueDate(target) {
-  return new Date(target) instanceof Date;
+  return typeof target === 'string' && target.trim().length > 0 && target.trim().length < 255;
 }
 
 export function isTodoScope(target) {
-  return typeof target === 'string' && target.length < 255;
+  return typeof target === 'string' && target.trim().length > 0 && target.trim().length < 255;
 }
 
-export function isTodoScopeDate(target) {
-  return new Date(target) instanceof Date;
-}
 
 // TODO rid of this
 function _objectHasEmptyValue(target) {

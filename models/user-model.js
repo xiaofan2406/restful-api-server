@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt-nodejs';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/jwt-config';
-import { type, creation, resources, defaultResources } from '../constants/user-constants.js';
+import { type, creation, resource, defaultResources } from '../constants/user-constants.js';
 import Error from '../helpers/errors';
 
 const hashPassword = (user) => {
@@ -90,10 +90,10 @@ export default (sequelize, DataTypes) => {
         return this.isValid() && this.type === type.ADMIN;
       },
       hasAriclePermission() {
-        return this.resources.indexOf(resources.ARTICLE) > -1;
+        return this.resources.indexOf(resource.ARTICLE) > -1;
       },
       hasTodoPermission() {
-        return this.resources.indexOf(resources.TODO) > -1;
+        return this.resources.indexOf(resource.TODO) > -1;
       },
       selfie() {
         return {
