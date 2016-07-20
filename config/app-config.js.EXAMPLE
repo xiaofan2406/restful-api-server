@@ -2,3 +2,5 @@ export const ROOT_DIR = '';
 export const APP_NAME = 'REST-ful API Server';
 export const SERVER_URL = 'http://192.168.1.49:3000';
 export const CLIENT_URL = 'http://192.168.1.49:3001';
+export const KEYMETRICS_PRIVATE_KEY = 'XXX';
+export const KEYMETRICS_PUBLIC_KEY = 'XXX'

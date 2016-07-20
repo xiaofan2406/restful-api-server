@@ -4,9 +4,9 @@
   "private": true,
   "description": "REST-ful api server on express.js",
   "scripts": {
-    "babel-node": "babel-node ./bin/www",
     "setup": "./setup.sh",
-    "start": "nodemon --exec npm run babel-node -i tests/",
+    "dev": "nodemon --exec babel-node ./bin/www -i tests/",
+    "start": "babel-node main.js",
     "test": "mocha tests --compilers js:babel-register",
     "preversion": "npm test",
     "version": "",
@@ -21,6 +21,7 @@
     "postgres",
     "REST-ful"
   ],
+  "main": "main.js",
   "author": "Xiaofan Wu",
   "license": "ISC",
   "dependencies": {
@@ -39,11 +40,12 @@
     "pg": "",
     "sequelize": "",
     "winston": "",
-    "winston-daily-rotate-file": ""
+    "winston-daily-rotate-file": "",
+    "pm2": "",
+    "babel-cli": ""
   },
   "devDependencies": {
     "axios": "",
-    "babel-cli": "",
     "babel-core": "",
     "babel-plugin-transform-object-rest-spread": "",
     "babel-preset-es2015": "",
