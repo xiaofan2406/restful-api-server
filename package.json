@@ -6,7 +6,7 @@
   "scripts": {
     "setup": "./setup.sh",
     "dev": "nodemon --exec babel-node ./bin/www -i tests/",
-    "start": "babel-node main.js",
+    "start": "NODE_ENV=production babel-node ./bin/www",
     "test": "mocha tests --compilers js:babel-register",
     "preversion": "npm test",
     "version": "",
@@ -41,15 +41,14 @@
     "sequelize": "",
     "winston": "",
     "winston-daily-rotate-file": "",
-    "pm2": "",
-    "babel-cli": ""
-  },
-  "devDependencies": {
-    "axios": "",
+    "babel-cli": "",
     "babel-core": "",
     "babel-plugin-transform-object-rest-spread": "",
     "babel-preset-es2015": "",
-    "babel-register": "",
+    "babel-register": ""
+  },
+  "devDependencies": {
+    "axios": "",
     "chai": "",
     "eslint": "",
     "eslint-config-airbnb": "",
