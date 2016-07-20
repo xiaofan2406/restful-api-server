@@ -24,6 +24,7 @@
 * production setup
 * folder structure
 * ~~webpack es6 babel~~
+> remove sequelize in the futuer, use pg, and es6 classes
 
 # Conventions
 ### Nodejs Naming

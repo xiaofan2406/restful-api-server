@@ -1,4 +1,5 @@
 import Error from '../helpers/errors';
+import { isEmptyString } from '../helpers/validator-funcs';
 
 export default (sequelize, DataTypes) => {
   const Todo = sequelize.define('Todo', {
@@ -73,6 +74,15 @@ export default (sequelize, DataTypes) => {
           scope: 'isTodoScope',
           scopeDate: 'isISODateString'
         };
+      },
+      fieldsSanitizer() {
+        return ['content'];
+      },
+      __contentSanitizer(title) {
+        if (isEmptyString(title)) {
+          return null;
+        }
+        return title;
       },
       _getAuthorizedFields(httpUser) { // TODO rewrite this when supports es6
         if (httpUser && httpUser.hasTodoPermission()) {
@@ -197,6 +207,15 @@ export default (sequelize, DataTypes) => {
       }
     },
     hooks: {
+      beforeUpdate(todo, opts) {
+        const sanitizers = this.fieldsSanitizer();
+        for (const field of opts.fields) {
+          if (sanitizers.indexOf(field) > -1) {
+            const fieldSanitizer = `__${field}Sanitizer`;
+            todo[field] = this[fieldSanitizer](todo[field]);
+          }
+        }
+      }
     }
   });
 

@@ -221,6 +221,70 @@ context('common isators', () => {
     });
   });
 
+  describe('isEmptyString', () => {
+    const { isEmptyString } = Validator;
+    context('Array', () => {
+      it('returns false with any array', () => {
+        expect(isEmptyString([])).to.be.false;
+        expect(isEmptyString([1, '2'])).to.be.false;
+      });
+    });
+
+    context('String', () => {
+      it('returns true with only whitespace', () => {
+        expect(isEmptyString(' ')).to.be.true;
+        expect(isEmptyString('\n')).to.be.true;
+        expect(isEmptyString('\t')).to.be.true;
+        expect(isEmptyString('\v')).to.be.true;
+        expect(isEmptyString('\f')).to.be.true;
+        expect(isEmptyString('\uFEFF')).to.be.true;
+        expect(isEmptyString('\u00A0')).to.be.true;
+        expect(isEmptyString('\u0020')).to.be.true;
+        expect(isEmptyString(' \n\t\v\f\uFEFF\u00A0\u0020')).to.be.true;
+      });
+
+      it('returns true with empty string', () => {
+        expect(isEmptyString('')).to.be.true;
+      });
+
+      it('returns false with any other character', () => {
+        expect(isEmptyString('0')).to.be.false;
+        expect(isEmptyString('1')).to.be.false;
+        expect(isEmptyString('some string')).to.be.false;
+      });
+    });
+
+    context('Object', () => {
+      it('returns false with any object', () => {
+        expect(isEmptyString({})).to.be.false;
+        expect(isEmptyString({ key: 'somevalue' })).to.be.false;
+      });
+    });
+
+    context('Boolean', () => {
+      it('returns false with any boolean', () => {
+        expect(isEmptyString(true)).to.be.false;
+        expect(isEmptyString(false)).to.be.false;
+      });
+    });
+
+    context('Number', () => {
+      it('returns false with any number', () => {
+        expect(isEmptyString(0)).to.be.false;
+        expect(isEmptyString(1)).to.be.false;
+        expect(isEmptyString(-1)).to.be.false;
+        expect(isEmptyString(2016)).to.be.false;
+      });
+    });
+
+    context('Speical', () => {
+      it('returns false with special values', () => {
+        expect(isEmptyString()).to.be.false;
+        expect(isEmptyString(null)).to.be.false;
+      });
+    });
+  });
+
   describe('isISODateString', () => {
     const { isISODateString } = Validator;
     context('Array', () => {
@@ -716,14 +780,14 @@ context('todo-model validators', () => {
     });
 
     context('String', () => {
-      it('returns false with only whitespace', () => {
-        expect(isTodoTitle(' ')).to.be.false;
-        expect(isTodoTitle('       ')).to.be.false;
-        expect(isTodoTitle('  \n ')).to.be.false;
+      it('returns true with only whitespace', () => {
+        expect(isTodoTitle(' ')).to.be.true;
+        expect(isTodoTitle('       ')).to.be.true;
+        expect(isTodoTitle('  \n ')).to.be.true;
       });
 
-      it('returns false with length under 1', () => {
-        expect(isTodoTitle('')).to.be.false;
+      it('returns true with empty string', () => {
+        expect(isTodoTitle('')).to.be.true;
       });
 
       it('returns falsw with length over 254', () => {
@@ -781,14 +845,14 @@ context('todo-model validators', () => {
     });
 
     context('String', () => {
-      it('returns false with only whitespace', () => {
-        expect(isTodoContent(' ')).to.be.false;
-        expect(isTodoContent('       ')).to.be.false;
-        expect(isTodoContent('  \n ')).to.be.false;
+      it('returns true with only whitespace', () => {
+        expect(isTodoContent(' ')).to.be.true;
+        expect(isTodoContent('       ')).to.be.true;
+        expect(isTodoContent('  \n ')).to.be.true;
       });
 
-      it('returns false with length under 1', () => {
-        expect(isTodoContent('')).to.be.false;
+      it('returns true with empty string', () => {
+        expect(isTodoContent('')).to.be.true;
       });
 
       it('returns falsw with length over 254', () => {
@@ -846,14 +910,14 @@ context('todo-model validators', () => {
     });
 
     context('String', () => {
-      it('returns false with only whitespace', () => {
-        expect(isTodoScope(' ')).to.be.false;
-        expect(isTodoScope('       ')).to.be.false;
-        expect(isTodoScope('  \n ')).to.be.false;
+      it('returns true with only whitespace', () => {
+        expect(isTodoScope(' ')).to.be.true;
+        expect(isTodoScope('       ')).to.be.true;
+        expect(isTodoScope('  \n ')).to.be.true;
       });
 
-      it('returns false with length under 1', () => {
-        expect(isTodoScope('')).to.be.false;
+      it('returns true with empty string', () => {
+        expect(isTodoScope('')).to.be.true;
       });
 
       it('returns falsw with length over 254', () => {
@@ -907,52 +971,52 @@ context('article-model validators', () => {
 });
 
 // skelonton
-// describe('isUserType', () => {
-//   const { isUserType } = Validator;
+// describe('FUNCTION_NAME', () => {
+//   const { FUNCTION_NAME } = Validator;
 //   context('Array', () => {
 //     it('returns false with any array', () => {
-//       expect(isUserType([])).to.be.false;
-//       expect(isUserType([1, '2'])).to.be.false;
+//       expect(FUNCTION_NAME([])).to.be.false;
+//       expect(FUNCTION_NAME([1, '2'])).to.be.false;
 //     });
 //   });
 //
 //   context('String', () => {
 //     it('returns false with any string', () => {
-//       expect(isUserType('')).to.be.false;
-//       expect(isUserType('0')).to.be.false;
-//       expect(isUserType('1')).to.be.false;
-//       expect(isUserType(' ')).to.be.false;
-//       expect(isUserType('some string')).to.be.false;
+//       expect(FUNCTION_NAME('')).to.be.false;
+//       expect(FUNCTION_NAME('0')).to.be.false;
+//       expect(FUNCTION_NAME('1')).to.be.false;
+//       expect(FUNCTION_NAME(' ')).to.be.false;
+//       expect(FUNCTION_NAME('some string')).to.be.false;
 //     });
 //   });
 //
 //   context('Object', () => {
 //     it('returns false with any object', () => {
-//       expect(isUserType({})).to.be.false;
-//       expect(isUserType({ key: 'somevalue' })).to.be.false;
+//       expect(FUNCTION_NAME({})).to.be.false;
+//       expect(FUNCTION_NAME({ key: 'somevalue' })).to.be.false;
 //     });
 //   });
 //
 //   context('Boolean', () => {
 //     it('returns false with any boolean', () => {
-//       expect(isUserType(true)).to.be.false;
-//       expect(isUserType(false)).to.be.false;
+//       expect(FUNCTION_NAME(true)).to.be.false;
+//       expect(FUNCTION_NAME(false)).to.be.false;
 //     });
 //   });
 //
 //   context('Number', () => {
 //     it('returns false with any number', () => {
-//       expect(isUserType(0)).to.be.false;
-//       expect(isUserType(1)).to.be.false;
-//       expect(isUserType(-1)).to.be.false;
-//       expect(isUserType(2016)).to.be.false;
+//       expect(FUNCTION_NAME(0)).to.be.false;
+//       expect(FUNCTION_NAME(1)).to.be.false;
+//       expect(FUNCTION_NAME(-1)).to.be.false;
+//       expect(FUNCTION_NAME(2016)).to.be.false;
 //     });
 //   });
 //
 //   context('Speical', () => {
 //     it('returns false with special values', () => {
-//       expect(isUserType()).to.be.false;
-//       expect(isUserType(null)).to.be.false;
+//       expect(FUNCTION_NAME()).to.be.false;
+//       expect(FUNCTION_NAME(null)).to.be.false;
 //     });
 //   });
 // });

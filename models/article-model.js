@@ -55,6 +55,16 @@ export default (sequelize, DataTypes) => {
           onDelete: 'cascade'
         });
       },
+      fieldsValidator() {
+        return {
+          title: 'isMedi',
+          content: 'isTodoContent',
+          completed: 'isBoolean',
+          dueDate: 'isISODateString',
+          scope: 'isTodoScope',
+          scopeDate: 'isISODateString'
+        };
+      },
       validFields() {
         return [
           'title',

@@ -26,6 +26,10 @@ export function isEmptyObject(target) {
     target.constructor === {}.constructor && Object.keys(target).length === 0;
 }
 
+export function isEmptyString(target) {
+  return typeof target === 'string' && target.trim().length === 0;
+}
+
 const uuid = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/i;
 
 export function isUUID(target) {
@@ -36,6 +40,12 @@ export function isISODateString(target) {
   return typeof target === 'string' &&
     /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z)/.test(target);
 }
+
+export function isMediumString(target) {
+  const trimmed = target.trim();
+  return typeof target === 'string' && trimmed.length > 0 && trimmed.length < 255;
+}
+
 
 /* user model validators */
 export function isPassword(target) {
@@ -77,6 +87,9 @@ export function isEmail(target) {
 }
 
 export function isUserType(target) {
+  if (typeof target !== 'number') {
+    return false;
+  }
   const types = Object.keys(userType);
   for (const type of types) {
     if (userType[type] === target) {
@@ -87,6 +100,9 @@ export function isUserType(target) {
 }
 
 export function isResourceType(target) {
+  if (typeof target !== 'number') {
+    return false;
+  }
   const types = Object.keys(resourceType);
   for (const type of types) {
     if (resourceType[type] === target) {
@@ -111,15 +127,15 @@ export function isResources(target) {
 
 /* todo model validators */
 export function isTodoTitle(target) {
-  return typeof target === 'string' && target.trim().length > 0 && target.trim().length < 255;
+  return typeof target === 'string' && target.trim().length < 255;
 }
 
 export function isTodoContent(target) {
-  return typeof target === 'string' && target.trim().length > 0 && target.trim().length < 255;
+  return typeof target === 'string' && target.trim().length < 255;
 }
 
 export function isTodoScope(target) {
-  return typeof target === 'string' && target.trim().length > 0 && target.trim().length < 255;
+  return typeof target === 'string' && target.trim().length < 255;
 }
 
 

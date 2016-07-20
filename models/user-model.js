@@ -4,21 +4,8 @@ import { JWT_SECRET } from '../config/jwt-config';
 import { type, creation, resource, defaultResources } from '../constants/user-constants.js';
 import Error from '../helpers/errors';
 
-const hashPassword = (user) => {
-  user.password = bcrypt.hashSync(user.password, bcrypt.genSaltSync(10), null);
-  // this asyncronous version dosen't really improve performance
-  // bcrypt.genSalt(10, (err, salt) => {
-  //   if (err) {
-  //     throw err;
-  //   }
-  //   bcrypt.hash(user.password, salt, null, (hashErr, hash) => {
-  //     if (hashErr) {
-  //       throw hashErr;
-  //     }
-  //     user.password = hash;
-  //     cb(null, user);
-  //   });
-  // });
+const getHashedPassword = originalPassword => {
+  return bcrypt.hashSync(originalPassword, bcrypt.genSaltSync(10), null);
 };
 
 export default (sequelize, DataTypes) => {
@@ -127,6 +114,11 @@ export default (sequelize, DataTypes) => {
           activated: 'isBoolean',
           type: 'isUserType',
           resources: 'isResources'
+        };
+      },
+      fieldsSanitizer() {
+        return {
+
         };
       },
       _adminableFields() {
@@ -396,11 +388,11 @@ export default (sequelize, DataTypes) => {
     },
     hooks: {
       beforeCreate(user) {
-        hashPassword(user);
+        user.password = getHashedPassword(user.password);
       },
       beforeUpdate(user, opts) {
         if (opts.fields.indexOf('password') > -1) {
-          hashPassword(user);
+          user.password = getHashedPassword(user.password);
         }
       },
       beforeDestroy(user) {
